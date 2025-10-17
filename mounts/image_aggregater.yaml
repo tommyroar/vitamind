@@ -1,0 +1,123 @@
+name: Hourly Scheduled Daylight Webcam Capture
+
+on:
+  schedule:
+    # Run every hour (at the top of the hour) based on UTC.
+    # The time check logic in the script will determine if it is "daylight" locally.
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  capture_image:
+    runs-on: ubuntu-latest
+    
+    env:
+      IMAGE_URL: 'https://www.washington.edu/cambots/camera1_l.jpg'
+      IMAGE_DIR: 'webcam-images'
+      SUN_DATA_FILE: 'seattle_sun_data.csv'
+      # Set the Time Zone to America/Los_Angeles for all date/time operations
+      TZ: 'America/Los_Angeles' 
+
+    steps:
+      # Step 1: Check Daylight Hours and Download Image (Run First)
+      - name: ☀️ Check Time and Download Image
+        id: time_check_and_download
+        # We perform the Git setup and download ONLY IF the time check passes, 
+        # but for simplicity and to exit early, we put the time check first.
+        run: |
+          # 1. Get current date (MM-DD) and local time (HHMM)
+          CURRENT_DATE_KEY=$(date +%m-%d)
+          CURRENT_TIME_MINUTES=$(date +%H%M) # e.g., 0830 for 8:30 AM
+          
+          # Check for the sun data file
+          if [ ! -f ${{ env.SUN_DATA_FILE }} ]; then
+            echo "Error: Sun data file (${{ env.SUN_DATA_FILE }}) not found in repository. Exiting."
+            exit 1
+          fi
+
+          # 2. Look up sun times from CSV (skip the header line)
+          SUN_TIMES_LINE=$(grep "^${CURRENT_DATE_KEY}," ${{ env.SUN_DATA_FILE }})
+          
+          if [ -z "$SUN_TIMES_LINE" ]; then
+            echo "Error: Sun data not found for $CURRENT_DATE_KEY in CSV. Exiting."
+            exit 1 
+          fi
+          
+          # 3. Extract Sunrise and Sunset times
+          SUNRISE_TIME=$(echo "$SUN_TIMES_LINE" | cut -d ',' -f 2) # e.g., 07:55
+          SUNSET_TIME=$(echo "$SUN_TIMES_LINE" | cut -d ',' -f 3) # e.g., 16:20
+          
+          # 4. Convert times to minute format for integer comparison
+          SUNRISE_MINUTES=$(echo $SUNRISE_TIME | sed 's/://')
+          SUNSET_MINUTES=$(echo $SUNSET_TIME | sed 's/://')
+          
+          # 5. Check if it is daylight (Sunrise check first)
+          if (( CURRENT_TIME_MINUTES < SUNRISE_MINUTES )); then
+            echo "Sunrise check: Current time ($CURRENT_TIME_MINUTES) is before Sunrise ($SUNRISE_MINUTES). Exiting run."
+            echo "RUN_COMMIT=false" >> $GITHUB_OUTPUT
+            exit 0 # Exit successfully without running the rest of the job
+          fi
+
+          if (( CURRENT_TIME_MINUTES >= SUNSET_MINUTES )); then
+            echo "Sunset check: Current time ($CURRENT_TIME_MINUTES) is after Sunset ($SUNSET_MINUTES). Exiting run."
+            echo "RUN_COMMIT=false" >> $GITHUB_OUTPUT
+            exit 0 # Exit successfully without running the rest of the job
+          fi
+          
+          # 6. Daylight detected - proceed with download
+          echo "✅ Daylight detected. Time is between Sunrise ($SUNRISE_TIME) and Sunset ($SUNSET_TIME). Proceeding with download."
+          
+          # Download the image
+          mkdir -p ${{ env.IMAGE_DIR }}
+          EPOCH_SECONDS=$(date +%s)
+          FILE_NAME="${{ env.IMAGE_DIR }}/${EPOCH_SECONDS}.jpg"
+          
+          curl -s -L -o "$FILE_NAME" ${{ env.IMAGE_URL }}
+          
+          if [ -s "$FILE_NAME" ]; then
+            echo "Downloaded image: $FILE_NAME"
+            echo "RUN_COMMIT=true" >> $GITHUB_OUTPUT
+            echo "FILE_TO_ADD=$FILE_NAME" >> $GITHUB_OUTPUT
+            echo "EPOCH_SECONDS=$EPOCH_SECONDS" >> $GITHUB_OUTPUT
+          else
+            echo "Download failed or file is empty. Skipping commit."
+            echo "RUN_COMMIT=false" >> $GITHUB_OUTPUT
+          fi
+          
+      # The rest of the steps only run if the time check passed and download succeeded
+      
+      # Step 2: Checkout the repository 
+      # This step is moved down and only runs if the time check was successful.
+      - name: ⬇️ Checkout Repository (Only if Daylight)
+        if: steps.time_check_and_download.outputs.RUN_COMMIT == 'true'
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          lfs: 'true'
+
+      # Step 3: Configure Git and Git LFS tracking
+      - name: ⚙️ Configure Git LFS and User
+        if: steps.time_check_and_download.outputs.RUN_COMMIT == 'true'
+        run: |
+          # Ensure image files are tracked by LFS
+          git lfs track "*.jpg"
+          git add .gitattributes
+          
+          # Set Git user for the automated commit
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+      # Step 4: Add, Commit, and Push the new LFS file
+      - name: ⬆️ Commit and Push to Git LFS
+        if: steps.time_check_and_download.outputs.RUN_COMMIT == 'true'
+        run: |
+          FILE_TO_ADD=${{ steps.time_check_and_download.outputs.FILE_TO_ADD }}
+          EPOCH_SECONDS=${{ steps.time_check_and_download.outputs.EPOCH_SECONDS }}
+          
+          git add $FILE_TO_ADD
+          
+          # Commit the file. This automatically handles the LFS pointer.
+          git commit -m "Webcam capture at $(date -d @${EPOCH_SECONDS}) local time"
+          
+          # Push the commit and the LFS objects
+          git push
