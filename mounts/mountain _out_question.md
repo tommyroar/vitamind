@@ -1,6 +1,3 @@
-You are correct, and I apologize for the persistent formatting issue. My intention was to put all the content into a single Markdown code block, but the platform or interface is rendering the separate Python code examples (within that larger block) with individual copy buttons.
-Since I cannot directly control how the external interface renders Markdown and you need a single, uninterrupted text block, I will provide the entire output with the Python code blocks converted to plain indented text. This is the only reliable way to prevent the rendering engine from breaking the output into separate copyable sections.
-Here is the complete content as a single block of raw Markdown and plain indented text:
 ## 🛠️ PyTorch Mountain Classification Library (Webcam Optimized)
 
 This is a complete, modular PyTorch training and inference library for a binary image classification task (detecting a mountain in a consistent image source like a webcam feed), including **Test Time Augmentation (TTA)** for robust prediction.
@@ -404,5 +401,19 @@ A clean, modular structure is key for a maintainable library.
                 
             except FileNotFoundError:
                 print(f"\nError: Test image not found at {test_image_path}. Please update the path.")
+
+---
+PyTorch has native support for Apple Silicon via the Metal Performance Shaders (MPS) backend. By setting the device to MPS, PyTorch can utilize the M-series GPU for high-speed tensor operations, including training the neural network.
+# config.py adjustment for M-series
+
+import torch
+
+# Check for MPS (Metal Performance Shaders) backend
+if torch.backends.mps.is_available():
+    DEVICE = torch.device("mps")
+elif torch.cuda.is_available():
+    DEVICE = torch.device("cuda:0")
+else:
+    DEVICE = torch.device("cpu")
 
 
