@@ -1,0 +1,64 @@
+name: '☀️ Daylight Status 🌙'
+
+on:
+  schedule:
+    # Run every hour (at the top of the hour) based on UTC.
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check_daylight:
+    # Determine the status icon and message based on the success/failure of this step
+    name: ${{ always() && steps.check.outcome == 'success' && '☀️ Daylight' || '🌙 Night' }}
+    runs-on: ubuntu-latest
+    
+    env:
+      SUN_DATA_FILE: 'seattle_sun_data.csv'
+      # Set the Time Zone to America/Los_Angeles for all date/time operations
+      TZ: 'America/Los_Angeles' 
+
+    steps:
+      # Step 1: Checkout the necessary file (required for the run environment)
+      - name: ⬇️ Checkout Sun Data File
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ${{ env.SUN_DATA_FILE }}
+          
+      # Step 2: Check Time Against Sunrise/Sunset Data
+      - name: ☀️ Check Daylight Hours
+        id: check
+        run: |
+          # 1. Get current date (MM-DD) and local time (HHMM)
+          CURRENT_DATE_KEY=$(date +%m-%d)
+          CURRENT_TIME_MINUTES=$(date +%H%M)
+          
+          # Check for the sun data file
+          if [ ! -f ${{ env.SUN_DATA_FILE }} ]; then
+            echo "Error: Sun data file (${{ env.SUN_DATA_FILE }}) not found."
+            exit 1
+          fi
+
+          # 2. Look up sun times from CSV (skip the header line)
+          SUN_TIMES_LINE=$(grep "^${CURRENT_DATE_KEY}," ${{ env.SUN_DATA_FILE }})
+          
+          if [ -z "$SUN_TIMES_LINE" ]; then
+            echo "Error: Sun data not found for $CURRENT_DATE_KEY in CSV."
+            exit 1
+          fi
+          
+          # 3. Extract Sunrise and Sunset times
+          SUNRISE_TIME=$(echo "$SUN_TIMES_LINE" | cut -d ',' -f 2)
+          SUNSET_TIME=$(echo "$SUN_TIMES_LINE" | cut -d ',' -f 3)
+          
+          # 4. Convert times to minute format for integer comparison
+          SUNRISE_MINUTES=$(echo $SUNRISE_TIME | sed 's/://')
+          SUNSET_MINUTES=$(echo $SUNSET_TIME | sed 's/://')
+          
+          # 5. Determine if it is daylight (Success = Daylight, Failure = Night)
+          if (( CURRENT_TIME_MINUTES >= SUNRISE_MINUTES && CURRENT_TIME_MINUTES < SUNSET_MINUTES )); then
+            echo "✅ SUCCESS: Daylight detected. Current time ($CURRENT_TIME_MINUTES) is between Sunrise ($SUNRISE_MINUTES) and Sunset ($SUNSET_MINUTES)."
+            # The script exits with 0 (success) by default if this block runs
+          else
+            echo "❌ FAILURE: Nighttime detected. Current time ($CURRENT_TIME_MINUTES) is outside sunrise/sunset window."
+            exit 1 # Exit with non-zero status code to fail the step/job
+          fi
