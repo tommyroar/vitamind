@@ -1,0 +1,116 @@
+import time
+from datetime import datetime, timedelta, timezone
+
+# --- Configuration ---
+# Resolution: 15-minute intervals.
+INTERVAL_MINUTES = 15
+INTERVALS_PER_DAY = 96 # (1440 / 15)
+DAYS_IN_HASH = 365 
+# ---------------------
+
+class UtcBitMaskDaylightChecker:
+    """
+    Manages the creation and querying of the compact Lookup Bit Mask, 
+    assuming ALL times (sun data and epoch) are in UTC.
+    """
+
+    def __init__(self, binary_mask=None):
+        self.binary_mask = binary_mask
+        # Reference epoch for 2025-01-01 00:00:00 UTC
+        self.REF_EPOCH_UTC = datetime(2025, 1, 1, tzinfo=timezone.utc).timestamp()
+        self.SECONDS_PER_DAY = 24 * 60 * 60
+
+    def _time_to_minutes(self, time_str):
+        """Converts HH:MM time string to total minutes from midnight (0-1439)."""
+        try:
+            H, M = map(int, time_str.split(':'))
+            return H * 60 + M
+        except Exception:
+            return None
+
+    def create_bit_mask(self, daily_sun_data):
+        """
+        Compiles daily UTC sunrise/sunset data (list of dicts) into a compact 
+        binary string.
+        
+        :param daily_sun_data: List of dicts, e.g., [{"date": "01-01", "sunrise": "07:55", "sunset": "16:20"}, ...].
+                               Sunrise/Sunset times MUST be expressed in UTC.
+        :return: A compact binary string.
+        """
+        data_map = {entry['date']: entry for entry in daily_sun_data}
+        binary_mask = ""
+        
+        start_date = datetime(2025, 1, 1) # Non-leap year base for indexing
+        
+        # 1. Iterate through all 365 days
+        for i in range(DAYS_IN_HASH):
+            day = start_date + timedelta(days=i)
+            date_key = day.strftime("%m-%d")
+            
+            entry = data_map.get(date_key)
+            if not entry:
+                binary_mask += '0' * INTERVALS_PER_DAY
+                continue
+
+            sr_min = self._time_to_minutes(entry.get("sunrise"))
+            ss_min = self._time_to_minutes(entry.get("sunset"))
+            
+            if sr_min is None or ss_min is None:
+                binary_mask += '0' * INTERVALS_PER_DAY
+                continue
+                
+            # 2. Iterate through 96 intervals in the day
+            for interval in range(INTERVALS_PER_DAY):
+                interval_start_min = interval * INTERVAL_MINUTES
+                
+                # Check if the interval is within the daylight window [SR_min, SS_min)
+                is_daylight = (interval_start_min >= sr_min) and \
+                              (interval_start_min < ss_min)
+                
+                binary_mask += '1' if is_daylight else '0'
+                
+        self.binary_mask = binary_mask
+        print(f"✅ UTC Mask created. Total length: {len(binary_mask)} bits ({len(binary_mask) / 8 / 1024:.2f} KB).")
+        return binary_mask
+
+    def is_sun_out(self, epoch_timestamp):
+        """
+        Queries the binary mask using a single epoch timestamp (assumed to be UTC).
+        (O(1) operation, pure integer math).
+
+        :param epoch_timestamp: Time in seconds since the epoch (UTC).
+        :return: True if sun is out, False otherwise.
+        """
+        if not self.binary_mask:
+            raise ValueError("Binary mask must be created first.")
+            
+        # 1. Calculate the Day Index (0-based) using UTC epoch difference
+        # Integer division: total days elapsed since the start of the reference year (2025-01-01 UTC)
+        total_seconds_since_ref = int(epoch_timestamp) - int(self.REF_EPOCH_UTC)
+        day_index = int(total_seconds_since_ref / self.SECONDS_PER_DAY)
+        
+        # Handle wraparound to a 365-day index (only necessary if multiple years are queried)
+        day_index = day_index % DAYS_IN_HASH
+        
+        # 2. Calculate the Minute of Day (0-1439) and Interval Index (0-95)
+        # Seconds elapsed since the start of the *current* UTC day
+        seconds_into_day = total_seconds_since_ref % self.SECONDS_PER_DAY 
+        
+        # Current time in minutes from midnight (UTC)
+        current_minutes = int(seconds_into_day / self.SECONDS_PER_MINUTE)
+        
+        # Interval Index (0 to 95)
+        interval_index = int(current_minutes / INTERVAL_MINUTES)
+        
+        # 3. Calculate the Total Bit Index (O(1) operation)
+        total_bit_index = (day_index * INTERVALS_PER_DAY) + interval_index
+
+        if total_bit_index >= len(self.binary_mask) or total_bit_index < 0:
+            print(f"Error: Index {total_bit_index} out of bounds.")
+            return False
+
+        # 4. Perform the single bit lookup
+        bit_status = self.binary_mask[total_bit_index]
+        
+        return bit_status == '1'
+
