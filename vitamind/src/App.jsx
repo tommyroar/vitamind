@@ -1,7 +1,46 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, createContext, useContext } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './App.css'; // Keep existing CSS for general styling
+
+// Theme Context for Dark Mode
+const ThemeContext = createContext(null);
+
+const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState('dark'); // Default to dark mode
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
+
+  useEffect(() => {
+    document.body.className = theme; // Apply theme class to body
+  }, [theme]);
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+// MenuBar Component (will be in its own file later)
+const MenuBar = () => {
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  return (
+    <nav className="menu-bar">
+      <div className="menu-left">
+        <span className="app-title">Vitamind Maps</span>
+      </div>
+      <div className="menu-right">
+        <button onClick={toggleTheme} className="theme-toggle">
+          {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+        </button>
+        <a href="#about" className="menu-item">About</a>
+        <a href="#contact" className="menu-item">Contact</a>
+      </div>
+    </nav>
+  );
+};
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -39,9 +78,14 @@ function App() {
   }, []); // Empty dependency array ensures this runs once on mount
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <div ref={mapContainerRef} data-testid="map-container" style={{ width: '100%', height: '100%' }} />
-    </div>
+    <ThemeProvider>
+      <div className="app-layout">
+        <MenuBar />
+        <div className="map-container-wrapper" style={{ flexGrow: 1 }}>
+          <div ref={mapContainerRef} data-testid="map-container" style={{ width: '100%', height: '100%' }} />
+        </div>
+      </div>
+    </ThemeProvider>
   );
 }
 
