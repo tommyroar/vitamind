@@ -40,7 +40,7 @@ function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
-      <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
+      <div ref={mapContainerRef} data-testid="map-container" style={{ width: '100%', height: '100%' }} />
     </div>
   );
 }
