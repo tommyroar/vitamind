@@ -105,7 +105,10 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
           <line x1={currentX - 4} y1={currentY} x2={currentX + 4} y2={currentY} />
           <line x1={currentX} y1={currentY - 4} x2={currentX} y2={currentY + 4} />
         </g>
-        <text x={currentX + 8} y={currentY - 22} fontSize="11" fill="#A6E22E" fontWeight="bold">Today: {today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
+        
+        {/* Today Label with shadow box */}
+        <rect x={currentX - 35} y={currentY - 32} width="70" height="14" fill="#272822" fillOpacity="0.8" rx="2" />
+        <text x={currentX} y={currentY - 22} fontSize="11" fill="#A6E22E" fontWeight="bold" textAnchor="middle">Today: {today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
         
         {vDayX !== null && (
           <>
@@ -115,7 +118,10 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
               <line x1={vDayX - 4} y1={vDayY} x2={vDayX + 4} y2={vDayY} />
               <line x1={vDayX} y1={vDayY - 4} x2={vDayX} y2={vDayY + 4} />
             </g>
-            <text x={vDayX + 8} y={vDayY + 28} fontSize="11" fill="#66D9EF" fontWeight="bold">V-D Day: {vitaminDDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
+            
+            {/* V-D Day Label with shadow box */}
+            <rect x={vDayX - 35} y={vDayY + 18} width="70" height="14" fill="#272822" fillOpacity="0.8" rx="2" />
+            <text x={vDayX} y={vDayY + 28} fontSize="11" fill="#66D9EF" fontWeight="bold" textAnchor="middle">V-D Day: {vitaminDDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
           </>
         )}
         
