@@ -198,3 +198,73 @@ body {
   font-size: 0.7em;
   white-space: nowrap; /* Prevent text wrapping */
 }
+
+/* Calendar Link and Modal */
+.calendar-link {
+  color: #66D9EF; /* Monokai blue/cyan */
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.calendar-link:hover {
+  color: #A6E22E; /* Monokai green on hover */
+}
+
+.calendar-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #3e3d32; /* Slightly lighter Monokai background */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  z-index: 1100; /* Above the main modal content */
+  text-align: center;
+  width: 250px;
+}
+
+.calendar-modal h3 {
+  color: #E6DB74; /* Monokai yellow */
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.calendar-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.calendar-button {
+  background-color: #66D9EF; /* Monokai blue */
+  color: #272822;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.calendar-button:hover {
+  background-color: #A6E22E; /* Monokai green */
+}
+
+.close-calendar {
+  background: none;
+  border: 1px solid #F92672; /* Monokai pink */
+  color: #F92672;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.close-calendar:hover {
+  background-color: #F92672;
+  color: #fff;
+}

@@ -42,11 +42,14 @@ function App() {
   // Vitamin D related states
   const [vitaminDDate, setVitaminDDate] = useState(null);
   const [daysUntilVitaminD, setDaysUntilVitaminD] = useState(null);
+  const [startTimeAbove45, setStartTimeAbove45] = useState(null);
+  const [endTimeAbove45, setEndTimeAbove45] = useState(null);
   const [durationAbove45, setDurationAbove45] = useState(null);
   const [daysUntilBelow45, setDaysUntilBelow45] = useState(null);
   
   const [activeFieldId, setActiveFieldId] = useState('vitamind-info'); // State to track the currently zoomed field
   const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
 
 
   useEffect(() => {
@@ -82,6 +85,8 @@ function App() {
       const vitaminDInfo = getVitaminDInfo(clickLat, clickLng, today);
       setVitaminDDate(vitaminDInfo.vitaminDDate);
       setDaysUntilVitaminD(vitaminDInfo.daysUntilVitaminD);
+      setStartTimeAbove45(vitaminDInfo.startTimeAbove45);
+      setEndTimeAbove45(vitaminDInfo.endTimeAbove45);
       setDurationAbove45(vitaminDInfo.durationAbove45);
       setDaysUntilBelow45(vitaminDInfo.daysUntilBelow45);
 
@@ -112,6 +117,7 @@ function App() {
 
   const closeModal = () => {
     setShowModal(false);
+    setShowCalendarModal(false);
     setActiveFieldId('vitamind-info'); // Reset active field on close
   };
 
@@ -145,24 +151,60 @@ function App() {
     }
   };
 
+  const formatToGoogleCalendarDate = (date) => {
+    if (!date) return '';
+    return date.toISOString().replace(/-|:|\.\d+/g, '');
+  };
+
   const vitaminDMessage = () => {
+    if (!vitaminDDate) {
+      return <span>The sun will not reach 45° above the horizon at this location within a year, making Vitamin D production unlikely naturally.</span>;
+    }
+
+    const dateStr = vitaminDDate.toLocaleDateString();
+    const timeStr = formatTime(startTimeAbove45);
+    const inDaysStr = daysUntilVitaminD === 0 ? 'today' : `in ${daysUntilVitaminD} days`;
+
+    const triggerCalendar = (e) => {
+      e.stopPropagation();
+      setShowCalendarModal(true);
+    };
+
     if (daysUntilVitaminD === 0 && durationAbove45) {
       // Sun is above 45 today
-      let message = `Today, the sun will be above 45° for ${durationAbove45}.`;
-      if (daysUntilBelow45 !== null) {
-        message += ` It will be below 45° for the whole day in ${daysUntilBelow45} days.`;
-      } else {
-        message += ` It will always be above 45° for the whole day.`;
-      }
-      return message;
-    } else if (vitaminDDate && daysUntilVitaminD > 0) {
+      return (
+        <span>
+          Today, the sun will be above 45° for {durationAbove45} starting at <span className="calendar-link" onClick={triggerCalendar}>{timeStr}</span>.
+          {daysUntilBelow45 !== null ? ` It will be below 45° for the whole day in ${daysUntilBelow45} days.` : ` It will always be above 45° for the whole day.`}
+        </span>
+      );
+    } else {
       // Sun will be above 45 in the future
-      return `On ${vitaminDDate.toLocaleDateString()} (in ${daysUntilVitaminD} days), the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.`;
-    } else if (vitaminDDate === null) {
-      // Sun never reaches 45 degrees
-      return `The sun will not reach 45° above the horizon at this location within a year, making Vitamin D production unlikely naturally.`;
+      return (
+        <span>
+          On <span className="calendar-link" onClick={triggerCalendar}>{dateStr}</span> ({inDaysStr}) at <span className="calendar-link" onClick={triggerCalendar}>{timeStr}</span>, the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.
+        </span>
+      );
     }
-    return ''; // Default empty string
+  };
+
+  const CalendarModal = () => {
+    if (!startTimeAbove45 || !endTimeAbove45) return null;
+
+    const start = formatToGoogleCalendarDate(startTimeAbove45);
+    const end = formatToGoogleCalendarDate(endTimeAbove45);
+    const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day!&details=Sun+is+above+45°+at+this+location.+Perfect+time+for+Vitamin+D!&location=${clickedLat},${clickedLng}&dates=${start}/${end}`;
+
+    return (
+      <div className="calendar-modal" onClick={e => e.stopPropagation()}>
+        <h3>Add to Calendar</h3>
+        <div className="calendar-options">
+          <a href={googleUrl} target="_blank" rel="noopener noreferrer" className="calendar-button">Google Calendar</a>
+          {/* Other options could be added here */}
+        </div>
+        <button className="close-calendar" onClick={() => setShowCalendarModal(false)}>Cancel</button>
+      </div>
+    );
   };
 
 
@@ -187,17 +229,18 @@ function App() {
             </div>
             <div ref={scrollContainerRef} className="modal-scroll-content">
               {/* Reversed order of fields */}
-              <p 
+              <div 
                 id="vitamind-info" 
-                className={activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}
+                className={`modal-field ${activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}`}
                 onClick={() => handleFieldClick('vitamind-info')}
-                onDoubleClick={(e) => handleDoubleClick(e, 'vitamind-info')}
               >
-                {vitaminDMessage()}
+                <p onDoubleClick={(e) => handleDoubleClick(e, 'vitamind-info')}>
+                  {vitaminDMessage()}
+                </p>
                 {copyFeedback.show && copyFeedback.id === 'vitamind-info' && (
                   <span className="copy-feedback">{copyFeedback.message}</span>
                 )}
-              </p>
+              </div>
               <p 
                 id="day-length" 
                 className={activeFieldId === 'day-length' ? 'zoomed-field' : ''}
@@ -272,6 +315,7 @@ function App() {
               <button onClick={() => adjustModalSize(0.1)}>Window +</button>
             </div>
           </div>
+          {showCalendarModal && <CalendarModal />}
         </div>
       )}
     </div>

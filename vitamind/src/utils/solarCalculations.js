@@ -1,6 +1,11 @@
 import SunCalc from 'suncalc';
 
-function formatTime(date) {
+/**
+ * Formats a Date object into a 2-digit hour/minute string.
+ * @param {Date} date - The date to format.
+ * @returns {string} Formatted time string (e.g., "12:30 PM").
+ */
+export function formatTime(date) {
   if (!date) return 'N/A';
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
@@ -63,7 +68,8 @@ function addDays(date, days) {
  * @param {number} longitude - The longitude of the location.
  * @param {Date} [startDate=new Date()] - The starting date for the calculation. Defaults to today.
  * @returns {object} An object containing vitaminDDate (Date), daysUntilVitaminD (number),
- *                   and potentially durationAbove45 (string) and daysUntilBelow45 (number) if sun is above 45 today.
+ *                   startTimeAbove45 (Date), endTimeAbove45 (Date),
+ *                   and potentially durationAbove45 (string) and daysUntilBelow45 (number).
  */
 export function getVitaminDInfo(latitude, longitude, startDate = new Date()) {
   const today = new Date(startDate);
@@ -89,46 +95,56 @@ export function getVitaminDInfo(latitude, longitude, startDate = new Date()) {
     }
   }
 
-  // If today's highest angle is already >= 45
+  let startTimeAbove45 = null;
+  let endTimeAbove45 = null;
   let durationAbove45 = null;
   let daysUntilBelow45 = null;
 
-  if (vitaminDDate && daysUntilVitaminD === 0) {
-    // Calculate duration sun is above 45 degrees today
-    const intervalMinutes = 5;
-    let minutesAbove45 = 0;
-    const startOfDay = new Date(today);
-    startOfDay.setUTCHours(0, 0, 0, 0); // Ensure startOfDay is UTC normalized
-
-    for (let i = 0; i < (24 * 60) / intervalMinutes; i++) {
-      const currentTime = new Date(startOfDay.getTime() + i * intervalMinutes * 60 * 1000);
+  if (vitaminDDate) {
+    // Find exact times on that date
+    // We search the entire identified date
+    const startOfDay = new Date(vitaminDDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    
+    // Iterate every minute
+    for (let i = 0; i < 24 * 60; i++) {
+      const currentTime = new Date(startOfDay.getTime() + i * 60 * 1000);
       const sunPos = SunCalc.getPosition(currentTime, latitude, longitude);
-      if (sunPos.altitude * 180 / Math.PI >= 45) {
-        minutesAbove45 += intervalMinutes;
+      const altitude = sunPos.altitude * 180 / Math.PI;
+      
+      if (altitude >= 45) {
+        if (!startTimeAbove45) startTimeAbove45 = currentTime;
+        endTimeAbove45 = currentTime;
       }
     }
-    const hours = Math.floor(minutesAbove45 / 60);
-    const minutes = minutesAbove45 % 60;
-    durationAbove45 = `${hours}h ${minutes}m`;
 
-    // Calculate how many days until highest angle drops below 45 for the whole day
-    for (let i = 1; i < 366; i++) { // Check up to a year from tomorrow
-      const futureDate = addDays(today, i);
-      const times = SunCalc.getTimes(futureDate, latitude, longitude);
-      const solarNoon = times.solarNoon;
+    if (startTimeAbove45 && endTimeAbove45) {
+      const diffMinutes = Math.round((endTimeAbove45 - startTimeAbove45) / (1000 * 60));
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+      durationAbove45 = `${hours}h ${minutes}m`;
+    }
 
-      let highestFutureAngle = 0;
-      if (solarNoon) {
-        const sunPosition = SunCalc.getPosition(solarNoon, latitude, longitude);
-        highestFutureAngle = sunPosition.altitude * 180 / Math.PI;
-      }
-      
-      if (highestFutureAngle < 45) {
-        daysUntilBelow45 = i;
-        break;
+    // If it's today, find how many days until it drops below 45
+    if (daysUntilVitaminD === 0) {
+      for (let i = 1; i < 366; i++) {
+        const futureDate = addDays(today, i);
+        const times = SunCalc.getTimes(futureDate, latitude, longitude);
+        const solarNoon = times.solarNoon;
+
+        let highestFutureAngle = 0;
+        if (solarNoon) {
+          const sunPosition = SunCalc.getPosition(solarNoon, latitude, longitude);
+          highestFutureAngle = sunPosition.altitude * 180 / Math.PI;
+        }
+        
+        if (highestFutureAngle < 45) {
+          daysUntilBelow45 = i;
+          break;
+        }
       }
     }
   }
 
-  return { vitaminDDate, daysUntilVitaminD, durationAbove45, daysUntilBelow45 };
+  return { vitaminDDate, daysUntilVitaminD, startTimeAbove45, endTimeAbove45, durationAbove45, daysUntilBelow45 };
 }

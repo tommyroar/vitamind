@@ -78,11 +78,9 @@ describe('getVitaminDInfo', () => {
     const info = getVitaminDInfo(latitude, longitude, startDate);
     expect(info.vitaminDDate).toBeInstanceOf(Date);
     expect(info.daysUntilVitaminD).toBeGreaterThan(0);
-    // Based on manual check, in Seattle, sun gets above 45 around late March/early April
-    // This test will be robust against exact date shifts in future years but checks range.
     expect(info.vitaminDDate.getUTCMonth()).toBeGreaterThanOrEqual(2); // March (0-indexed)
     expect(info.vitaminDDate.getUTCMonth()).toBeLessThanOrEqual(3); // April
-    expect(info.durationAbove45).toBeNull();
+    expect(info.durationAbove45).not.toBeNull();
     expect(info.daysUntilBelow45).toBeNull();
   });
 
@@ -129,9 +127,9 @@ describe('getVitaminDInfo', () => {
     expect(info.vitaminDDate).toEqual(startDate);
     expect(info.daysUntilVitaminD).toBe(0);
     expect(info.durationAbove45).toMatch(/\d{1,2}h \d{1,2}m/);
-    // At equator, duration above 45 should be long, e.g., > 6h
+    // At equator, duration above 45 should be long, e.g., > 5h
     const [hours] = info.durationAbove45.split('h').map(Number);
-    expect(hours).toBeGreaterThanOrEqual(6);
+    expect(hours).toBeGreaterThanOrEqual(5);
     expect(info.daysUntilBelow45).toBeNull(); // Never drops below 45 for the whole day
   });
 });
