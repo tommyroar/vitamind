@@ -49,7 +49,7 @@ function App() {
   
   const [activeFieldId, setActiveFieldId] = useState('vitamind-info'); // State to track the currently zoomed field
   const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
-  const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [modalView, setModalView] = useState('stats'); // 'stats' or 'calendar'
 
 
   useEffect(() => {
@@ -117,7 +117,7 @@ function App() {
 
   const closeModal = () => {
     setShowModal(false);
-    setShowCalendarModal(false);
+    setModalView('stats');
     setActiveFieldId('vitamind-info'); // Reset active field on close
   };
 
@@ -156,9 +156,36 @@ function App() {
     return date.toISOString().replace(/-|:|\.\d+/g, '');
   };
 
+  const generateICS = () => {
+    if (!startTimeAbove45 || !endTimeAbove45) return;
+    const start = formatToGoogleCalendarDate(startTimeAbove45);
+    const end = formatToGoogleCalendarDate(endTimeAbove45);
+    // Use proper line endings for ICS format
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `DTSTART:${start}`,
+      `DTEND:${end}`,
+      'SUMMARY:V Day!',
+      'DESCRIPTION:Sun is above 45° at this location. Perfect time for Vitamin D!',
+      `LOCATION:${clickedLat},${clickedLng}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'v-day.ics');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const vitaminDMessage = () => {
     if (!vitaminDDate) {
-      return <span>The sun will not reach 45° above the horizon at this location within a year, making Vitamin D production unlikely naturally.</span>;
+      return "The sun will not reach 45° above the horizon at this location within a year, making Vitamin D production unlikely naturally.";
     }
 
     const dateStr = vitaminDDate.toLocaleDateString();
@@ -166,7 +193,7 @@ function App() {
 
     const triggerCalendar = (e) => {
       e.stopPropagation();
-      setShowCalendarModal(true);
+      setModalView('calendar');
     };
 
     const linkContent = daysUntilVitaminD === 0 ? `today at ${timeStr}` : `${dateStr} at ${timeStr}`;
@@ -175,17 +202,17 @@ function App() {
     if (daysUntilVitaminD === 0 && durationAbove45) {
       // Sun is above 45 today
       return (
-        <span>
+        <>
           On <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will be above 45° for {durationAbove45}.
           {daysUntilBelow45 !== null ? ` It will be below 45° for the whole day in ${daysUntilBelow45} days.` : ` It will always be above 45° for the whole day.`}
-        </span>
+        </>
       );
     } else {
       // Sun will be above 45 in the future
       return (
-        <span>
+        <>
           On <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.
-        </span>
+        </>
       );
     }
   };
@@ -207,113 +234,116 @@ function App() {
             }}
           >
             <div className="modal-header">
-              <h2>Sun Statistics &#x2600;</h2>
+              <h2>{modalView === 'stats' ? 'Sun Statistics \u2600;' : 'Add to Calendar'}</h2>
               <button className="close-button" onClick={closeModal}>&times;</button>
             </div>
-            <div ref={scrollContainerRef} className="modal-scroll-content">
-              {/* Reversed order of fields */}
-              <div 
-                id="vitamind-info" 
-                className={`modal-field ${activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}`}
-                onClick={() => handleFieldClick('vitamind-info')}
-              >
-                <p onDoubleClick={(e) => handleDoubleClick(e, 'vitamind-info')}>
-                  {vitaminDMessage()}
-                </p>
-                {copyFeedback.show && copyFeedback.id === 'vitamind-info' && (
-                  <span className="copy-feedback">{copyFeedback.message}</span>
-                )}
+            
+            {modalView === 'stats' ? (
+              <>
+                <div ref={scrollContainerRef} className="modal-scroll-content">
+                  {/* Reversed order of fields */}
+                  <p 
+                    id="vitamind-info" 
+                    className={activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('vitamind-info')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'vitamind-info')}
+                  >
+                    {vitaminDMessage()}
+                    {copyFeedback.show && copyFeedback.id === 'vitamind-info' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="day-length" 
+                    className={activeFieldId === 'day-length' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('day-length')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'day-length')}
+                  >
+                    Day Length: {dayLength}
+                    {copyFeedback.show && copyFeedback.id === 'day-length' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="solar-noon" 
+                    className={activeFieldId === 'solar-noon' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('solar-noon')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'solar-noon')}
+                  >
+                    Solar Noon Time: {solarNoonTime}
+                    {copyFeedback.show && copyFeedback.id === 'solar-noon' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="highest-angle" 
+                    className={activeFieldId === 'highest-angle' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('highest-angle')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'highest-angle')}
+                  >
+                    Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°
+                    {copyFeedback.show && copyFeedback.id === 'highest-angle' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="longitude" 
+                    className={activeFieldId === 'longitude' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('longitude')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'longitude')}
+                  >
+                    Longitude: {clickedLng}
+                    {copyFeedback.show && copyFeedback.id === 'longitude' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="latitude" 
+                    className={activeFieldId === 'latitude' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('latitude')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'latitude')}
+                  >
+                    Latitude: {clickedLat}
+                    {copyFeedback.show && copyFeedback.id === 'latitude' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="zoom-level" 
+                    className={activeFieldId === 'zoom-level' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('zoom-level')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'zoom-level')}
+                  >
+                    Zoom Level: {currentZoom}
+                    {copyFeedback.show && copyFeedback.id === 'zoom-level' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                </div>
+                <div className="font-size-controls">
+                  <button onClick={() => adjustFontSize(-0.1)}>Text -</button>
+                  <button onClick={() => adjustFontSize(0.1)}>Text +</button>
+                  <button onClick={() => adjustModalSize(-0.1)}>Window -</button>
+                  <button onClick={() => adjustModalSize(0.1)}>Window +</button>
+                </div>
+              </>
+            ) : (
+              <div className="calendar-view">
+                <div className="calendar-options">
+                  <a 
+                    href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day!&details=Sun+is+above+45°+at+this+location.+Perfect+time+for+Vitamin+D!&location=${clickedLat},${clickedLng}&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="calendar-button"
+                  >
+                    Google Calendar
+                  </a>
+                  <button onClick={generateICS} className="calendar-button">Download .ics</button>
+                </div>
+                <button className="back-button" onClick={() => setModalView('stats')}>Back to Stats</button>
               </div>
-              <p 
-                id="day-length" 
-                className={activeFieldId === 'day-length' ? 'zoomed-field' : ''}
-                onClick={() => handleFieldClick('day-length')}
-                onDoubleClick={(e) => handleDoubleClick(e, 'day-length')}
-              >
-                Day Length: {dayLength}
-                {copyFeedback.show && copyFeedback.id === 'day-length' && (
-                  <span className="copy-feedback">{copyFeedback.message}</span>
-                )}
-              </p>
-              <p 
-                id="solar-noon" 
-                className={activeFieldId === 'solar-noon' ? 'zoomed-field' : ''}
-                onClick={() => handleFieldClick('solar-noon')}
-                onDoubleClick={(e) => handleDoubleClick(e, 'solar-noon')}
-              >
-                Solar Noon Time: {solarNoonTime}
-                {copyFeedback.show && copyFeedback.id === 'solar-noon' && (
-                  <span className="copy-feedback">{copyFeedback.message}</span>
-                )}
-              </p>
-              <p 
-                id="highest-angle" 
-                className={activeFieldId === 'highest-angle' ? 'zoomed-field' : ''}
-                onClick={() => handleFieldClick('highest-angle')}
-                onDoubleClick={(e) => handleDoubleClick(e, 'highest-angle')}
-              >
-                Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°
-                {copyFeedback.show && copyFeedback.id === 'highest-angle' && (
-                  <span className="copy-feedback">{copyFeedback.message}</span>
-                )}
-              </p>
-              <p 
-                id="longitude" 
-                className={activeFieldId === 'longitude' ? 'zoomed-field' : ''}
-                onClick={() => handleFieldClick('longitude')}
-                onDoubleClick={(e) => handleDoubleClick(e, 'longitude')}
-              >
-                Longitude: {clickedLng}
-                {copyFeedback.show && copyFeedback.id === 'longitude' && (
-                  <span className="copy-feedback">{copyFeedback.message}</span>
-                )}
-              </p>
-              <p 
-                id="latitude" 
-                className={activeFieldId === 'latitude' ? 'zoomed-field' : ''}
-                onClick={() => handleFieldClick('latitude')}
-                onDoubleClick={(e) => handleDoubleClick(e, 'latitude')}
-              >
-                Latitude: {clickedLat}
-                {copyFeedback.show && copyFeedback.id === 'latitude' && (
-                  <span className="copy-feedback">{copyFeedback.message}</span>
-                )}
-              </p>
-              <p 
-                id="zoom-level" 
-                className={activeFieldId === 'zoom-level' ? 'zoomed-field' : ''}
-                onClick={() => handleFieldClick('zoom-level')}
-                onDoubleClick={(e) => handleDoubleClick(e, 'zoom-level')}
-              >
-                Zoom Level: {currentZoom}
-                {copyFeedback.show && copyFeedback.id === 'zoom-level' && (
-                  <span className="copy-feedback">{copyFeedback.message}</span>
-                )}
-              </p>
-            </div>
-            <div className="font-size-controls">
-              <button onClick={() => adjustFontSize(-0.1)}>Text -</button>
-              <button onClick={() => adjustFontSize(0.1)}>Text +</button>
-              <button onClick={() => adjustModalSize(-0.1)}>Window -</button>
-              <button onClick={() => adjustModalSize(0.1)}>Window +</button>
-            </div>
+            )}
           </div>
-          {showCalendarModal && startTimeAbove45 && endTimeAbove45 && (
-            <div className="calendar-modal" onClick={e => e.stopPropagation()}>
-              <h3>Add to Calendar</h3>
-              <div className="calendar-options">
-                <a 
-                  href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day!&details=Sun+is+above+45°+at+this+location.+Perfect+time+for+Vitamin+D!&location=${clickedLat},${clickedLng}&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="calendar-button"
-                >
-                  Google Calendar
-                </a>
-              </div>
-              <button className="close-calendar" onClick={() => setShowCalendarModal(false)}>Cancel</button>
-            </div>
-          )}
         </div>
       )}
     </div>
