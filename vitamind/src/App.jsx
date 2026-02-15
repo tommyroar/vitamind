@@ -13,6 +13,7 @@ const DEFAULT_FONT_SIZE = 1.0; // Corresponds to 1em
 function App() {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null); // Ref to store the map instance
+  const scrollContainerRef = useRef(null); // Ref for the scrollable modal content
   const [lng, setLng] = useState(-122.3321); // Default longitude for Seattle
   const [lat, setLat] = useState(47.6062); // Default latitude for Seattle
   const [zoom, setZoom] = useState(4);   // Default zoom for Seattle (showing Western US)
@@ -35,6 +36,8 @@ function App() {
   const [daysUntilVitaminD, setDaysUntilVitaminD] = useState(null);
   const [durationAbove45, setDurationAbove45] = useState(null);
   const [daysUntilBelow45, setDaysUntilBelow45] = useState(null);
+  
+  const [activeFieldId, setActiveFieldId] = useState(null); // State to track the currently zoomed field
 
 
   useEffect(() => {
@@ -92,6 +95,44 @@ function App() {
     localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
   }, [fontSize]);
 
+  // Effect for IntersectionObserver to handle scroll-based zooming
+  useEffect(() => {
+    if (!showModal || !scrollContainerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the first intersecting entry with a significant intersectionRatio,
+        // prioritizing those higher in the scroll area.
+        let topmostVisibleId = null;
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.7) { // 70% visible threshold
+            if (topmostVisibleId === null || entry.target.offsetTop < scrollContainerRef.current.querySelector(`#${topmostVisibleId}`).offsetTop) {
+                 topmostVisibleId = entry.target.id;
+            }
+          }
+        }
+        setActiveFieldId(topmostVisibleId);
+      },
+      {
+        root: scrollContainerRef.current,
+        rootMargin: '0px',
+        threshold: [0.1, 0.7, 1.0], // Observe at different visibility thresholds
+      }
+    );
+
+    // Observe all child <p> elements
+    Array.from(scrollContainerRef.current.children).forEach((child) => {
+      if (child.tagName === 'P') { // Only observe paragraphs containing data
+        observer.observe(child);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [showModal]); // Re-run when modal visibility changes
+
+
   const closeModal = () => setShowModal(false);
 
   const adjustFontSize = (amount) => {
@@ -133,14 +174,15 @@ function App() {
               <h2>Sun Statistics &#x2600;</h2>
               <button className="close-button" onClick={closeModal}>&times;</button>
             </div>
-            <div className="modal-scroll-content">
-              <p>Zoom Level: {currentZoom}</p>
-              <p>Latitude: {clickedLat}</p>
-              <p>Longitude: {clickedLng}</p>
-              <p>Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°</p>
-              <p>Solar Noon Time: {solarNoonTime}</p>
-              <p>Day Length: {dayLength}</p>
-              <p>{vitaminDMessage()}</p> {/* New Vitamin D information */}
+            <div ref={scrollContainerRef} className="modal-scroll-content">
+              {/* Reversed order of fields */}
+              <p id="vitamind-info" className={activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}>{vitaminDMessage()}</p>
+              <p id="day-length" className={activeFieldId === 'day-length' ? 'zoomed-field' : ''}>Day Length: {dayLength}</p>
+              <p id="solar-noon" className={activeFieldId === 'solar-noon' ? 'zoomed-field' : ''}>Solar Noon Time: {solarNoonTime}</p>
+              <p id="highest-angle" className={activeFieldId === 'highest-angle' ? 'zoomed-field' : ''}>Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°</p>
+              <p id="longitude" className={activeFieldId === 'longitude' ? 'zoomed-field' : ''}>Longitude: {clickedLng}</p>
+              <p id="latitude" className={activeFieldId === 'latitude' ? 'zoomed-field' : ''}>Latitude: {clickedLat}</p>
+              <p id="zoom-level" className={activeFieldId === 'zoom-level' ? 'zoomed-field' : ''}>Zoom Level: {currentZoom}</p>
             </div>
             <div className="font-size-controls">
               <button onClick={() => adjustFontSize(-0.1)}>-</button>
