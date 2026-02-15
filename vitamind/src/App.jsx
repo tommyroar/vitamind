@@ -163,18 +163,20 @@ function App() {
 
     const dateStr = vitaminDDate.toLocaleDateString();
     const timeStr = formatTime(startTimeAbove45);
-    const inDaysStr = daysUntilVitaminD === 0 ? 'today' : `in ${daysUntilVitaminD} days`;
 
     const triggerCalendar = (e) => {
       e.stopPropagation();
       setShowCalendarModal(true);
     };
 
+    const linkContent = daysUntilVitaminD === 0 ? `today at ${timeStr}` : `${dateStr} at ${timeStr}`;
+    const daysFromTodayStr = `(${daysUntilVitaminD} days from today)`;
+
     if (daysUntilVitaminD === 0 && durationAbove45) {
       // Sun is above 45 today
       return (
         <span>
-          Today, the sun will be above 45° for {durationAbove45} starting at <span className="calendar-link" onClick={triggerCalendar}>{timeStr}</span>.
+          On <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will be above 45° for {durationAbove45}.
           {daysUntilBelow45 !== null ? ` It will be below 45° for the whole day in ${daysUntilBelow45} days.` : ` It will always be above 45° for the whole day.`}
         </span>
       );
@@ -182,7 +184,7 @@ function App() {
       // Sun will be above 45 in the future
       return (
         <span>
-          On <span className="calendar-link" onClick={triggerCalendar}>{dateStr}</span> ({inDaysStr}) at <span className="calendar-link" onClick={triggerCalendar}>{timeStr}</span>, the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.
+          On <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.
         </span>
       );
     }
