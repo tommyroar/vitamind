@@ -14,7 +14,7 @@ const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
 const BASE_MODAL_WIDTH = 400; // Base width in pixels
 const BASE_MODAL_HEIGHT = 350; // Base height in pixels
 
-const SunAngleGraph = ({ yearlyData, highestSunAngle }) => {
+const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVitaminD }) => {
   if (!yearlyData || !yearlyData.length) return null;
 
   const width = 350;
@@ -36,18 +36,44 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle }) => {
   const currentX = padding + ((currentMonthIndex + currentDay / 30) / 12) * graphWidth;
   const currentY = padding + graphHeight - (parseFloat(highestSunAngle) / 90) * graphHeight;
 
+  // Calculate V-Day position if it's in the future
+  let vDayX = null;
+  let vDayY = null;
+  if (vitaminDDate && daysUntilVitaminD > 0) {
+    const vMonthIndex = vitaminDDate.getMonth();
+    const vDay = vitaminDDate.getDate();
+    vDayX = padding + ((vMonthIndex + vDay / 30) / 12) * graphWidth;
+    // For simplicity, we assume it's right at 45 on that day
+    vDayY = padding + graphHeight - (45 / 90) * graphHeight;
+  }
+
   return (
     <div className="sun-graph-container">
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
+        {/* 45 degree line */}
         <line 
           x1={padding} y1={padding + graphHeight - (45/90) * graphHeight} 
           x2={padding + graphWidth} y2={padding + graphHeight - (45/90) * graphHeight} 
           stroke="#F92672" strokeDasharray="4 2" strokeWidth="1" opacity="0.5"
         />
         <text x={padding} y={padding + graphHeight - (45/90) * graphHeight - 2} fontSize="6" fill="#F92672">45°</text>
+        
+        {/* Main curve */}
         <polyline points={points} fill="none" stroke="#66D9EF" strokeWidth="2" strokeLinejoin="round" />
+        
+        {/* Today indicator */}
         <circle cx={currentX} cy={currentY} r="4" fill="#A6E22E" />
         <text x={currentX + 6} y={currentY} fontSize="8" fill="#A6E22E" fontWeight="bold">Today: {highestSunAngle}°</text>
+
+        {/* V-Day indicator */}
+        {vDayX !== null && (
+          <>
+            <circle cx={vDayX} cy={vDayY} r="3" fill="#66D9EF" />
+            <text x={vDayX} y={vDayY - 8} fontSize="7" fill="#66D9EF" textAnchor="middle">V-Day: {vitaminDDate.toLocaleDateString()}</text>
+          </>
+        )}
+
+        {/* Month labels */}
         {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((m, i) => (
           <text key={i} x={padding + (i / 11) * graphWidth} y={height - 5} fontSize="6" fill="#F8F8F2" textAnchor="middle">{m}</text>
         ))}
@@ -285,8 +311,13 @@ function App() {
             
             {modalView === 'stats' ? (
               <>
-                <SunAngleGraph yearlyData={yearlyData} highestSunAngle={highestSunAngle} />
                 <div ref={scrollContainerRef} className="modal-scroll-content">
+                  <SunAngleGraph 
+                    yearlyData={yearlyData} 
+                    highestSunAngle={highestSunAngle} 
+                    vitaminDDate={vitaminDDate}
+                    daysUntilVitaminD={daysUntilVitaminD}
+                  />
                   {/* Reversed order of fields */}
                   <p 
                     id="vitamind-info" 
