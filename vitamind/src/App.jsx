@@ -78,19 +78,28 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
           stroke="#F92672" strokeDasharray="4 2" strokeWidth="1" opacity="0.5"
         />
         <text x={padding} y={padding + graphHeight - (45/90) * graphHeight - 2} fontSize="6" fill="#F92672">45°</text>
-        <line x1={maxX} y1={maxY} x2={width - padding} y2={padding + 5} stroke="#E6DB74" strokeDasharray="2 2" strokeWidth="0.5" opacity="0.4" />
-        <line x1={minX} y1={minY} x2={width - padding} y2={height - padding - 5} stroke="#AE81FF" strokeDasharray="2 2" strokeWidth="0.5" opacity="0.4" />
         <polyline points={points} fill="none" stroke="#66D9EF" strokeWidth="2" strokeLinejoin="round" />
-        <circle cx={currentX} cy={currentY} r="4" fill="none" stroke="#A6E22E" strokeWidth="1.5" strokeDasharray="1 1" />
-        <circle cx={currentX} cy={currentY} r="1" fill="#A6E22E" />
-        <text x={currentX + 6} y={currentY} fontSize="8" fill="#A6E22E" fontWeight="bold">Today: {highestSunAngle}°</text>
+        
+        {/* Today point: crossed circle */}
+        <g stroke="#A6E22E" strokeWidth="1.5">
+          <circle cx={currentX} cy={currentY} r="4" fill="none" />
+          <line x1={currentX - 4} y1={currentY} x2={currentX + 4} y2={currentY} />
+          <line x1={currentX} y1={currentY - 4} x2={currentX} y2={currentY + 4} />
+        </g>
+        <text x={currentX + 6} y={currentY} fontSize="9" fill="#A6E22E" fontWeight="bold">Today: {highestSunAngle}°</text>
+        
         {vDayX !== null && (
           <>
-            <circle cx={vDayX} cy={vDayY} r="3" fill="none" stroke="#66D9EF" strokeWidth="1" strokeDasharray="1 1" />
-            <circle cx={vDayX} cy={vDayY} r="0.8" fill="#66D9EF" />
-            <text x={vDayX} y={vDayY - 8} fontSize="7" fill="#66D9EF" textAnchor="middle">V-Day: {vitaminDDate.toLocaleDateString()}</text>
+            {/* V-Day point: crossed circle */}
+            <g stroke="#66D9EF" strokeWidth="1.5">
+              <circle cx={vDayX} cy={vDayY} r="4" fill="none" />
+              <line x1={vDayX - 4} y1={vDayY} x2={vDayX + 4} y2={vDayY} />
+              <line x1={vDayX} y1={vDayY - 4} x2={vDayX} y2={vDayY + 4} />
+            </g>
+            <text x={vDayX} y={vDayY - 8} fontSize="9" fill="#66D9EF" fontWeight="bold" textAnchor="middle">V-Day: {vitaminDDate.toLocaleDateString()}</text>
           </>
         )}
+        
         <text x={width - padding} y={padding + 5} textAnchor="end">
           <tspan fontSize="7" fill="#E6DB74">Highest max: {maxVal.toFixed(1)}°</tspan>
           <tspan x={width - padding} dy="8" fontSize="5" fill="#E6DB74" opacity="0.6">({maxEntry.month} 15)</tspan>
