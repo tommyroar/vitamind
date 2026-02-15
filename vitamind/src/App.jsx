@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './vitamind.css';
@@ -152,6 +152,51 @@ function App() {
 
   const [cityName, setCityName] = useState('');
 
+  const fetchCityName = useCallback(async (lng, lat) => {
+    try {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=place&access_token=${mapboxgl.accessToken}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        setCityName(data.features[0].text);
+      } else {
+        setCityName('Unknown Location');
+      }
+    } catch (error) {
+      console.error("Error fetching city name:", error);
+      setCityName('Unknown Location');
+    }
+  }, []);
+
+  const updateStatsForLocation = useCallback(async (lng, lat) => {
+    const today = new Date();
+    const currentMapZoom = mapRef.current ? mapRef.current.getZoom() : zoom;
+
+    setCurrentZoom(currentMapZoom.toFixed(2));
+    setClickedLat(lat.toFixed(4));
+    setClickedLng(lng.toFixed(4));
+    setCurrentDateFormatted(today.toLocaleDateString());
+
+    fetchCityName(lng, lat);
+
+    const sunStats = getSunStats(lat, lng, today);
+    setHighestSunAngle(sunStats.highestSunAngle);
+    setSolarNoonTime(sunStats.solarNoonTime);
+    setDayLength(sunStats.dayLength);
+    
+    const vitaminDInfo = getVitaminDInfo(lat, lng, today);
+    setVitaminDDate(vitaminDInfo.vitaminDDate);
+    setDaysUntilVitaminD(vitaminDInfo.daysUntilVitaminD);
+    setStartTimeAbove45(vitaminDInfo.startTimeAbove45);
+    setEndTimeAbove45(vitaminDInfo.endTimeAbove45);
+    setDurationAbove45(vitaminDInfo.durationAbove45);
+    setDaysUntilBelow45(vitaminDInfo.daysUntilBelow45);
+
+    setYearlyData(getYearlySunData(lat, lng));
+
+    setShowModal(true);
+    setModalView('stats');
+  }, [fetchCityName, zoom]);
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -167,56 +212,29 @@ function App() {
       zoom: zoom
     });
 
-    const fetchCityName = async (lng, lat) => {
-      try {
-        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=place&access_token=${mapboxgl.accessToken}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          setCityName(data.features[0].text);
-        } else {
-          setCityName('Unknown Location');
-        }
-      } catch (error) {
-        console.error("Error fetching city name:", error);
-        setCityName('Unknown Location');
-      }
-    };
-
     mapRef.current.on('click', (e) => {
-      const currentMapZoom = mapRef.current.getZoom();
-      const clickLat = e.lngLat.lat;
-      const clickLng = e.lngLat.lng;
-      const today = new Date();
-
-      setCurrentZoom(currentMapZoom.toFixed(2));
-      setClickedLat(clickLat.toFixed(4));
-      setClickedLng(clickLng.toFixed(4));
-      setCurrentDateFormatted(today.toLocaleDateString());
-
-      fetchCityName(clickLng, clickLat);
-
-      const sunStats = getSunStats(clickLat, clickLng, today);
-      setHighestSunAngle(sunStats.highestSunAngle);
-      setSolarNoonTime(sunStats.solarNoonTime);
-      setDayLength(sunStats.dayLength);
-      
-      const vitaminDInfo = getVitaminDInfo(clickLat, clickLng, today);
-      setVitaminDDate(vitaminDInfo.vitaminDDate);
-      setDaysUntilVitaminD(vitaminDInfo.daysUntilVitaminD);
-      setStartTimeAbove45(vitaminDInfo.startTimeAbove45);
-      setEndTimeAbove45(vitaminDInfo.endTimeAbove45);
-      setDurationAbove45(vitaminDInfo.durationAbove45);
-      setDaysUntilBelow45(vitaminDInfo.daysUntilBelow45);
-
-      setYearlyData(getYearlySunData(clickLat, clickLng));
-
-      setShowModal(true);
-      setModalView('stats');
+      updateStatsForLocation(e.lngLat.lng, e.lngLat.lat);
     });
 
     // Add navigation controls (optional)
     mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
+    // Request user location on load
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const userLng = position.coords.longitude;
+        const userLat = position.coords.latitude;
+        
+        if (mapRef.current) {
+          mapRef.current.setCenter([userLng, userLat]);
+          mapRef.current.setZoom(10); // Zoom in a bit on user location
+        }
+        
+        updateStatsForLocation(userLng, userLat);
+      }, (error) => {
+        console.warn("Geolocation access denied or failed:", error.message);
+      });
+    }
 
     // Clean up on unmount
     return () => {
@@ -224,7 +242,7 @@ function App() {
         mapRef.current.remove();
       }
     };
-  }, [lat, lng, zoom]); // dependencies for Mapbox init
+  }, [lat, lng, zoom, updateStatsForLocation]); // dependencies for Mapbox init
 
   // Effect to update localStorage when fontSize changes
   useEffect(() => {
