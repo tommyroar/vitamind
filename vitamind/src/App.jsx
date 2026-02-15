@@ -209,38 +209,52 @@ function App() {
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/navigation-night-v1', // Night navigation basemap
       center: [lng, lat],
-      zoom: zoom
+      zoom: zoom,
+      projection: 'globe' // Enable globe projection for better terminator visualization
     });
 
     mapRef.current.on('load', () => {
-      // Add terminator layer
       const terminatorData = getTerminatorGeoJSON();
+      
+      if (mapRef.current.getSource('terminator')) return;
+
       mapRef.current.addSource('terminator', {
         type: 'geojson',
         data: terminatorData
       });
 
+      // Night fill layer - use a more distinct blue-tinted dark color
       mapRef.current.addLayer({
         id: 'terminator-layer',
         type: 'fill',
         source: 'terminator',
         layout: {},
         paint: {
-          'fill-color': '#000814', // Very deep blue/black
+          'fill-color': '#0a0a23',
           'fill-opacity': 0.5
         }
       });
 
+      // Very bright boundary line to ensure visibility
       mapRef.current.addLayer({
         id: 'terminator-boundary',
         type: 'line',
         source: 'terminator',
         layout: {},
         paint: {
-          'line-color': '#66D9EF', // Monokai blue for the boundary
-          'line-width': 1,
-          'line-opacity': 0.3
+          'line-color': '#F92672', // Monokai Pink - extremely visible
+          'line-width': 2,
+          'line-opacity': 0.8
         }
+      });
+      
+      // Add atmosphere for the globe
+      mapRef.current.setFog({
+        'color': 'rgb(186, 210, 235)', // Lower atmosphere
+        'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
+        'horizon-blend': 0.02, // Atmosphere thickness
+        'space-color': 'rgb(11, 11, 25)', // Background color
+        'star-intensity': 0.6 // Background star brightness
       });
     });
 

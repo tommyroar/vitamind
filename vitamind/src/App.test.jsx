@@ -19,6 +19,7 @@ describe('App', () => {
       style: 'mapbox://styles/mapbox/navigation-night-v1',
       center: [-122.3321, 47.6062],
       zoom: 4,
+      projection: 'globe',
     });
   });
 
