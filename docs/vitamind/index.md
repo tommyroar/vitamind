@@ -20,6 +20,25 @@ The `solarCalculations.js` utility in this project builds upon `suncalc` to prov
 -   **Finding the "Vitamin D Window"**: The application iterates through dates to determine the precise start and end times of the day when the sun is above this 45-degree mark.
 -   **Seasonal Awareness**: It can also project forward to tell you how many days are left in the "Vitamin D season" before the sun's peak daily altitude drops below 45 degrees.
 
+## Latitude, Sun Angle, and Vitamin D Production
+
+Vitamin D production is significantly influenced by latitude and the angle of the sun's rays, as this dictates the amount of UV-B radiation reaching the Earth's surface. UV-B radiation is essential for the skin's synthesis of vitamin D.
+
+### Key Relationships:
+
+*   **Solar Zenith Angle**: This is the angle of the sun's light relative to the vertical. At higher latitudes, in the early morning or late afternoon, and during winter months, the solar zenith angle increases. As this angle increases, more UV-B radiation is absorbed by the ozone layer, reducing the amount that reaches the Earth's surface and thus limiting vitamin D production. [Source: NIH]
+*   **"Vitamin D Winter"**: In regions at higher latitudes (generally above 34 degrees), the sun is too low in the sky during winter months for effective UV-B penetration, making vitamin D synthesis nearly impossible. This period is often referred to as a "vitamin D winter." For example, in Boston, Massachusetts (above 34 degrees latitude), vitamin D synthesis is impossible for four months of the year, and in Edmonton, Canada, for six months. Some models suggest that at latitudes beyond 50 degrees, no vitamin D synthesis occurs outside of summer. [Source: westonaprice.org, grassrootshealth.net]
+*   **Equator vs. Higher Latitudes**: Those closer to the equator, where the midday sun is high in the sky year-round, can produce vitamin D throughout the year. Even small migrations from equatorial regions can lead to significant decreases in vitamin D synthesis during non-summer months at higher latitudes. [Source: grassrootshealth.net]
+*   **Optimal Sun Angle**: Studies suggest significant vitamin D3 production occurs when the solar altitude angle is greater than 45 degrees. A common guideline is that if your shadow is shorter than you are, the sun's angle is sufficient for vitamin D production. [Source: researchgate.net]
+*   **Other Factors**: Beyond latitude and sun angle, other factors like clouds, air pollution (e.g., sulfur dioxide, nitrous oxide, ozone), altitude, and reflective surfaces (like snow) can also affect the amount of UV-B radiation reaching the skin and, consequently, vitamin D production. [Source: NIH, researchgate.net]
+
+### Sources:
+
+*   **NIH**: [National Institutes of Health](https://www.nih.gov/)
+*   **westonaprice.org**: [Weston A. Price Foundation](https://www.westonaprice.org/)
+*   **grassrootshealth.net**: [GrassrootsHealth](https://www.grassrootshealth.net/)
+*   **researchgate.net**: [ResearchGate](https://www.researchgate.net/)
+
 ## Mapbox Integration
 
 The application integrates [Mapbox](https://docs.mapbox.com/api/) to provide an interactive geographic interface for sun data analysis.
