@@ -324,7 +324,12 @@ function App() {
             }}
           >
             <div className="modal-header">
-              <h2>{modalView === 'stats' ? 'Sun Statistics \u2600;' : 'Add to Calendar'}</h2>
+              <h2>
+                {modalView === 'calendar' 
+                  ? 'Add to Calendar' 
+                  : (daysUntilVitaminD === 0 ? 'V-D Day!' : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD}` : 'Sun Statistics \u2600;')
+                }
+              </h2>
               <button className="close-button" onClick={closeModal}>&times;</button>
             </div>
             
