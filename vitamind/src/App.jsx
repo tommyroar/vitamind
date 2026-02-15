@@ -7,6 +7,9 @@ import { getSunStats } from './utils/solarCalculations';
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
+const FONT_SIZE_STORAGE_KEY = 'vitamind_modal_font_size';
+const DEFAULT_FONT_SIZE = 1.0; // Corresponds to 1em
+
 function App() {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null); // Ref to store the map instance
@@ -22,6 +25,10 @@ function App() {
   const [solarNoonTime, setSolarNoonTime] = useState(null);
   const [dayLength, setDayLength] = useState(null);
   const [currentDateFormatted, setCurrentDateFormatted] = useState('');
+  const [fontSize, setFontSize] = useState(() => {
+    const storedFontSize = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
+    return storedFontSize ? parseFloat(storedFontSize) : DEFAULT_FONT_SIZE;
+  });
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -67,7 +74,19 @@ function App() {
     };
   }, []); // Empty dependency array ensures this runs once on mount
 
+  // Effect to update localStorage when fontSize changes
+  useEffect(() => {
+    localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
+  }, [fontSize]);
+
   const closeModal = () => setShowModal(false);
+
+  const adjustFontSize = (amount) => {
+    setFontSize((prevSize) => {
+      const newSize = Math.max(0.7, Math.min(1.5, prevSize + amount)); // Limit min/max size
+      return parseFloat(newSize.toFixed(1)); // Keep 1 decimal place
+    });
+  };
 
   return (
     <div className="app-main-container">
@@ -75,15 +94,23 @@ function App() {
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>Sun Statistics &#x2600;</h2> {/* Changed title with sun emoji */}
-            <p>Zoom Level: {currentZoom}</p>
-            <p>Latitude: {clickedLat}</p>
-            <p>Longitude: {clickedLng}</p>
-            <p>Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°</p>
-            <p>Solar Noon Time: {solarNoonTime}</p>
-            <p>Day Length: {dayLength}</p>
-            <button onClick={closeModal}>Close</button>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ fontSize: `${fontSize}em` }}>
+            <div className="modal-header">
+              <h2>Sun Statistics &#x2600;</h2>
+              <button className="close-button" onClick={closeModal}>&times;</button>
+            </div>
+            <div className="modal-scroll-content">
+              <p>Zoom Level: {currentZoom}</p>
+              <p>Latitude: {clickedLat}</p>
+              <p>Longitude: {clickedLng}</p>
+              <p>Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°</p>
+              <p>Solar Noon Time: {solarNoonTime}</p>
+              <p>Day Length: {dayLength}</p>
+            </div>
+            <div className="font-size-controls">
+              <button onClick={() => adjustFontSize(-0.1)}>-</button>
+              <button onClick={() => adjustFontSize(0.1)}>+</button>
+            </div>
           </div>
         </div>
       )}

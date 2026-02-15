@@ -79,7 +79,7 @@ body {
 /* Modal Content */
 .modal-content {
   background-color: #272822; /* Monokai background */
-  padding: 25px 35px;
+  padding: 15px 25px; /* Adjusted padding */
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
   text-align: left; /* Left justify text */
@@ -88,13 +88,70 @@ body {
   width: 90%;
   position: relative;
   font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace; /* Monospaced font */
+  display: flex; /* Use flexbox for layout */
+  flex-direction: column; /* Arrange content vertically */
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .modal-content h2 {
   color: #E6DB74; /* Monokai yellow for heading */
-  margin-bottom: 10px; /* Decreased margin */
+  margin: 0; /* Remove default margin */
   font-size: 1.3em; /* Decreased font size */
 }
+
+/* Close Button (X icon) */
+.close-button {
+  background: none;
+  border: none;
+  color: #F92672; /* Monokai pink for X */
+  font-size: 1.8em;
+  cursor: pointer;
+  padding: 0 5px;
+  line-height: 1; /* Align 'X' vertically */
+  transition: color 0.2s;
+  font-family: sans-serif; /* Use a standard font for 'X' for better rendering */
+}
+
+.close-button:hover {
+  color: #FD971F; /* Monokai orange on hover */
+}
+
+/* Scrollable Content Area */
+.modal-scroll-content {
+  max-height: 200px; /* Maximum height before scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+  padding-right: 10px; /* Space for scrollbar */
+  margin-bottom: 10px;
+}
+
+/* Style for scrollbar in webkit browsers */
+.modal-scroll-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scroll-content::-webkit-scrollbar-track {
+  background: #3e3d32; /* Darker track */
+  border-radius: 4px;
+}
+
+.modal-scroll-content::-webkit-scrollbar-thumb {
+  background: #66D9EF; /* Monokai blue/cyan thumb */
+  border-radius: 4px;
+}
+
+.modal-scroll-content::-webkit-scrollbar-thumb:hover {
+  background: #A6E22E; /* Monokai green on hover */
+}
+
 
 .modal-content p {
   font-size: 0.9em; /* Decreased font size */
@@ -103,15 +160,27 @@ body {
   color: #F8F8F2; /* Monokai light grey for paragraphs */
 }
 
-.modal-content button {
+/* Font Size Controls */
+.font-size-controls {
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+  gap: 5px; /* Space between buttons */
+  margin-top: 10px; /* Add some top margin */
+}
+
+.font-size-controls button {
   background-color: #66D9EF; /* Monokai blue/cyan for button */
   color: #272822;
   border: none;
-  padding: 8px 15px; /* Decreased padding */
+  padding: 5px 10px; /* Smaller padding for these buttons */
   border-radius: 5px;
   cursor: pointer;
-  font-size: 0.9em; /* Decreased font size */
+  font-size: 0.8em; /* Smaller font size for controls */
   transition: background-color 0.2s;
-  font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace; /* Monospaced font for button */
-  margin-top: 15px; /* Added top margin for button */
+  font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace;
+  margin-top: 0; /* Override previous margin-top */
+}
+
+.font-size-controls button:hover {
+  background-color: #A6E22E; /* Monokai green on hover */
 }

@@ -16,6 +16,28 @@ window.matchMedia =
     };
   };
 
+// Mock localStorage
+const localStorageMock = (function() {
+  let store = {};
+  return {
+    getItem: function(key) {
+      return store[key] || null;
+    },
+    setItem: function(key, value) {
+      store[key] = String(value);
+    },
+    clear: function() {
+      store = {};
+    },
+    removeItem: function(key) {
+      delete store[key];
+    }
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock
+});
 // Mock Mapbox GL JS to prevent errors during tests
 // mapbox-gl requires a DOM environment and will error if not mocked
 // We're mocking the core Map and NavigationControl to avoid runtime errors
