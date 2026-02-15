@@ -38,6 +38,7 @@ function App() {
   const [daysUntilBelow45, setDaysUntilBelow45] = useState(null);
   
   const [activeFieldId, setActiveFieldId] = useState('vitamind-info'); // State to track the currently zoomed field
+  const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
 
 
   useEffect(() => {
@@ -101,22 +102,36 @@ function App() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // Find the first intersecting entry with a significant intersectionRatio,
-        // prioritizing those higher in the scroll area.
-        let topmostVisibleId = null;
-        for (const entry of entries) {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.7) { // 70% visible threshold
-            if (topmostVisibleId === null || entry.target.offsetTop < scrollContainerRef.current.querySelector(`#${topmostVisibleId}`).offsetTop) {
-                 topmostVisibleId = entry.target.id;
-            }
-          }
+        let currentTopmostId = null;
+        let minTop = Infinity;
+
+        // Filter for elements that are intersecting and above a certain threshold (e.g., 10% from top)
+        const relevantEntries = entries.filter(entry => 
+            entry.isIntersecting && entry.intersectionRatio > 0 && entry.boundingClientRect.top >= 0
+        );
+
+        // Sort them by their top position to find the actual topmost
+        relevantEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+        // The very first one that is mostly visible is our topmost
+        if (relevantEntries.length > 0 && relevantEntries[0].intersectionRatio >= 0.7) {
+            currentTopmostId = relevantEntries[0].target.id;
         }
-        setActiveFieldId(topmostVisibleId);
+
+        // If no element is sufficiently visible at the top,
+        // and if it's not the initial load, perhaps clear active field or keep the last one.
+        // For this scenario, we'll keep the last active one if nothing new qualifies.
+        if (currentTopmostId !== null) {
+          setActiveFieldId(currentTopmostId);
+        } else if (scrollContainerRef.current.scrollTop === 0) {
+           // If scrolled to top and no specific element is active, ensure the first one is active
+           setActiveFieldId('vitamind-info');
+        }
       },
       {
         root: scrollContainerRef.current,
         rootMargin: '0px',
-        threshold: [0.1, 0.7, 1.0], // Observe at different visibility thresholds
+        threshold: Array.from({length: 101}, (_, i) => i / 100), // Observe all visibility thresholds
       }
     );
 
@@ -132,14 +147,32 @@ function App() {
     };
   }, [showModal]); // Re-run when modal visibility changes
 
-
-  const closeModal = () => setShowModal(false);
+  const closeModal = () => {
+    setShowModal(false);
+    setActiveFieldId('vitamind-info'); // Reset active field on close
+  };
 
   const adjustFontSize = (amount) => {
     setFontSize((prevSize) => {
       const newSize = Math.max(0.7, Math.min(1.5, prevSize + amount)); // Limit min/max size
       return parseFloat(newSize.toFixed(1)); // Keep 1 decimal place
     });
+  };
+
+  const handleFieldClick = (id) => {
+    setActiveFieldId(id);
+  };
+
+  const handleDoubleClick = async (e, id) => {
+    const textToCopy = e.target.innerText;
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopyFeedback({ show: true, message: 'Copied!', id });
+      setTimeout(() => setCopyFeedback({ show: false, message: '', id: null }), 1500);
+    } catch (err) {
+      setCopyFeedback({ show: true, message: 'Failed to copy!', id });
+      setTimeout(() => setCopyFeedback({ show: false, message: '', id: null }), 1500);
+    }
   };
 
   const vitaminDMessage = () => {
@@ -176,13 +209,83 @@ function App() {
             </div>
             <div ref={scrollContainerRef} className="modal-scroll-content">
               {/* Reversed order of fields */}
-              <p id="vitamind-info" className={activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}>{vitaminDMessage()}</p>
-              <p id="day-length" className={activeFieldId === 'day-length' ? 'zoomed-field' : ''}>Day Length: {dayLength}</p>
-              <p id="solar-noon" className={activeFieldId === 'solar-noon' ? 'zoomed-field' : ''}>Solar Noon Time: {solarNoonTime}</p>
-              <p id="highest-angle" className={activeFieldId === 'highest-angle' ? 'zoomed-field' : ''}>Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°</p>
-              <p id="longitude" className={activeFieldId === 'longitude' ? 'zoomed-field' : ''}>Longitude: {clickedLng}</p>
-              <p id="latitude" className={activeFieldId === 'latitude' ? 'zoomed-field' : ''}>Latitude: {clickedLat}</p>
-              <p id="zoom-level" className={activeFieldId === 'zoom-level' ? 'zoomed-field' : ''}>Zoom Level: {currentZoom}</p>
+              <p 
+                id="vitamind-info" 
+                className={activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}
+                onClick={() => handleFieldClick('vitamind-info')}
+                onDoubleClick={(e) => handleDoubleClick(e, 'vitamind-info')}
+              >
+                {vitaminDMessage()}
+                {copyFeedback.show && copyFeedback.id === 'vitamind-info' && (
+                  <span className="copy-feedback">{copyFeedback.message}</span>
+                )}
+              </p>
+              <p 
+                id="day-length" 
+                className={activeFieldId === 'day-length' ? 'zoomed-field' : ''}
+                onClick={() => handleFieldClick('day-length')}
+                onDoubleClick={(e) => handleDoubleClick(e, 'day-length')}
+              >
+                Day Length: {dayLength}
+                {copyFeedback.show && copyFeedback.id === 'day-length' && (
+                  <span className="copy-feedback">{copyFeedback.message}</span>
+                )}
+              </p>
+              <p 
+                id="solar-noon" 
+                className={activeFieldId === 'solar-noon' ? 'zoomed-field' : ''}
+                onClick={() => handleFieldClick('solar-noon')}
+                onDoubleClick={(e) => handleDoubleClick(e, 'solar-noon')}
+              >
+                Solar Noon Time: {solarNoonTime}
+                {copyFeedback.show && copyFeedback.id === 'solar-noon' && (
+                  <span className="copy-feedback">{copyFeedback.message}</span>
+                )}
+              </p>
+              <p 
+                id="highest-angle" 
+                className={activeFieldId === 'highest-angle' ? 'zoomed-field' : ''}
+                onClick={() => handleFieldClick('highest-angle')}
+                onDoubleClick={(e) => handleDoubleClick(e, 'highest-angle')}
+              >
+                Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°
+                {copyFeedback.show && copyFeedback.id === 'highest-angle' && (
+                  <span className="copy-feedback">{copyFeedback.message}</span>
+                )}
+              </p>
+              <p 
+                id="longitude" 
+                className={activeFieldId === 'longitude' ? 'zoomed-field' : ''}
+                onClick={() => handleFieldClick('longitude')}
+                onDoubleClick={(e) => handleDoubleClick(e, 'longitude')}
+              >
+                Longitude: {clickedLng}
+                {copyFeedback.show && copyFeedback.id === 'longitude' && (
+                  <span className="copy-feedback">{copyFeedback.message}</span>
+                )}
+              </p>
+              <p 
+                id="latitude" 
+                className={activeFieldId === 'latitude' ? 'zoomed-field' : ''}
+                onClick={() => handleFieldClick('latitude')}
+                onDoubleClick={(e) => handleDoubleClick(e, 'latitude')}
+              >
+                Latitude: {clickedLat}
+                {copyFeedback.show && copyFeedback.id === 'latitude' && (
+                  <span className="copy-feedback">{copyFeedback.message}</span>
+                )}
+              </p>
+              <p 
+                id="zoom-level" 
+                className={activeFieldId === 'zoom-level' ? 'zoomed-field' : ''}
+                onClick={() => handleFieldClick('zoom-level')}
+                onDoubleClick={(e) => handleDoubleClick(e, 'zoom-level')}
+              >
+                Zoom Level: {currentZoom}
+                {copyFeedback.show && copyFeedback.id === 'zoom-level' && (
+                  <span className="copy-feedback">{copyFeedback.message}</span>
+                )}
+              </p>
             </div>
             <div className="font-size-controls">
               <button onClick={() => adjustFontSize(-0.1)}>-</button>

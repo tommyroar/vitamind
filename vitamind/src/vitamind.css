@@ -189,3 +189,14 @@ body {
 .font-size-controls button:hover {
   background-color: #A6E22E; /* Monokai green on hover */
 }
+
+/* Copy Feedback */
+.copy-feedback {
+  margin-left: 10px;
+  padding: 2px 8px;
+  background-color: #A6E22E; /* Monokai green */
+  color: #272822; /* Monokai background color for text */
+  border-radius: 3px;
+  font-size: 0.7em;
+  white-space: nowrap; /* Prevent text wrapping */
+}
