@@ -359,11 +359,11 @@ function App() {
     const end = formatToGoogleCalendarDate(endTimeAbove45);
     
     // ICS requires commas to be escaped with a backslash. 
-    // In JS strings, we need a double backslash to get a literal backslash.
-    const escapedCityName = cityName.replace(/,/g, '\\\\,');
+    // In JS strings, '\\,' becomes the literal string '\,'
+    const escapedCityName = cityName.replace(/,/g, '\\,');
     const location = cityName === 'Unknown Location' 
-      ? `${clickedLat}\\\\, ${clickedLng}` 
-      : `${escapedCityName} (${clickedLat}\\\\, ${clickedLng})`;
+      ? `${clickedLat}\\, ${clickedLng}` 
+      : `${escapedCityName} (${clickedLat}\\, ${clickedLng})`;
       
     const icsContent = [
       'BEGIN:VCALENDAR',
@@ -372,7 +372,7 @@ function App() {
       `DTSTART:${start}`,
       `DTEND:${end}`,
       `SUMMARY:V Day in ${escapedCityName}!`,
-      `DESCRIPTION:Sun is above 45° in ${escapedCityName}. Perfect time for Vitamin D!`.replace(/,/g, '\\\\,'),
+      `DESCRIPTION:Sun is above 45° in ${escapedCityName}. Perfect time for Vitamin D!`.replace(/,/g, '\\,'),
       `LOCATION:${location}`,
       'END:VEVENT',
       'END:VCALENDAR'
