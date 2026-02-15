@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './vitamind.css';
-import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getTerminatorGeoJSON } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -210,6 +210,26 @@ function App() {
       style: 'mapbox://styles/mapbox/navigation-night-v1', // Night navigation basemap
       center: [lng, lat],
       zoom: zoom
+    });
+
+    mapRef.current.on('load', () => {
+      // Add terminator layer
+      const terminatorData = getTerminatorGeoJSON();
+      mapRef.current.addSource('terminator', {
+        type: 'geojson',
+        data: terminatorData
+      });
+
+      mapRef.current.addLayer({
+        id: 'terminator-layer',
+        type: 'fill',
+        source: 'terminator',
+        layout: {},
+        paint: {
+          'fill-color': '#000',
+          'fill-opacity': 0.4
+        }
+      });
     });
 
     mapRef.current.on('click', (e) => {
