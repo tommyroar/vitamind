@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './vitamind.css';
-import { getHighestDailySunAngle } from './utils/solarCalculations';
+import { getSunStats } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -19,6 +19,8 @@ function App() {
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
   const [highestSunAngle, setHighestSunAngle] = useState(null);
+  const [solarNoonTime, setSolarNoonTime] = useState(null);
+  const [dayLength, setDayLength] = useState(null);
   const [currentDateFormatted, setCurrentDateFormatted] = useState('');
 
   useEffect(() => {
@@ -46,8 +48,10 @@ function App() {
       setClickedLng(clickLng.toFixed(4));
       setCurrentDateFormatted(today.toLocaleDateString());
 
-      const angle = getHighestDailySunAngle(clickLat, clickLng, today);
-      setHighestSunAngle(angle.toFixed(2));
+      const sunStats = getSunStats(clickLat, clickLng, today);
+      setHighestSunAngle(sunStats.highestSunAngle);
+      setSolarNoonTime(sunStats.solarNoonTime);
+      setDayLength(sunStats.dayLength);
       
       setShowModal(true);
     });
@@ -72,11 +76,13 @@ function App() {
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>Map Information</h2>
+            <h2>Sun Statistics &#x2600;</h2> {/* Changed title with sun emoji */}
             <p>Zoom Level: {currentZoom}</p>
             <p>Latitude: {clickedLat}</p>
             <p>Longitude: {clickedLng}</p>
             <p>Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°</p>
+            <p>Solar Noon Time: {solarNoonTime}</p>
+            <p>Day Length: {dayLength}</p>
             <button onClick={closeModal}>Close</button>
           </div>
         </div>
