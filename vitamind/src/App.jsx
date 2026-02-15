@@ -23,43 +23,57 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
   const graphWidth = width - 2 * padding;
   const graphHeight = height - 2 * padding;
 
+  const today = new Date();
+  const currentMonthIndex = today.getMonth();
+  const currentDay = today.getDate();
+  
+  // Calculate interpolated index for today relative to the 15th-of-month points
+  // Jan 15 is index 0, Dec 15 is index 11.
+  const t = currentMonthIndex + (currentDay - 15) / 30.44;
+  const currentX = padding + (Math.max(0, Math.min(11, t)) / 11) * graphWidth;
+  
+  // Interpolate angle to stay exactly on the piecewise linear graph line
+  const idx1 = Math.max(0, Math.min(10, Math.floor(t)));
+  const idx2 = idx1 + 1;
+  const ratio = Math.max(0, Math.min(1, t - idx1));
+  const interpolatedAngle = yearlyData[idx1].angle * (1 - ratio) + yearlyData[idx2].angle * ratio;
+  const currentY = padding + graphHeight - (interpolatedAngle / 90) * graphHeight;
+
   const points = yearlyData.map((d, i) => {
     const x = padding + (i / 11) * graphWidth;
     const y = padding + graphHeight - (d.angle / 90) * graphHeight;
     return `${x},${y}`;
   }).join(' ');
 
-  const today = new Date();
-  const currentMonthIndex = today.getMonth();
-  const currentDay = today.getDate();
-  // Approximate current position on X axis
-  const currentX = padding + ((currentMonthIndex + currentDay / 30) / 12) * graphWidth;
-  const currentY = padding + graphHeight - (parseFloat(highestSunAngle) / 90) * graphHeight;
-
-  // Calculate V-Day position if it's in the future
+  // Calculate V-Day position
   let vDayX = null;
   let vDayY = null;
   if (vitaminDDate && daysUntilVitaminD > 0) {
     const vMonthIndex = vitaminDDate.getMonth();
     const vDay = vitaminDDate.getDate();
-    vDayX = padding + ((vMonthIndex + vDay / 30) / 12) * graphWidth;
-    // For simplicity, we assume it's right at 45 on that day
+    const vt = vMonthIndex + (vDay - 15) / 30.44;
+    vDayX = padding + (Math.max(0, Math.min(11, vt)) / 11) * graphWidth;
     vDayY = padding + graphHeight - (45 / 90) * graphHeight;
   }
 
-  // Calculate overall min/max for labels
+  // Calculate overall min/max
   const angles = yearlyData.map(d => d.angle);
   const maxVal = Math.max(...angles);
   const minVal = Math.min(...angles);
-  const maxEntry = yearlyData.find(d => d.angle === maxVal);
-  const minEntry = yearlyData.find(d => d.angle === minVal);
-  const maxAngle = maxVal.toFixed(1);
-  const minAngle = minVal.toFixed(1);
+  const maxIdx = yearlyData.findIndex(d => d.angle === maxVal);
+  const minIdx = yearlyData.findIndex(d => d.angle === minVal);
+  const maxEntry = yearlyData[maxIdx];
+  const minEntry = yearlyData[minIdx];
+  
+  const maxX = padding + (maxIdx / 11) * graphWidth;
+  const maxY = padding + graphHeight - (maxVal / 90) * graphHeight;
+  const minX = padding + (minIdx / 11) * graphWidth;
+  const minY = padding + graphHeight - (minVal / 90) * graphHeight;
 
   return (
     <div className="sun-graph-container">
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
-        {/* 45 degree line */}
+        {/* 45 degree reference line */}
         <line 
           x1={padding} y1={padding + graphHeight - (45/90) * graphHeight} 
           x2={padding + graphWidth} y2={padding + graphHeight - (45/90) * graphHeight} 
@@ -67,28 +81,34 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
         />
         <text x={padding} y={padding + graphHeight - (45/90) * graphHeight - 2} fontSize="6" fill="#F92672">45°</text>
         
+        {/* Dotted projection lines for max/min */}
+        <line x1={maxX} y1={maxY} x2={width - padding} y2={padding + 5} stroke="#E6DB74" strokeDasharray="2 2" strokeWidth="0.5" opacity="0.4" />
+        <line x1={minX} y1={minY} x2={width - padding} y2={height - padding - 5} stroke="#AE81FF" strokeDasharray="2 2" strokeWidth="0.5" opacity="0.4" />
+
         {/* Main curve */}
         <polyline points={points} fill="none" stroke="#66D9EF" strokeWidth="2" strokeLinejoin="round" />
         
-        {/* Today indicator (Hollow Circle) */}
-        <circle cx={currentX} cy={currentY} r="4" fill="none" stroke="#A6E22E" strokeWidth="2" />
+        {/* Today indicator (Hollow Dotted Circle with center dot) */}
+        <circle cx={currentX} cy={currentY} r="4" fill="none" stroke="#A6E22E" strokeWidth="1.5" strokeDasharray="1 1" />
+        <circle cx={currentX} cy={currentY} r="1" fill="#A6E22E" />
         <text x={currentX + 6} y={currentY} fontSize="8" fill="#A6E22E" fontWeight="bold">Today: {highestSunAngle}°</text>
 
         {/* V-Day indicator */}
         {vDayX !== null && (
           <>
-            <circle cx={vDayX} cy={vDayY} r="3" fill="#66D9EF" />
+            <circle cx={vDayX} cy={vDayY} r="3" fill="none" stroke="#66D9EF" strokeWidth="1" strokeDasharray="1 1" />
+            <circle cx={vDayX} cy={vDayY} r="0.8" fill="#66D9EF" />
             <text x={vDayX} y={vDayY - 8} fontSize="7" fill="#66D9EF" textAnchor="middle">V-Day: {vitaminDDate.toLocaleDateString()}</text>
           </>
         )}
 
-        {/* Min/Max Labels with subtler date text */}
+        {/* Min/Max Labels */}
         <text x={width - padding} y={padding + 5} textAnchor="end">
-          <tspan fontSize="7" fill="#E6DB74">Highest max: {maxAngle}°</tspan>
+          <tspan fontSize="7" fill="#E6DB74">Highest max: {maxVal.toFixed(1)}°</tspan>
           <tspan x={width - padding} dy="8" fontSize="5" fill="#E6DB74" opacity="0.6">({maxEntry.month} 15)</tspan>
         </text>
         <text x={width - padding} y={height - padding - 5} textAnchor="end">
-          <tspan fontSize="7" fill="#AE81FF">Lowest max: {minAngle}°</tspan>
+          <tspan fontSize="7" fill="#AE81FF">Lowest max: {minVal.toFixed(1)}°</tspan>
           <tspan x={width - padding} dy="8" fontSize="5" fill="#AE81FF" opacity="0.6">({minEntry.month} 15)</tspan>
         </text>
 
