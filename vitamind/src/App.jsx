@@ -354,7 +354,12 @@ function App() {
             </div>
             
             {modalView === 'stats' ? (
-              <>
+              <div className="modal-body-container">
+                <div className="sidebar left-sidebar">
+                  <button onClick={() => adjustFontSize(0.1)}>Text +</button>
+                  <button onClick={() => adjustFontSize(-0.1)}>Text -</button>
+                </div>
+                
                 <div ref={scrollContainerRef} className="modal-scroll-content">
                   <SunAngleGraph 
                     yearlyData={yearlyData} 
@@ -441,13 +446,12 @@ function App() {
                     )}
                   </p>
                 </div>
-                <div className="font-size-controls">
-                  <button onClick={() => adjustFontSize(-0.1)}>Text -</button>
-                  <button onClick={() => adjustFontSize(0.1)}>Text +</button>
-                  <button onClick={() => adjustModalSize(-0.1)}>Window -</button>
-                  <button onClick={() => adjustModalSize(0.1)}>Window +</button>
+
+                <div className="sidebar right-sidebar">
+                  <button onClick={() => adjustModalSize(0.1)}>Win +</button>
+                  <button onClick={() => adjustModalSize(-0.1)}>Win -</button>
                 </div>
-              </>
+              </div>
             ) : (
               <div className="calendar-view">
                 <div className="calendar-options">
