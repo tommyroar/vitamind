@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSunStats } from './solarCalculations';
+import { getSunStats, getVitaminDInfo } from './solarCalculations';
 
 describe('getSunStats', () => {
   it('should calculate the highest daily sun angle, solar noon time, and day length for a given location and date (equator, equinox)', () => {
@@ -64,5 +64,74 @@ describe('getSunStats', () => {
     expect(stats.highestSunAngle).toBeCloseTo(23.4, 0); // Sun is always above horizon, highest point is 90 - latitude + axial tilt (approx 23.4)
     expect(stats.solarNoonTime).toMatch(/\d{1,2}:\d{2} (AM|PM)/); // Solar noon is still defined
     expect(stats.dayLength).toBe('24h 0m'); // Day length for polar day should be 24h
+  });
+});
+
+describe('getVitaminDInfo', () => {
+  it('should find the Vitamin D date and days until for a location where sun will be above 45 in the future', () => {
+    // Location: Seattle (47.6062, -122.3321)
+    // Date: Winter (e.g., January 1st) - sun won't be above 45 for a while
+    const latitude = 47.6062;
+    const longitude = -122.3321;
+    const startDate = new Date('2024-01-01T00:00:00Z'); // UTC midnight
+
+    const info = getVitaminDInfo(latitude, longitude, startDate);
+    expect(info.vitaminDDate).toBeInstanceOf(Date);
+    expect(info.daysUntilVitaminD).toBeGreaterThan(0);
+    // Based on manual check, in Seattle, sun gets above 45 around late March/early April
+    // This test will be robust against exact date shifts in future years but checks range.
+    expect(info.vitaminDDate.getUTCMonth()).toBeGreaterThanOrEqual(2); // March (0-indexed)
+    expect(info.vitaminDDate.getUTCMonth()).toBeLessThanOrEqual(3); // April
+    expect(info.durationAbove45).toBeNull();
+    expect(info.daysUntilBelow45).toBeNull();
+  });
+
+  it('should indicate if sun is already above 45 today and calculate duration/days until below 45', () => {
+    // Location: Seattle (47.6062, -122.3321)
+    // Date: Summer (e.g., June 20th) - sun should be above 45
+    const latitude = 47.6062;
+    const longitude = -122.3321;
+    const startDate = new Date('2024-06-20T00:00:00Z'); // UTC midnight
+
+    const info = getVitaminDInfo(latitude, longitude, startDate);
+    expect(info.vitaminDDate).toEqual(startDate);
+    expect(info.daysUntilVitaminD).toBe(0);
+    expect(info.durationAbove45).toMatch(/\d{1,2}h \d{1,2}m/);
+    // For Seattle in summer, duration should be several hours, e.g., > 4h
+    const [hours] = info.durationAbove45.split('h').map(Number);
+    expect(hours).toBeGreaterThanOrEqual(4);
+    expect(info.daysUntilBelow45).toBeGreaterThan(0);
+    // Should be many days until it drops below 45, e.g., > 60 days
+    expect(info.daysUntilBelow45).toBeGreaterThan(60);
+  });
+
+  it('should handle locations where sun never reaches 45 degrees (e.g., high latitude in winter)', () => {
+    // Location: Tromsø, Norway (69.6492, 18.9553)
+    // Date: Winter (e.g., January 1st) - sun likely never reaches 45
+    const latitude = 69.6492;
+    const longitude = 18.9553;
+    const startDate = new Date('2024-01-01T00:00:00Z'); // UTC midnight
+
+    const info = getVitaminDInfo(latitude, longitude, startDate);
+    expect(info.vitaminDDate).toBeNull(); // Sun never reaches 45
+    expect(info.daysUntilVitaminD).toBe(0); // No "days until" if it never happens within the year
+    expect(info.durationAbove45).toBeNull();
+    expect(info.daysUntilBelow45).toBeNull();
+  });
+
+  it('should handle locations where sun always reaches above 45 (e.g., equator)', () => {
+    // Location: Equator (0,0)
+    const latitude = 0;
+    const longitude = 0;
+    const startDate = new Date('2024-03-20T00:00:00Z'); // UTC midnight
+
+    const info = getVitaminDInfo(latitude, longitude, startDate);
+    expect(info.vitaminDDate).toEqual(startDate);
+    expect(info.daysUntilVitaminD).toBe(0);
+    expect(info.durationAbove45).toMatch(/\d{1,2}h \d{1,2}m/);
+    // At equator, duration above 45 should be long, e.g., > 10h
+    const [hours] = info.durationAbove45.split('h').map(Number);
+    expect(hours).toBeGreaterThanOrEqual(10);
+    expect(info.daysUntilBelow45).toBeNull(); // Never drops below 45 for the whole day
   });
 });
