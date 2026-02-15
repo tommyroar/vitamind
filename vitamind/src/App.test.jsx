@@ -18,7 +18,7 @@ describe('App', () => {
       container: mapContainer, // The mock should receive the actual DOM element
       style: 'mapbox://styles/mapbox/navigation-night-v1',
       center: [-70.9, 42.35],
-      zoom: 9,
+      zoom: 22,
     });
   });
 
