@@ -11,7 +11,7 @@ html, body, #root {
 body {
   font-family: sans-serif;
   color: #e0e0e0; /* Basic light text for contrast */
-  background-color: #282c34; /* Dark base color fallback */
+  /* background-color: #282c34; Removed to ensure image shows */
   background-image: url('https://g.co/gemini/share/70f2a2debd32'); /* New background image */
   background-size: cover; /* Cover the entire viewport */
   background-position: center; /* Center the background image */
@@ -19,6 +19,7 @@ body {
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
+  /* background-attachment: fixed; Optional: keeps background fixed during scroll if overflow:hidden wasn't used */
 }
 
 /* Main container for the app, to allow centering of the map */
@@ -32,6 +33,8 @@ body {
   justify-content: center;
   align-items: center;
   position: relative; /* For map positioning */
+  border-radius: 15px; /* Rounded corners */
+  backdrop-filter: blur(5px); /* Transparent frosted glass effect */
 }
 
 /* Styling for the map display area itself */
@@ -50,6 +53,8 @@ body {
   right: 0;
   width: 100%;
   height: 100%;
+  border-radius: 14px; /* Slightly less than container to fit inside */
+  overflow: hidden; /* Ensures map content respects border-radius */
 }
 
 /* Hide original boilerplate styles if they exist */
