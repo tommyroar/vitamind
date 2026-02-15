@@ -75,6 +75,22 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const maxEntry = orderedData[maxIdx];
   const minEntry = orderedData[minIdx];
   
+  const todayTextRef = useRef(null);
+  const [todayRectWidth, setTodayRectWidth] = useState(0);
+  const vDayTextRef = useRef(null);
+  const [vDayRectWidth, setVDayRectWidth] = useState(0);
+
+  useEffect(() => {
+    if (todayTextRef.current) {
+      const bbox = todayTextRef.current.getBBox();
+      setTodayRectWidth(bbox.width + 10); // Add 10px padding
+    }
+    if (vDayTextRef.current && vitaminDDate) { // Only measure if vDayTextRef exists and vitaminDDate is valid
+      const bbox = vDayTextRef.current.getBBox();
+      setVDayRectWidth(bbox.width + 10); // Add 10px padding
+    }
+  }, [today.toLocaleDateString(), vitaminDDate?.toLocaleDateString()]);
+
   return (
     <div className="sun-graph-container">
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
@@ -107,8 +123,28 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
         </g>
         
         {/* Today Label with shadow box */}
-        <rect x={currentX - 40} y={currentY - 32} width="80" height="14" fill="#272822" fillOpacity="0.8" rx="2" />
-        <text x={currentX} y={currentY - 22} fontSize="11" fill="#A6E22E" fontWeight="bold" textAnchor="middle">Today: {today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
+        {todayRectWidth > 0 && ( // Render rect only after width is calculated
+          <rect 
+            x={currentX - todayRectWidth / 2} 
+            y={currentY - 32} 
+            width={todayRectWidth} 
+            height="14" 
+            fill="#272822" 
+            fillOpacity="0.8" 
+            rx="2" 
+          />
+        )}
+        <text 
+          ref={todayTextRef} 
+          x={currentX} 
+          y={currentY - 22} 
+          fontSize="11" 
+          fill="#A6E22E" 
+          fontWeight="bold" 
+          textAnchor="middle"
+        >
+          Today: {today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        </text>
         
         {vDayX !== null && (
           <>
@@ -120,8 +156,28 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
             </g>
             
             {/* V-D Day Label with shadow box */}
-            <rect x={vDayX - 40} y={vDayY + 18} width="80" height="14" fill="#272822" fillOpacity="0.8" rx="2" />
-            <text x={vDayX} y={vDayY + 28} fontSize="11" fill="#66D9EF" fontWeight="bold" textAnchor="middle">V-D Day: {vitaminDDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
+            {vDayRectWidth > 0 && ( // Render rect only after width is calculated
+              <rect 
+                x={vDayX - vDayRectWidth / 2} 
+                y={vDayY + 18} 
+                width={vDayRectWidth} 
+                height="14" 
+                fill="#272822" 
+                fillOpacity="0.8" 
+                rx="2" 
+              />
+            )}
+            <text 
+              ref={vDayTextRef} 
+              x={vDayX} 
+              y={vDayY + 28} 
+              fontSize="11" 
+              fill="#66D9EF" 
+              fontWeight="bold" 
+              textAnchor="middle"
+            >
+              V-D Day: {vitaminDDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+            </text>
           </>
         )}
         
