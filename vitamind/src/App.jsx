@@ -28,7 +28,6 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
   const currentDay = today.getDate();
   
   // Calculate interpolated index for today relative to the 15th-of-month points
-  // Jan 15 is index 0, Dec 15 is index 11.
   const t = currentMonthIndex + (currentDay - 15) / 30.44;
   const currentX = padding + (Math.max(0, Math.min(11, t)) / 11) * graphWidth;
   
@@ -73,27 +72,18 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
   return (
     <div className="sun-graph-container">
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
-        {/* 45 degree reference line */}
         <line 
           x1={padding} y1={padding + graphHeight - (45/90) * graphHeight} 
           x2={padding + graphWidth} y2={padding + graphHeight - (45/90) * graphHeight} 
           stroke="#F92672" strokeDasharray="4 2" strokeWidth="1" opacity="0.5"
         />
         <text x={padding} y={padding + graphHeight - (45/90) * graphHeight - 2} fontSize="6" fill="#F92672">45°</text>
-        
-        {/* Dotted projection lines for max/min */}
         <line x1={maxX} y1={maxY} x2={width - padding} y2={padding + 5} stroke="#E6DB74" strokeDasharray="2 2" strokeWidth="0.5" opacity="0.4" />
         <line x1={minX} y1={minY} x2={width - padding} y2={height - padding - 5} stroke="#AE81FF" strokeDasharray="2 2" strokeWidth="0.5" opacity="0.4" />
-
-        {/* Main curve */}
         <polyline points={points} fill="none" stroke="#66D9EF" strokeWidth="2" strokeLinejoin="round" />
-        
-        {/* Today indicator (Hollow Dotted Circle with center dot) */}
         <circle cx={currentX} cy={currentY} r="4" fill="none" stroke="#A6E22E" strokeWidth="1.5" strokeDasharray="1 1" />
         <circle cx={currentX} cy={currentY} r="1" fill="#A6E22E" />
         <text x={currentX + 6} y={currentY} fontSize="8" fill="#A6E22E" fontWeight="bold">Today: {highestSunAngle}°</text>
-
-        {/* V-Day indicator */}
         {vDayX !== null && (
           <>
             <circle cx={vDayX} cy={vDayY} r="3" fill="none" stroke="#66D9EF" strokeWidth="1" strokeDasharray="1 1" />
@@ -101,8 +91,6 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
             <text x={vDayX} y={vDayY - 8} fontSize="7" fill="#66D9EF" textAnchor="middle">V-Day: {vitaminDDate.toLocaleDateString()}</text>
           </>
         )}
-
-        {/* Min/Max Labels */}
         <text x={width - padding} y={padding + 5} textAnchor="end">
           <tspan fontSize="7" fill="#E6DB74">Highest max: {maxVal.toFixed(1)}°</tspan>
           <tspan x={width - padding} dy="8" fontSize="5" fill="#E6DB74" opacity="0.6">({maxEntry.month} 15)</tspan>
@@ -111,8 +99,6 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
           <tspan fontSize="7" fill="#AE81FF">Lowest max: {minVal.toFixed(1)}°</tspan>
           <tspan x={width - padding} dy="8" fontSize="5" fill="#AE81FF" opacity="0.6">({minEntry.month} 15)</tspan>
         </text>
-
-        {/* Month labels */}
         {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((m, i) => (
           <text key={i} x={padding + (i / 11) * graphWidth} y={height - 5} fontSize="6" fill="#F8F8F2" textAnchor="middle">{m}</text>
         ))}
@@ -459,13 +445,17 @@ function App() {
                     href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day!&details=Sun+is+above+45°+at+this+location.+Perfect+time+for+Vitamin+D!&location=${clickedLat},${clickedLng}&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="calendar-button"
+                    className="calendar-button google-button"
                   >
+                    <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.82 2.07-1.74 2.7v2.24h2.81c1.65-1.52 2.6-3.76 2.6-6.3z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.84-2.2c-.79.53-1.8.85-3.12.85-2.39 0-4.41-1.61-5.14-3.77H1.03v2.32C2.51 16.03 5.52 18 9 18z"/><path fill="#FBBC05" d="M3.86 10.7c-.18-.53-.29-1.1-.29-1.7s.11-1.17.29-1.7V4.98H1.03C.37 6.19 0 7.56 0 9s.37 2.81 1.03 4.02l2.83-2.32z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59C13.47.89 11.43 0 9 0 5.52 0 2.51 1.97 1.03 4.98l2.83 2.32C4.59 5.19 6.61 3.58 9 3.58z"/></svg>
                     Google Calendar
                   </a>
-                  <button onClick={generateICS} className="calendar-button">Download .ics</button>
+                  <button onClick={generateICS} className="calendar-button apple-button">
+                    <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path fill="currentColor" d="M14.1 9.5c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.8.8-3.5.8s-1.9-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.8-.4 6.9 1.1 8.6.8 1.1 1.7 2.3 2.9 2.3s1.6-.7 3.1-.7 1.9.7 3.1.7c1.2 0 2-.1 2.8-1.2.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.9zm-2.6-6.6c.6-.8 1.1-1.9.9-3-.9.1-2 1.1-2.6 1.9-.6.7-1.1 1.8-.9 2.9 1 .1 2-.8 2.6-1.8z"/></svg>
+                    Apple / iCal
+                  </button>
                 </div>
-                <button className="back-button" onClick={() => setModalView('stats')}>Back to Stats</button>
+                <button className="back-button" onClick={() => setModalView('stats')}>Back</button>
               </div>
             )}
           </div>

@@ -236,49 +236,66 @@ body {
   align-items: center;
   justify-content: center;
   flex-grow: 1;
-  padding: 20px;
+  padding: 10px; /* Decreased padding */
 }
 
 .calendar-options {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 8px; /* Decreased gap */
+  margin-bottom: 10px; /* Decreased margin */
   width: 100%;
 }
 
 .calendar-button {
-  background-color: #66D9EF; /* Monokai blue */
-  color: #272822;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   text-decoration: none;
-  padding: 10px 15px;
-  border-radius: 4px;
+  padding: 8px 12px; /* Decreased padding */
+  border-radius: 6px;
   font-weight: bold;
-  font-size: 1em;
+  font-size: 0.9em; /* Decreased font size */
   text-align: center;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s;
-  font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace;
+  transition: opacity 0.2s;
+  font-family: sans-serif; /* Cleaner font for official look */
+}
+
+.google-button {
+  background-color: #ffffff;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+}
+
+.apple-button {
+  background-color: #000000;
+  color: #ffffff;
 }
 
 .calendar-button:hover {
-  background-color: #A6E22E; /* Monokai green */
+  opacity: 0.85;
+}
+
+.calendar-icon {
+  flex-shrink: 0;
 }
 
 .back-button {
   background: none;
-  border: 1px solid #F92672; /* Monokai pink */
-  color: #F92672;
-  padding: 8px 15px;
+  border: 1px solid #75715e; /* Subtler border */
+  color: #75715e;
+  padding: 4px 10px; /* Compact */
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9em;
-  transition: background-color 0.2s, color 0.2s;
-  font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace;
+  font-size: 0.7em;
+  transition: color 0.2s, border-color 0.2s;
+  font-family: 'Fira Code', monospace;
 }
 
 .back-button:hover {
-  background-color: #F92672;
-  color: #fff;
+  color: #F8F8F2;
+  border-color: #F8F8F2;
 }
