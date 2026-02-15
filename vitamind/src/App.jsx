@@ -86,7 +86,7 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
           <line x1={currentX - 4} y1={currentY} x2={currentX + 4} y2={currentY} />
           <line x1={currentX} y1={currentY - 4} x2={currentX} y2={currentY + 4} />
         </g>
-        <text x={currentX + 6} y={currentY} fontSize="9" fill="#A6E22E" fontWeight="bold">Today: {highestSunAngle}°</text>
+        <text x={currentX} y={currentY - 10} fontSize="9" fill="#F8F8F2" fontWeight="bold" textAnchor="middle">Today: {highestSunAngle}°</text>
         
         {vDayX !== null && (
           <>
@@ -96,7 +96,7 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
               <line x1={vDayX - 4} y1={vDayY} x2={vDayX + 4} y2={vDayY} />
               <line x1={vDayX} y1={vDayY - 4} x2={vDayX} y2={vDayY + 4} />
             </g>
-            <text x={vDayX} y={vDayY - 8} fontSize="9" fill="#66D9EF" fontWeight="bold" textAnchor="middle">V-Day: {vitaminDDate.toLocaleDateString()}</text>
+            <text x={vDayX} y={vDayY + 15} fontSize="9" fill="#F8F8F2" fontWeight="bold" textAnchor="middle">V-Day: {vitaminDDate.toLocaleDateString()}</text>
           </>
         )}
         
