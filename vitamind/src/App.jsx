@@ -49,8 +49,12 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
 
   // Calculate overall min/max for labels
   const angles = yearlyData.map(d => d.angle);
-  const maxAngle = Math.max(...angles).toFixed(1);
-  const minAngle = Math.min(...angles).toFixed(1);
+  const maxVal = Math.max(...angles);
+  const minVal = Math.min(...angles);
+  const maxEntry = yearlyData.find(d => d.angle === maxVal);
+  const minEntry = yearlyData.find(d => d.angle === minVal);
+  const maxAngle = maxVal.toFixed(1);
+  const minAngle = minVal.toFixed(1);
 
   return (
     <div className="sun-graph-container">
@@ -66,8 +70,8 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
         {/* Main curve */}
         <polyline points={points} fill="none" stroke="#66D9EF" strokeWidth="2" strokeLinejoin="round" />
         
-        {/* Today indicator */}
-        <circle cx={currentX} cy={currentY} r="4" fill="#A6E22E" />
+        {/* Today indicator (Hollow Circle) */}
+        <circle cx={currentX} cy={currentY} r="4" fill="none" stroke="#A6E22E" strokeWidth="2" />
         <text x={currentX + 6} y={currentY} fontSize="8" fill="#A6E22E" fontWeight="bold">Today: {highestSunAngle}°</text>
 
         {/* V-Day indicator */}
@@ -78,9 +82,15 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
           </>
         )}
 
-        {/* Min/Max Labels */}
-        <text x={width - padding} y={padding + 5} fontSize="7" fill="#E6DB74" textAnchor="end">Highest max: {maxAngle}°</text>
-        <text x={width - padding} y={height - padding - 5} fontSize="7" fill="#AE81FF" textAnchor="end">Lowest max: {minAngle}°</text>
+        {/* Min/Max Labels with subtler date text */}
+        <text x={width - padding} y={padding + 5} textAnchor="end">
+          <tspan fontSize="7" fill="#E6DB74">Highest max: {maxAngle}°</tspan>
+          <tspan x={width - padding} dy="8" fontSize="5" fill="#E6DB74" opacity="0.6">({maxEntry.month} 15)</tspan>
+        </text>
+        <text x={width - padding} y={height - padding - 5} textAnchor="end">
+          <tspan fontSize="7" fill="#AE81FF">Lowest max: {minAngle}°</tspan>
+          <tspan x={width - padding} dy="8" fontSize="5" fill="#AE81FF" opacity="0.6">({minEntry.month} 15)</tspan>
+        </text>
 
         {/* Month labels */}
         {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((m, i) => (
