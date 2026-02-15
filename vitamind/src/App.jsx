@@ -37,7 +37,7 @@ function App() {
   const [durationAbove45, setDurationAbove45] = useState(null);
   const [daysUntilBelow45, setDaysUntilBelow45] = useState(null);
   
-  const [activeFieldId, setActiveFieldId] = useState(null); // State to track the currently zoomed field
+  const [activeFieldId, setActiveFieldId] = useState('vitamind-info'); // State to track the currently zoomed field
 
 
   useEffect(() => {
