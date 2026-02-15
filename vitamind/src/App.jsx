@@ -15,6 +15,8 @@ function App() {
 
   const [showModal, setShowModal] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(zoom);
+  const [clickedLat, setClickedLat] = useState(null);
+  const [clickedLng, setClickedLng] = useState(null);
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -30,9 +32,11 @@ function App() {
       zoom: zoom
     });
 
-    mapRef.current.on('click', () => {
+    mapRef.current.on('click', (e) => {
       const currentMapZoom = mapRef.current.getZoom();
       setCurrentZoom(currentMapZoom.toFixed(2));
+      setClickedLat(e.lngLat.lat.toFixed(4));
+      setClickedLng(e.lngLat.lng.toFixed(4));
       setShowModal(true);
     });
 
@@ -56,8 +60,10 @@ function App() {
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>Map Zoom Level</h2>
-            <p>The current zoom level is: {currentZoom}</p>
+            <h2>Map Information</h2>
+            <p>Zoom Level: {currentZoom}</p>
+            <p>Latitude: {clickedLat}</p>
+            <p>Longitude: {clickedLng}</p>
             <button onClick={closeModal}>Close</button>
           </div>
         </div>
