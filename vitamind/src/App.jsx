@@ -358,8 +358,8 @@ function App() {
     const start = formatToGoogleCalendarDate(startTimeAbove45);
     const end = formatToGoogleCalendarDate(endTimeAbove45);
     const location = cityName === 'Unknown Location' 
-      ? `${clickedLat}, ${clickedLng}` 
-      : `${cityName} (${clickedLat}, ${clickedLng})`;
+      ? `${clickedLat}\, ${clickedLng}` 
+      : `${cityName} (${clickedLat}\, ${clickedLng})`;
       
     const icsContent = [
       'BEGIN:VCALENDAR',
@@ -367,8 +367,8 @@ function App() {
       'BEGIN:VEVENT',
       `DTSTART:${start}`,
       `DTEND:${end}`,
-      `SUMMARY:V Day in ${cityName === 'Unknown Location' ? 'your location' : cityName}!`,
-      `DESCRIPTION:Sun is above 45° in ${cityName === 'Unknown Location' ? 'this location' : cityName}. Perfect time for Vitamin D!`,
+      `SUMMARY:V Day in ${cityName}!`,
+      `DESCRIPTION:Sun is above 45° in ${cityName}. Perfect time for Vitamin D!`.replace(/,/g, '\\,'),
       `LOCATION:${location}`,
       'END:VEVENT',
       'END:VCALENDAR'
