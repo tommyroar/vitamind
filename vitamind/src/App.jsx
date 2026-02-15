@@ -11,7 +11,7 @@ function App() {
   const mapRef = useRef(null); // Ref to store the map instance
   const [lng, setLng] = useState(-70.9); // Default longitude
   const [lat, setLat] = useState(42.35); // Default latitude
-  const [zoom, setZoom] = useState(9);   // Default zoom
+  const [zoom, setZoom] = useState(22);   // Default zoom (max zoom)
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
