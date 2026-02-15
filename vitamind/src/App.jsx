@@ -11,7 +11,7 @@ function App() {
   const mapRef = useRef(null); // Ref to store the map instance
   const [lng, setLng] = useState(-122.3321); // Default longitude for Seattle
   const [lat, setLat] = useState(47.6062); // Default latitude for Seattle
-  const [zoom, setZoom] = useState(9);   // Default zoom for Seattle
+  const [zoom, setZoom] = useState(4);   // Default zoom for Seattle (showing Western US)
 
   const [showModal, setShowModal] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(zoom);
