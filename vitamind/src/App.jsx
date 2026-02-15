@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './vitamind.css';
+import { getHighestDailySunAngle } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -17,6 +18,7 @@ function App() {
   const [currentZoom, setCurrentZoom] = useState(zoom);
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
+  const [highestSunAngle, setHighestSunAngle] = useState(null);
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -34,9 +36,16 @@ function App() {
 
     mapRef.current.on('click', (e) => {
       const currentMapZoom = mapRef.current.getZoom();
+      const clickLat = e.lngLat.lat;
+      const clickLng = e.lngLat.lng;
+
       setCurrentZoom(currentMapZoom.toFixed(2));
-      setClickedLat(e.lngLat.lat.toFixed(4));
-      setClickedLng(e.lngLat.lng.toFixed(4));
+      setClickedLat(clickLat.toFixed(4));
+      setClickedLng(clickLng.toFixed(4));
+
+      const angle = getHighestDailySunAngle(clickLat, clickLng);
+      setHighestSunAngle(angle.toFixed(2));
+      
       setShowModal(true);
     });
 
@@ -64,6 +73,7 @@ function App() {
             <p>Zoom Level: {currentZoom}</p>
             <p>Latitude: {clickedLat}</p>
             <p>Longitude: {clickedLng}</p>
+            <p>Highest Daily Sun Angle: {highestSunAngle}°</p>
             <button onClick={closeModal}>Close</button>
           </div>
         </div>
