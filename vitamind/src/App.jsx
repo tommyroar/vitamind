@@ -2,10 +2,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './vitamind.css';
-import { getSunStats, getVitaminDInfo } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo, formatTime } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const FONT_SIZE_STORAGE_KEY = 'vitamind_modal_font_size';
 const DEFAULT_FONT_SIZE = 1.0; // Corresponds to 1em
@@ -18,9 +18,9 @@ function App() {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null); // Ref to store the map instance
   const scrollContainerRef = useRef(null); // Ref for the scrollable modal content
-  const [lng, setLng] = useState(-122.3321); // Default longitude for Seattle
-  const [lat, setLat] = useState(47.6062); // Default latitude for Seattle
-  const [zoom, setZoom] = useState(4);   // Default zoom for Seattle (showing Western US)
+  const [lng] = useState(-122.3321); // Default longitude for Seattle
+  const [lat] = useState(47.6062); // Default latitude for Seattle
+  const [zoom] = useState(4);   // Default zoom for Seattle (showing Western US)
 
   const [showModal, setShowModal] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(zoom);
@@ -54,7 +54,7 @@ function App() {
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
-      console.error("Mapbox access token is not set. Please ensure VITE_MAPBOX_ACCESS_TOKEN or REACT_APP_MAPBOX_ACCESS_TOKEN is configured.");
+      console.error("Mapbox access token is not set. Please ensure VITE_MAPBOX_ACCESS_TOKEN is configured.");
       return;
     }
     if (mapRef.current) return; // Initialize map only once
@@ -102,7 +102,7 @@ function App() {
         mapRef.current.remove();
       }
     };
-  }, []); // Empty dependency array ensures this runs once on mount
+  }, [lat, lng, zoom]); // Empty dependency array ensures this runs once on mount
 
   // Effect to update localStorage when fontSize changes
   useEffect(() => {
@@ -145,7 +145,7 @@ function App() {
       await navigator.clipboard.writeText(textToCopy);
       setCopyFeedback({ show: true, message: 'Copied!', id });
       setTimeout(() => setCopyFeedback({ show: false, message: '', id: null }), 1500);
-    } catch (err) {
+    } catch {
       setCopyFeedback({ show: true, message: 'Failed to copy!', id });
       setTimeout(() => setCopyFeedback({ show: false, message: '', id: null }), 1500);
     }
@@ -186,25 +186,6 @@ function App() {
         </span>
       );
     }
-  };
-
-  const CalendarModal = () => {
-    if (!startTimeAbove45 || !endTimeAbove45) return null;
-
-    const start = formatToGoogleCalendarDate(startTimeAbove45);
-    const end = formatToGoogleCalendarDate(endTimeAbove45);
-    const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day!&details=Sun+is+above+45°+at+this+location.+Perfect+time+for+Vitamin+D!&location=${clickedLat},${clickedLng}&dates=${start}/${end}`;
-
-    return (
-      <div className="calendar-modal" onClick={e => e.stopPropagation()}>
-        <h3>Add to Calendar</h3>
-        <div className="calendar-options">
-          <a href={googleUrl} target="_blank" rel="noopener noreferrer" className="calendar-button">Google Calendar</a>
-          {/* Other options could be added here */}
-        </div>
-        <button className="close-calendar" onClick={() => setShowCalendarModal(false)}>Cancel</button>
-      </div>
-    );
   };
 
 
@@ -315,7 +296,22 @@ function App() {
               <button onClick={() => adjustModalSize(0.1)}>Window +</button>
             </div>
           </div>
-          {showCalendarModal && <CalendarModal />}
+          {showCalendarModal && startTimeAbove45 && endTimeAbove45 && (
+            <div className="calendar-modal" onClick={e => e.stopPropagation()}>
+              <h3>Add to Calendar</h3>
+              <div className="calendar-options">
+                <a 
+                  href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day!&details=Sun+is+above+45°+at+this+location.+Perfect+time+for+Vitamin+D!&location=${clickedLat},${clickedLng}&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="calendar-button"
+                >
+                  Google Calendar
+                </a>
+              </div>
+              <button className="close-calendar" onClick={() => setShowCalendarModal(false)}>Cancel</button>
+            </div>
+          )}
         </div>
       )}
     </div>

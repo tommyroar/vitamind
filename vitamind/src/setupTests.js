@@ -2,8 +2,8 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
-// Set environment variable for process.env fallback
-process.env.REACT_APP_MAPBOX_ACCESS_TOKEN = 'pk.test-token-from-process-env';
+// Set environment variable for fallback
+vi.stubEnv('VITE_MAPBOX_ACCESS_TOKEN', 'pk.test-token-from-vitest-stub');
 
 // Mock matchMedia for testing responsive components
 window.matchMedia =
