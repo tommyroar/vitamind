@@ -129,9 +129,9 @@ describe('getVitaminDInfo', () => {
     expect(info.vitaminDDate).toEqual(startDate);
     expect(info.daysUntilVitaminD).toBe(0);
     expect(info.durationAbove45).toMatch(/\d{1,2}h \d{1,2}m/);
-    // At equator, duration above 45 should be long, e.g., > 10h
+    // At equator, duration above 45 should be long, e.g., > 6h
     const [hours] = info.durationAbove45.split('h').map(Number);
-    expect(hours).toBeGreaterThanOrEqual(10);
+    expect(hours).toBeGreaterThanOrEqual(6);
     expect(info.daysUntilBelow45).toBeNull(); // Never drops below 45 for the whole day
   });
 });

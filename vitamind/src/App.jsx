@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './vitamind.css';
-import { getSunStats } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -29,6 +29,13 @@ function App() {
     const storedFontSize = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
     return storedFontSize ? parseFloat(storedFontSize) : DEFAULT_FONT_SIZE;
   });
+
+  // Vitamin D related states
+  const [vitaminDDate, setVitaminDDate] = useState(null);
+  const [daysUntilVitaminD, setDaysUntilVitaminD] = useState(null);
+  const [durationAbove45, setDurationAbove45] = useState(null);
+  const [daysUntilBelow45, setDaysUntilBelow45] = useState(null);
+
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -60,6 +67,12 @@ function App() {
       setSolarNoonTime(sunStats.solarNoonTime);
       setDayLength(sunStats.dayLength);
       
+      const vitaminDInfo = getVitaminDInfo(clickLat, clickLng, today);
+      setVitaminDDate(vitaminDInfo.vitaminDDate);
+      setDaysUntilVitaminD(vitaminDInfo.daysUntilVitaminD);
+      setDurationAbove45(vitaminDInfo.durationAbove45);
+      setDaysUntilBelow45(vitaminDInfo.daysUntilBelow45);
+
       setShowModal(true);
     });
 
@@ -88,6 +101,27 @@ function App() {
     });
   };
 
+  const vitaminDMessage = () => {
+    if (daysUntilVitaminD === 0 && durationAbove45) {
+      // Sun is above 45 today
+      let message = `Today, the sun will be above 45° for ${durationAbove45}.`;
+      if (daysUntilBelow45 !== null) {
+        message += ` It will be below 45° for the whole day in ${daysUntilBelow45} days.`;
+      } else {
+        message += ` It will always be above 45° for the whole day.`;
+      }
+      return message;
+    } else if (vitaminDDate && daysUntilVitaminD > 0) {
+      // Sun will be above 45 in the future
+      return `On ${vitaminDDate.toLocaleDateString()} (in ${daysUntilVitaminD} days), the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.`;
+    } else if (vitaminDDate === null) {
+      // Sun never reaches 45 degrees
+      return `The sun will not reach 45° above the horizon at this location within a year, making Vitamin D production unlikely naturally.`;
+    }
+    return ''; // Default empty string
+  };
+
+
   return (
     <div className="app-main-container">
       <div ref={mapContainerRef} data-testid="map-container" className="map-display-area" />
@@ -106,6 +140,7 @@ function App() {
               <p>Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°</p>
               <p>Solar Noon Time: {solarNoonTime}</p>
               <p>Day Length: {dayLength}</p>
+              <p>{vitaminDMessage()}</p> {/* New Vitamin D information */}
             </div>
             <div className="font-size-controls">
               <button onClick={() => adjustFontSize(-0.1)}>-</button>
