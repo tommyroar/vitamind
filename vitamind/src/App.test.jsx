@@ -17,8 +17,8 @@ describe('App', () => {
     expect(mapboxgl.Map).toHaveBeenCalledWith({
       container: mapContainer, // The mock should receive the actual DOM element
       style: 'mapbox://styles/mapbox/navigation-night-v1',
-      center: [-70.9, 42.35],
-      zoom: 22,
+      center: [-122.3321, 47.6062],
+      zoom: 9,
     });
   });
 
