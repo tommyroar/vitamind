@@ -13,6 +13,9 @@ function App() {
   const [lat, setLat] = useState(47.6062); // Default latitude for Seattle
   const [zoom, setZoom] = useState(9);   // Default zoom for Seattle
 
+  const [showModal, setShowModal] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState(zoom);
+
   useEffect(() => {
     if (!mapboxgl.accessToken) {
       console.error("Mapbox access token is not set. Please ensure VITE_MAPBOX_ACCESS_TOKEN or REACT_APP_MAPBOX_ACCESS_TOKEN is configured.");
@@ -27,6 +30,12 @@ function App() {
       zoom: zoom
     });
 
+    mapRef.current.on('click', () => {
+      const currentMapZoom = mapRef.current.getZoom();
+      setCurrentZoom(currentMapZoom.toFixed(2));
+      setShowModal(true);
+    });
+
     // Add navigation controls (optional)
     mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
@@ -38,9 +47,21 @@ function App() {
     };
   }, []); // Empty dependency array ensures this runs once on mount
 
+  const closeModal = () => setShowModal(false);
+
   return (
     <div className="app-main-container">
       <div ref={mapContainerRef} data-testid="map-container" className="map-display-area" />
+
+      {showModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2>Map Zoom Level</h2>
+            <p>The current zoom level is: {currentZoom}</p>
+            <button onClick={closeModal}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
