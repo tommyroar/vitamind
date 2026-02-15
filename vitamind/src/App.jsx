@@ -27,18 +27,29 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const currentMonthIndex = today.getMonth();
   const currentDay = today.getDate();
   
-  // Calculate interpolated index for today relative to the 15th-of-month points
-  const t = currentMonthIndex + (currentDay - 15) / 30.44;
+  // Rotate data so current month is centered (at index 5 of 0-11)
+  const startMonth = (currentMonthIndex - 5 + 12) % 12;
+  const monthLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+  const orderedData = [];
+  const orderedLabels = [];
+  for (let i = 0; i < 12; i++) {
+    const idx = (startMonth + i) % 12;
+    orderedData.push(yearlyData[idx]);
+    orderedLabels.push(monthLabels[idx]);
+  }
+
+  // Calculate interpolated index for today relative to the shifted points
+  const t = 5 + (currentDay - 15) / 30.44;
   const currentX = padding + (Math.max(0, Math.min(11, t)) / 11) * graphWidth;
   
   // Interpolate angle to stay exactly on the piecewise linear graph line
   const idx1 = Math.max(0, Math.min(10, Math.floor(t)));
   const idx2 = idx1 + 1;
   const ratio = Math.max(0, Math.min(1, t - idx1));
-  const interpolatedAngle = yearlyData[idx1].angle * (1 - ratio) + yearlyData[idx2].angle * ratio;
+  const interpolatedAngle = orderedData[idx1].angle * (1 - ratio) + orderedData[idx2].angle * ratio;
   const currentY = padding + graphHeight - (interpolatedAngle / 90) * graphHeight;
 
-  const points = yearlyData.map((d, i) => {
+  const points = orderedData.map((d, i) => {
     const x = padding + (i / 11) * graphWidth;
     const y = padding + graphHeight - (d.angle / 90) * graphHeight;
     return `${x},${y}`;
@@ -50,29 +61,42 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   if (vitaminDDate && daysUntilVitaminD > 0) {
     const vMonthIndex = vitaminDDate.getMonth();
     const vDay = vitaminDDate.getDate();
-    const vt = vMonthIndex + (vDay - 15) / 30.44;
+    const vt = (vMonthIndex - startMonth + 12) % 12 + (vDay - 15) / 30.44;
     vDayX = padding + (Math.max(0, Math.min(11, vt)) / 11) * graphWidth;
     vDayY = padding + graphHeight - (45 / 90) * graphHeight;
   }
 
   // Calculate overall min/max
-  const angles = yearlyData.map(d => d.angle);
+  const angles = orderedData.map(d => d.angle);
   const maxVal = Math.max(...angles);
   const minVal = Math.min(...angles);
-  const maxIdx = yearlyData.findIndex(d => d.angle === maxVal);
-  const minIdx = yearlyData.findIndex(d => d.angle === minVal);
-  const maxEntry = yearlyData[maxIdx];
-  const minEntry = yearlyData[minIdx];
+  const maxIdx = orderedData.findIndex(d => d.angle === maxVal);
+  const minIdx = orderedData.findIndex(d => d.angle === minVal);
+  const maxEntry = orderedData[maxIdx];
+  const minEntry = orderedData[minIdx];
   
   return (
     <div className="sun-graph-container">
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
+        {/* Horizontal reference lines */}
         <line 
           x1={padding} y1={padding + graphHeight - (45/90) * graphHeight} 
           x2={padding + graphWidth} y2={padding + graphHeight - (45/90) * graphHeight} 
           stroke="#F92672" strokeDasharray="4 2" strokeWidth="1" opacity="0.5"
         />
         <text x={padding} y={padding + graphHeight - (45/90) * graphHeight - 2} fontSize="6" fill="#F92672">45°</text>
+
+        <line 
+          x1={padding} y1={padding + graphHeight - (maxVal/90) * graphHeight} 
+          x2={padding + graphWidth} y2={padding + graphHeight - (maxVal/90) * graphHeight} 
+          stroke="#E6DB74" strokeDasharray="2 2" strokeWidth="0.5" opacity="0.3"
+        />
+        <line 
+          x1={padding} y1={padding + graphHeight - (minVal/90) * graphHeight} 
+          x2={padding + graphWidth} y2={padding + graphHeight - (minVal/90) * graphHeight} 
+          stroke="#AE81FF" strokeDasharray="2 2" strokeWidth="0.5" opacity="0.3"
+        />
+
         <polyline points={points} fill="none" stroke="#F8F8F2" strokeWidth="2" strokeLinejoin="round" />
         
         {/* Today point: crossed circle */}
@@ -81,7 +105,7 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
           <line x1={currentX - 4} y1={currentY} x2={currentX + 4} y2={currentY} />
           <line x1={currentX} y1={currentY - 4} x2={currentX} y2={currentY + 4} />
         </g>
-        <text x={currentX + 8} y={currentY - 18} fontSize="11" fill="#A6E22E" fontWeight="bold">Today: {today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
+        <text x={currentX + 8} y={currentY - 22} fontSize="11" fill="#A6E22E" fontWeight="bold">Today: {today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
         
         {vDayX !== null && (
           <>
@@ -91,7 +115,7 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
               <line x1={vDayX - 4} y1={vDayY} x2={vDayX + 4} y2={vDayY} />
               <line x1={vDayX} y1={vDayY - 4} x2={vDayX} y2={vDayY + 4} />
             </g>
-            <text x={vDayX + 8} y={vDayY + 22} fontSize="11" fill="#66D9EF" fontWeight="bold">V-D Day: {vitaminDDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
+            <text x={vDayX + 8} y={vDayY + 28} fontSize="11" fill="#66D9EF" fontWeight="bold">V-D Day: {vitaminDDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
           </>
         )}
         
@@ -103,7 +127,7 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
           <tspan fontSize="7" fill="#AE81FF">Lowest max: {minVal.toFixed(1)}°</tspan>
           <tspan x={width - padding} dy="8" fontSize="5" fill="#AE81FF" opacity="0.6">({minEntry.month} 15)</tspan>
         </text>
-        {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((m, i) => (
+        {orderedLabels.map((m, i) => (
           <text key={i} x={padding + (i / 11) * graphWidth} y={height - 5} fontSize="6" fill="#F8F8F2" textAnchor="middle">{m}</text>
         ))}
       </svg>
