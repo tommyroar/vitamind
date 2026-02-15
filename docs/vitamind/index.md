@@ -1,6 +1,6 @@
 # VitaminD
 
-The VitaminD web application is a tool designed to predict when sufficient sun exposure for Vitamin D production will occur based on geographic location and sun data. It is built as a Single Page App (React) deployed via GitHub Pages.
+The [VitaminD web application](https://tommyroar.github.io/maps/vitamind/) is a tool designed to predict when sufficient sun exposure for Vitamin D production will occur based on geographic location and sun data. It is built as a Single Page App (React) deployed via GitHub Pages.
 
 ## Latitude, Sun Angle, and Vitamin D Production
 
