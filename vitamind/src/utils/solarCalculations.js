@@ -178,69 +178,50 @@ export function getYearlySunData(latitude, longitude) {
  * @returns {object} GeoJSON Feature representing the nighttime polygon.
  */
 export function getTerminatorGeoJSON(date = new Date()) {
-  // More accurate subsolar point calculation:
+  // 1. Calculate Sun's declination (approximate but sufficient for visualization)
   const msInDay = 86400000;
   const time = date.getTime();
   const day = (time / msInDay) - (new Date('2000-01-01T12:00:00Z').getTime() / msInDay);
-  const omega = 2.142980185 + 4.3943358517 * day;
-  const e = 0.016709 - 0.00004193 * day;
-  const m = 6.24006 + 6.283019552 * day;
-  const l = m + e * Math.sin(m) * (2.0 + 2.5 * e * Math.cos(m)) + 0.033 * Math.sin(2.0 * m);
-  const z = l + 0.0003 + 0.0048 * Math.cos(omega) + 0.0003 * Math.sin(omega);
-  const eps = 0.40909 - 0.000000226 * day;
-  const dec = Math.asin(Math.sin(eps) * Math.sin(z));
   
-  // Greenwich Mean Sidereal Time
-  const gmst = 18.697374558 + 24.06570982441908 * day;
-  const ra = Math.atan2(Math.cos(eps) * Math.sin(z), Math.cos(z));
-  const lon = ((ra - (gmst * Math.PI / 12)) % (2 * Math.PI)) * 180 / Math.PI;
-  const lat = dec * 180 / Math.PI;
+  // Solar coordinates
+  const m = 6.24006 + 6.283019552 * day;
+  const l = m + 0.03341 * Math.sin(m) + 0.000348 * Math.sin(2 * m);
+  const eps = 0.40909 - 0.000000226 * day;
+  const dec = Math.asin(Math.sin(eps) * Math.sin(l));
+  
+  // 2. Calculate Subsolar Longitude (based on UTC time)
+  // Sun is over 0Â° longitude at approximately 12:00 UTC (ignoring equation of time for now)
+  const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+  const sunLng = (12 - utcHours) * 15;
 
   const points = [];
   const resolution = 2; // degrees
-  
-  // The terminator is a great circle 90 degrees away from the subsolar point
-  for (let i = 0; i <= 360; i += resolution) {
-    const angle = i * Math.PI / 180;
-    const latRad = lat * Math.PI / 180;
-    const lonRad = lon * Math.PI / 180;
-    
-    // Parametric equation of a great circle
-    const x = Math.cos(angle);
-    const y = Math.sin(angle);
-    
-    const pLat = Math.asin(Math.cos(latRad) * x);
-    const pLon = Math.atan2(Math.sin(latRad) * x, y) + lonRad;
-    
-    let pLonDeg = pLon * 180 / Math.PI;
-    const pLatDeg = pLat * 180 / Math.PI;
-    
-    // Normalize longitude
-    while (pLonDeg > 180) pLonDeg -= 360;
-    while (pLonDeg < -180) pLonDeg += 360;
-    
-    points.push([pLonDeg, pLatDeg]);
+  const decDeg = dec * 180 / Math.PI;
+
+  // 3. Generate the terminator line
+  // tan(phi) = -cos(lng - sunLng) / tan(dec)
+  for (let lng = -180; lng <= 180; lng += resolution) {
+    const h = (lng - sunLng) * Math.PI / 180;
+    const tanPhi = -Math.cos(h) / Math.tan(dec);
+    let lat = Math.atan(tanPhi) * 180 / Math.PI;
+    points.push([lng, lat]);
   }
 
-  // Sort points by longitude to avoid self-intersection when creating the polygon
-  // For a proper night polygon, we need to decide which side is night.
-  // The subsolar point is the center of the day. The antipode is the center of the night.
-  
-  // To handle the poles and wrapping, we construct the polygon by adding corners
+  // 4. Construct the nighttime polygon
+  // We need to decide whether to wrap around the North or South pole.
+  // If declination > 0 (Summer in N. Hemisphere), the South Pole is in darkness.
+  // If declination < 0 (Winter in N. Hemisphere), the North Pole is in darkness.
   const nightPoints = [...points];
-  
-  // Check if north pole or south pole is in night
-  // If subsolar lat > 0, south pole is in night. If < 0, north pole is in night.
-  if (lat > 0) {
-    // South pole is in dark
+  if (decDeg > 0) {
+    // South Pole is in dark
     nightPoints.push([180, -90]);
     nightPoints.push([-180, -90]);
   } else {
-    // North pole is in dark
+    // North Pole is in dark
     nightPoints.push([180, 90]);
     nightPoints.push([-180, 90]);
   }
-  nightPoints.push(nightPoints[0]);
+  nightPoints.push(nightPoints[0]); // Close the polygon
 
   return {
     type: 'Feature',

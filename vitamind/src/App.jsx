@@ -226,8 +226,20 @@ function App() {
         source: 'terminator',
         layout: {},
         paint: {
-          'fill-color': '#000',
-          'fill-opacity': 0.4
+          'fill-color': '#000814', // Very deep blue/black
+          'fill-opacity': 0.5
+        }
+      });
+
+      mapRef.current.addLayer({
+        id: 'terminator-boundary',
+        type: 'line',
+        source: 'terminator',
+        layout: {},
+        paint: {
+          'line-color': '#66D9EF', // Monokai blue for the boundary
+          'line-width': 1,
+          'line-opacity': 0.3
         }
       });
     });
