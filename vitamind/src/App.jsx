@@ -47,6 +47,11 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
     vDayY = padding + graphHeight - (45 / 90) * graphHeight;
   }
 
+  // Calculate overall min/max for labels
+  const angles = yearlyData.map(d => d.angle);
+  const maxAngle = Math.max(...angles).toFixed(1);
+  const minAngle = Math.min(...angles).toFixed(1);
+
   return (
     <div className="sun-graph-container">
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
@@ -72,6 +77,10 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
             <text x={vDayX} y={vDayY - 8} fontSize="7" fill="#66D9EF" textAnchor="middle">V-Day: {vitaminDDate.toLocaleDateString()}</text>
           </>
         )}
+
+        {/* Min/Max Labels */}
+        <text x={width - padding} y={padding + 5} fontSize="7" fill="#E6DB74" textAnchor="end">Highest max: {maxAngle}°</text>
+        <text x={width - padding} y={height - padding - 5} fontSize="7" fill="#AE81FF" textAnchor="end">Lowest max: {minAngle}°</text>
 
         {/* Month labels */}
         {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((m, i) => (
