@@ -78,38 +78,42 @@ body {
 
 /* Modal Content */
 .modal-content {
-  background-color: #333; /* Dark background for the modal */
+  background-color: #272822; /* Monokai background */
   padding: 25px 35px;
   border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
   text-align: center;
-  color: #eee; /* Light text color */
+  color: #F8F8F2; /* Monokai light grey text */
   max-width: 400px;
   width: 90%;
   position: relative;
+  font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace; /* Monospaced font */
 }
 
 .modal-content h2 {
-  color: #fff;
+  color: #E6DB74; /* Monokai yellow for heading */
   margin-bottom: 15px;
+  font-size: 1.5em;
 }
 
 .modal-content p {
-  font-size: 1.1em;
-  margin-bottom: 20px;
+  font-size: 1.0em;
+  margin-bottom: 10px;
+  color: #F8F8F2; /* Monokai light grey for paragraphs */
 }
 
 .modal-content button {
-  background-color: #007bff; /* Blue button */
-  color: white;
+  background-color: #66D9EF; /* Monokai blue/cyan for button */
+  color: #272822;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
   transition: background-color 0.2s;
+  font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace; /* Monospaced font for button */
 }
 
 .modal-content button:hover {
-  background-color: #0056b3;
+  background-color: #A6E22E; /* Monokai green on hover */
 }

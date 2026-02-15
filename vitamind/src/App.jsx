@@ -19,6 +19,7 @@ function App() {
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
   const [highestSunAngle, setHighestSunAngle] = useState(null);
+  const [currentDateFormatted, setCurrentDateFormatted] = useState('');
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -38,12 +39,14 @@ function App() {
       const currentMapZoom = mapRef.current.getZoom();
       const clickLat = e.lngLat.lat;
       const clickLng = e.lngLat.lng;
+      const today = new Date();
 
       setCurrentZoom(currentMapZoom.toFixed(2));
       setClickedLat(clickLat.toFixed(4));
       setClickedLng(clickLng.toFixed(4));
+      setCurrentDateFormatted(today.toLocaleDateString());
 
-      const angle = getHighestDailySunAngle(clickLat, clickLng);
+      const angle = getHighestDailySunAngle(clickLat, clickLng, today);
       setHighestSunAngle(angle.toFixed(2));
       
       setShowModal(true);
@@ -73,7 +76,7 @@ function App() {
             <p>Zoom Level: {currentZoom}</p>
             <p>Latitude: {clickedLat}</p>
             <p>Longitude: {clickedLng}</p>
-            <p>Highest Daily Sun Angle: {highestSunAngle}°</p>
+            <p>Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°</p>
             <button onClick={closeModal}>Close</button>
           </div>
         </div>
