@@ -89,17 +89,43 @@ body {
   display: flex; /* Use flexbox for layout */
   flex-direction: column; /* Arrange content vertically */
   overflow: hidden; /* Contain growing children */
+  transition: width 0.3s ease-in-out, height 0.3s ease-in-out; /* Dynamic transition */
 }
 
 /* Modal Header */
 .modal-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Center the title */
   align-items: center;
   margin-bottom: 10px;
   padding-bottom: 5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0; /* Header doesn't shrink */
+  position: relative; /* For absolute positioning of close button */
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.2em;
+  text-align: center;
+}
+
+.close-button {
+  position: absolute;
+  right: -10px;
+  top: -5px;
+  background: none;
+  border: none;
+  color: #75715e;
+  font-size: 1.5em;
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #F92672; /* Monokai pink */
 }
 
 /* New Body Container */

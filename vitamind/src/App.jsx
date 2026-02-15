@@ -325,8 +325,8 @@ function App() {
             onClick={e => e.stopPropagation()} 
             style={{ 
               fontSize: `${fontSize}em`, 
-              width: `${BASE_MODAL_WIDTH * modalSize}px`,
-              height: `${BASE_MODAL_HEIGHT * modalSize}px`
+              width: `${(modalView === 'calendar' ? 0.6 : 1.0) * BASE_MODAL_WIDTH * modalSize}px`,
+              height: `${(modalView === 'calendar' ? 0.6 : 1.0) * BASE_MODAL_HEIGHT * modalSize}px`
             }}
           >
             <div className="modal-header">
