@@ -90,7 +90,34 @@ body {
   flex-direction: column; /* Arrange content vertically */
   overflow: hidden; /* Contain growing children */
   transition: width 0.3s ease-in-out, height 0.3s ease-in-out; /* Dynamic transition */
+  max-width: 90vw;   /* Max width 90% of viewport width */
+  max-height: 90vh;  /* Max height 90% of viewport height */
+  width: auto !important; /* Override inline style for width */
+  height: auto !important; /* Override inline style for height */
+  box-sizing: border-box; /* Include padding in width/height */
 }
+
+/* Media query for smaller screens */
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  .modal-body-container {
+    flex-direction: column; /* Stack content vertically on smaller screens */
+  }
+  .sidebar {
+    flex-direction: row; /* Make sidebars horizontal */
+    justify-content: space-around;
+    padding: 5px 0;
+  }
+  .sidebar button {
+    width: auto; /* Let buttons take natural width */
+    padding: 8px 10px;
+    font-size: 0.8em;
+  }
+}
+
 
 /* Modal Header */
 .modal-header {

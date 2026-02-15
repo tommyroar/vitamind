@@ -11,8 +11,8 @@ const FONT_SIZE_STORAGE_KEY = 'vitamind_modal_font_size';
 const DEFAULT_FONT_SIZE = 1.0; // Corresponds to 1em
 const MODAL_SIZE_STORAGE_KEY = 'vitamind_modal_size';
 const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
-const BASE_MODAL_WIDTH = 400; // Base width in pixels
-const BASE_MODAL_HEIGHT = 350; // Base height in pixels
+const BASE_MODAL_WIDTH = 600; // Base width in pixels
+const BASE_MODAL_HEIGHT = 500; // Base height in pixels
 
 const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   if (!yearlyData || !yearlyData.length) return null;
@@ -525,8 +525,6 @@ function App() {
             onClick={e => e.stopPropagation()} 
             style={{ 
               fontSize: `${fontSize}em`, 
-              width: `${(modalView === 'calendar' ? 0.6 : 1.0) * BASE_MODAL_WIDTH * modalSize}px`,
-              height: `${(modalView === 'calendar' ? 0.6 : 1.0) * BASE_MODAL_HEIGHT * modalSize}px`
             }}
           >
             <div className="modal-header">
