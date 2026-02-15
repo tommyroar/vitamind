@@ -68,6 +68,13 @@ run_shell_command(
 **Objective:** Monitor the GitHub Actions workflow triggered by your push and verify the successful deployment of the SPA to GitHub Pages.
 
 **Gemini Task:**
+Always monitor the deployment with `gh cli`. For example, to monitor the latest run for a workflow named "deploy-vitamind.yaml" on the "vitamind" branch, you would use:
+```
+gh run list --workflow="deploy-vitamind.yaml" --branch="vitamind" --json databaseId,status,conclusion --limit 1
+# Then, to watch a specific run:
+# gh run watch <RUN_DATABASE_ID>
+```
+
 Gemini CLI will perform the following actions automatically:
 1.  Retrieve the SHA of your latest commit.
 2.  Identify the workflow ID for the "Deploy Vitamind SPA to GitHub Pages" workflow.
