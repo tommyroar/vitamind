@@ -9,8 +9,10 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || process.env.R
 
 const FONT_SIZE_STORAGE_KEY = 'vitamind_modal_font_size';
 const DEFAULT_FONT_SIZE = 1.0; // Corresponds to 1em
-const WINDOW_WIDTH_STORAGE_KEY = 'vitamind_modal_width';
-const DEFAULT_MODAL_WIDTH = 400; // Corresponds to max-width in CSS, in pixels
+const MODAL_SIZE_STORAGE_KEY = 'vitamind_modal_size';
+const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
+const BASE_MODAL_WIDTH = 400; // Base width in pixels
+const BASE_MODAL_HEIGHT = 320; // Base height in pixels
 
 function App() {
   const mapContainerRef = useRef(null);
@@ -32,9 +34,9 @@ function App() {
     const storedFontSize = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
     return storedFontSize ? parseFloat(storedFontSize) : DEFAULT_FONT_SIZE;
   });
-  const [modalWidth, setModalWidth] = useState(() => {
-    const storedModalWidth = localStorage.getItem(WINDOW_WIDTH_STORAGE_KEY);
-    return storedModalWidth ? parseFloat(storedModalWidth) : DEFAULT_MODAL_WIDTH;
+  const [modalSize, setModalSize] = useState(() => {
+    const storedModalSize = localStorage.getItem(MODAL_SIZE_STORAGE_KEY);
+    return storedModalSize ? parseFloat(storedModalSize) : DEFAULT_MODAL_SIZE;
   });
 
   // Vitamin D related states
@@ -102,10 +104,10 @@ function App() {
     localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
   }, [fontSize]);
 
-  // Effect to update localStorage when modalWidth changes
+  // Effect to update localStorage when modalSize changes
   useEffect(() => {
-    localStorage.setItem(WINDOW_WIDTH_STORAGE_KEY, modalWidth.toString());
-  }, [modalWidth]);
+    localStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
+  }, [modalSize]);
 
   // Effect for IntersectionObserver to handle scroll-based zooming
   useEffect(() => {
@@ -164,10 +166,10 @@ function App() {
     });
   };
 
-  const adjustModalWidth = (amount) => {
-    setModalWidth((prevWidth) => {
-      const newWidth = Math.max(300, Math.min(800, prevWidth + amount)); // Limit min/max width in pixels
-      return newWidth;
+  const adjustModalSize = (amount) => {
+    setModalSize((prevSize) => {
+      const newSize = Math.max(0.7, Math.min(1.5, prevSize + amount)); // Limit min/max size
+      return parseFloat(newSize.toFixed(1)); // Keep 1 decimal place
     });
   };
 
@@ -214,7 +216,15 @@ function App() {
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ fontSize: `${fontSize}em`, maxWidth: `${modalWidth}px`, width: `${modalWidth}px` }}>
+          <div 
+            className="modal-content" 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              fontSize: `${fontSize}em`, 
+              width: `${BASE_MODAL_WIDTH * modalSize}px`,
+              height: `${BASE_MODAL_HEIGHT * modalSize}px`
+            }}
+          >
             <div className="modal-header">
               <h2>Sun Statistics &#x2600;</h2>
               <button className="close-button" onClick={closeModal}>&times;</button>
@@ -302,8 +312,8 @@ function App() {
             <div className="font-size-controls">
               <button onClick={() => adjustFontSize(-0.1)}>Text -</button>
               <button onClick={() => adjustFontSize(0.1)}>Text +</button>
-              <button onClick={() => adjustModalWidth(-20)}>Window -</button>
-              <button onClick={() => adjustModalWidth(20)}>Window +</button>
+              <button onClick={() => adjustModalSize(-0.1)}>Window -</button>
+              <button onClick={() => adjustModalSize(0.1)}>Window +</button>
             </div>
           </div>
         </div>

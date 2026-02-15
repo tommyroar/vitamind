@@ -84,7 +84,6 @@ body {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
   text-align: left; /* Left justify text */
   color: #F8F8F2; /* Monokai light grey text */
-  max-width: 400px;
   position: relative;
   font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace; /* Monospaced font */
   display: flex; /* Use flexbox for layout */
@@ -167,7 +166,7 @@ body {
 /* Font Size Controls */
 .font-size-controls {
   display: flex;
-  justify-content: flex-end; /* Align buttons to the right */
+  justify-content: center; /* Align buttons to the center */
   gap: 5px; /* Space between buttons */
   margin-top: 10px; /* Add some top margin */
 }
