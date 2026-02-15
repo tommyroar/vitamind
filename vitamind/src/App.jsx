@@ -393,21 +393,23 @@ function App() {
     };
 
     const linkContent = daysUntilVitaminD === 0 ? `today at ${timeStr}` : `${dateStr} at ${timeStr}`;
-    const daysFromTodayStr = `(${daysUntilVitaminD} days from today)`;
+    const daysFromTodayStr = daysUntilVitaminD === 0 ? '' : ` (${daysUntilVitaminD} days from today)`;
 
     if (daysUntilVitaminD === 0 && durationAbove45) {
       // Sun is above 45 today
+      const locationPart = cityName !== 'Unknown Location' ? <>In <strong>{cityName}</strong> on </> : <>On </>;
       return (
         <>
-          In <strong>{cityName}</strong> on <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will be above 45° for {durationAbove45}.
+          {locationPart}<span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span>{daysFromTodayStr}, the sun will be above 45° for {durationAbove45}.
           {daysUntilBelow45 !== null ? ` It will be below 45° for the whole day in ${daysUntilBelow45} days.` : ` It will always be above 45° for the whole day.`}
         </>
       );
     } else {
       // Sun will be above 45 in the future
+      const locationPart = cityName !== 'Unknown Location' ? <>In <strong>{cityName}</strong> on </> : <>On </>;
       return (
         <>
-          In <strong>{cityName}</strong> on <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.
+          {locationPart}<span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span>{daysFromTodayStr}, the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.
         </>
       );
     }
@@ -433,7 +435,9 @@ function App() {
               <h2>
                 {modalView === 'calendar' 
                   ? 'Add to Calendar' 
-                  : (daysUntilVitaminD === 0 ? `V-D Day in ${cityName}!` : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD} in ${cityName}` : `Sun Stats: ${cityName}`)
+                  : (cityName === 'Unknown Location' 
+                      ? (daysUntilVitaminD === 0 ? 'V-D Day!' : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD}` : 'Sun Stats')
+                      : (daysUntilVitaminD === 0 ? `V-D Day in ${cityName}!` : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD} in ${cityName}` : `Sun Stats: ${cityName}`))
                 }
               </h2>
               <button className="close-button" onClick={closeModal}>&times;</button>
