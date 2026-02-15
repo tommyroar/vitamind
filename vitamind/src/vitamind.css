@@ -85,7 +85,6 @@ body {
   text-align: left; /* Left justify text */
   color: #F8F8F2; /* Monokai light grey text */
   max-width: 400px;
-  width: 90%;
   position: relative;
   font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace; /* Monospaced font */
   display: flex; /* Use flexbox for layout */

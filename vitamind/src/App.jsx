@@ -9,6 +9,8 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || process.env.R
 
 const FONT_SIZE_STORAGE_KEY = 'vitamind_modal_font_size';
 const DEFAULT_FONT_SIZE = 1.0; // Corresponds to 1em
+const WINDOW_WIDTH_STORAGE_KEY = 'vitamind_modal_width';
+const DEFAULT_MODAL_WIDTH = 400; // Corresponds to max-width in CSS, in pixels
 
 function App() {
   const mapContainerRef = useRef(null);
@@ -29,6 +31,10 @@ function App() {
   const [fontSize, setFontSize] = useState(() => {
     const storedFontSize = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
     return storedFontSize ? parseFloat(storedFontSize) : DEFAULT_FONT_SIZE;
+  });
+  const [modalWidth, setModalWidth] = useState(() => {
+    const storedModalWidth = localStorage.getItem(WINDOW_WIDTH_STORAGE_KEY);
+    return storedModalWidth ? parseFloat(storedModalWidth) : DEFAULT_MODAL_WIDTH;
   });
 
   // Vitamin D related states
@@ -96,42 +102,40 @@ function App() {
     localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
   }, [fontSize]);
 
+  // Effect to update localStorage when modalWidth changes
+  useEffect(() => {
+    localStorage.setItem(WINDOW_WIDTH_STORAGE_KEY, modalWidth.toString());
+  }, [modalWidth]);
+
   // Effect for IntersectionObserver to handle scroll-based zooming
   useEffect(() => {
     if (!showModal || !scrollContainerRef.current) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        let currentTopmostId = null;
+        let topmostVisibleId = null;
         let minTop = Infinity;
 
-        // Filter for elements that are intersecting and above a certain threshold (e.g., 10% from top)
+        // Filter for elements that are intersecting and at least 50% visible,
+        // and are not fully below the scroll container's top edge.
         const relevantEntries = entries.filter(entry => 
-            entry.isIntersecting && entry.intersectionRatio > 0 && entry.boundingClientRect.top >= 0
+            entry.isIntersecting && 
+            entry.intersectionRatio > 0.5 && // Consider element "visible enough"
+            entry.boundingClientRect.top >= 0 // Element's top edge is at or above scroll container's top edge
         );
 
-        // Sort them by their top position to find the actual topmost
-        relevantEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-
-        // The very first one that is mostly visible is our topmost
-        if (relevantEntries.length > 0 && relevantEntries[0].intersectionRatio >= 0.7) {
-            currentTopmostId = relevantEntries[0].target.id;
+        // Find the one that is closest to the top (smallest boundingClientRect.top)
+        if (relevantEntries.length > 0) {
+          relevantEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+          topmostVisibleId = relevantEntries[0].target.id;
         }
-
-        // If no element is sufficiently visible at the top,
-        // and if it's not the initial load, perhaps clear active field or keep the last one.
-        // For this scenario, we'll keep the last active one if nothing new qualifies.
-        if (currentTopmostId !== null) {
-          setActiveFieldId(currentTopmostId);
-        } else if (scrollContainerRef.current.scrollTop === 0) {
-           // If scrolled to top and no specific element is active, ensure the first one is active
-           setActiveFieldId('vitamind-info');
-        }
+        
+        setActiveFieldId(topmostVisibleId);
       },
       {
         root: scrollContainerRef.current,
         rootMargin: '0px',
-        threshold: Array.from({length: 101}, (_, i) => i / 100), // Observe all visibility thresholds
+        threshold: [0.1], // Observe at 10% visibility to catch elements entering/leaving
       }
     );
 
@@ -147,6 +151,7 @@ function App() {
     };
   }, [showModal]); // Re-run when modal visibility changes
 
+
   const closeModal = () => {
     setShowModal(false);
     setActiveFieldId('vitamind-info'); // Reset active field on close
@@ -156,6 +161,13 @@ function App() {
     setFontSize((prevSize) => {
       const newSize = Math.max(0.7, Math.min(1.5, prevSize + amount)); // Limit min/max size
       return parseFloat(newSize.toFixed(1)); // Keep 1 decimal place
+    });
+  };
+
+  const adjustModalWidth = (amount) => {
+    setModalWidth((prevWidth) => {
+      const newWidth = Math.max(300, Math.min(800, prevWidth + amount)); // Limit min/max width in pixels
+      return newWidth;
     });
   };
 
@@ -202,7 +214,7 @@ function App() {
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ fontSize: `${fontSize}em` }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ fontSize: `${fontSize}em`, maxWidth: `${modalWidth}px`, width: `${modalWidth}px` }}>
             <div className="modal-header">
               <h2>Sun Statistics &#x2600;</h2>
               <button className="close-button" onClick={closeModal}>&times;</button>
@@ -288,8 +300,10 @@ function App() {
               </p>
             </div>
             <div className="font-size-controls">
-              <button onClick={() => adjustFontSize(-0.1)}>-</button>
-              <button onClick={() => adjustFontSize(0.1)}>+</button>
+              <button onClick={() => adjustFontSize(-0.1)}>Text -</button>
+              <button onClick={() => adjustFontSize(0.1)}>Text +</button>
+              <button onClick={() => adjustModalWidth(-20)}>Window -</button>
+              <button onClick={() => adjustModalWidth(20)}>Window +</button>
             </div>
           </div>
         </div>
