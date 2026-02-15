@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './vitamind.css';
-import { getSunStats, getVitaminDInfo, formatTime } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -12,7 +12,49 @@ const DEFAULT_FONT_SIZE = 1.0; // Corresponds to 1em
 const MODAL_SIZE_STORAGE_KEY = 'vitamind_modal_size';
 const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
 const BASE_MODAL_WIDTH = 400; // Base width in pixels
-const BASE_MODAL_HEIGHT = 320; // Base height in pixels
+const BASE_MODAL_HEIGHT = 350; // Base height in pixels
+
+const SunAngleGraph = ({ yearlyData, highestSunAngle }) => {
+  if (!yearlyData || !yearlyData.length) return null;
+
+  const width = 350;
+  const height = 100;
+  const padding = 20;
+  const graphWidth = width - 2 * padding;
+  const graphHeight = height - 2 * padding;
+
+  const points = yearlyData.map((d, i) => {
+    const x = padding + (i / 11) * graphWidth;
+    const y = padding + graphHeight - (d.angle / 90) * graphHeight;
+    return `${x},${y}`;
+  }).join(' ');
+
+  const today = new Date();
+  const currentMonthIndex = today.getMonth();
+  const currentDay = today.getDate();
+  // Approximate current position on X axis
+  const currentX = padding + ((currentMonthIndex + currentDay / 30) / 12) * graphWidth;
+  const currentY = padding + graphHeight - (parseFloat(highestSunAngle) / 90) * graphHeight;
+
+  return (
+    <div className="sun-graph-container">
+      <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
+        <line 
+          x1={padding} y1={padding + graphHeight - (45/90) * graphHeight} 
+          x2={padding + graphWidth} y2={padding + graphHeight - (45/90) * graphHeight} 
+          stroke="#F92672" strokeDasharray="4 2" strokeWidth="1" opacity="0.5"
+        />
+        <text x={padding} y={padding + graphHeight - (45/90) * graphHeight - 2} fontSize="6" fill="#F92672">45°</text>
+        <polyline points={points} fill="none" stroke="#66D9EF" strokeWidth="2" strokeLinejoin="round" />
+        <circle cx={currentX} cy={currentY} r="4" fill="#A6E22E" />
+        <text x={currentX + 6} y={currentY} fontSize="8" fill="#A6E22E" fontWeight="bold">Today: {highestSunAngle}°</text>
+        {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'].map((m, i) => (
+          <text key={i} x={padding + (i / 11) * graphWidth} y={height - 5} fontSize="6" fill="#F8F8F2" textAnchor="middle">{m}</text>
+        ))}
+      </svg>
+    </div>
+  );
+};
 
 function App() {
   const mapContainerRef = useRef(null);
@@ -50,6 +92,7 @@ function App() {
   const [activeFieldId, setActiveFieldId] = useState('vitamind-info'); // State to track the currently zoomed field
   const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
   const [modalView, setModalView] = useState('stats'); // 'stats' or 'calendar'
+  const [yearlyData, setYearlyData] = useState([]);
 
 
   useEffect(() => {
@@ -90,7 +133,10 @@ function App() {
       setDurationAbove45(vitaminDInfo.durationAbove45);
       setDaysUntilBelow45(vitaminDInfo.daysUntilBelow45);
 
+      setYearlyData(getYearlySunData(clickLat, clickLng));
+
       setShowModal(true);
+      setModalView('stats');
     });
 
     // Add navigation controls (optional)
@@ -102,7 +148,7 @@ function App() {
         mapRef.current.remove();
       }
     };
-  }, [lat, lng, zoom]); // Empty dependency array ensures this runs once on mount
+  }, [lat, lng, zoom]); // dependencies for Mapbox init
 
   // Effect to update localStorage when fontSize changes
   useEffect(() => {
@@ -160,7 +206,6 @@ function App() {
     if (!startTimeAbove45 || !endTimeAbove45) return;
     const start = formatToGoogleCalendarDate(startTimeAbove45);
     const end = formatToGoogleCalendarDate(endTimeAbove45);
-    // Use proper line endings for ICS format
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
@@ -240,6 +285,7 @@ function App() {
             
             {modalView === 'stats' ? (
               <>
+                <SunAngleGraph yearlyData={yearlyData} highestSunAngle={highestSunAngle} />
                 <div ref={scrollContainerRef} className="modal-scroll-content">
                   {/* Reversed order of fields */}
                   <p 

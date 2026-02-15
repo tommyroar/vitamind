@@ -148,3 +148,26 @@ export function getVitaminDInfo(latitude, longitude, startDate = new Date()) {
 
   return { vitaminDDate, daysUntilVitaminD, startTimeAbove45, endTimeAbove45, durationAbove45, daysUntilBelow45 };
 }
+
+/**
+ * Calculates the maximum solar angle for the 15th of each month for a year.
+ * @param {number} latitude 
+ * @param {number} longitude 
+ * @returns {Array<{month: string, angle: number}>}
+ */
+export function getYearlySunData(latitude, longitude) {
+  const data = [];
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const year = new Date().getFullYear();
+
+  for (let m = 0; m < 12; m++) { // Note: 'i' should be 'm' in loop
+    // Middle of the month for a representative angle
+    const date = new Date(Date.UTC(year, m, 15, 12, 0, 0));
+    const times = SunCalc.getTimes(date, latitude, longitude);
+    const solarNoon = times.solarNoon || date;
+    const sunPos = SunCalc.getPosition(solarNoon, latitude, longitude);
+    const angle = Math.max(0, sunPos.altitude * 180 / Math.PI);
+    data.push({ month: monthNames[m], angle });
+  }
+  return data;
+}

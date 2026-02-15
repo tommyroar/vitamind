@@ -199,6 +199,17 @@ body {
   white-space: nowrap; /* Prevent text wrapping */
 }
 
+/* Sun Graph */
+.sun-graph-container {
+  width: 100%;
+  height: 120px; /* Reduced height for minimalist look */
+  margin-bottom: 15px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  padding: 5px;
+  transition: opacity 0.3s ease;
+}
+
 /* Calendar Link and Modal */
 .calendar-link {
   color: #66D9EF; /* Monokai blue/cyan */
