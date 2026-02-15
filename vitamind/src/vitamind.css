@@ -108,7 +108,7 @@ body {
   flex-direction: row;
   flex-grow: 1; /* Take up all remaining space */
   overflow: hidden; /* Ensure scroll stays internal */
-  gap: 10px;
+  gap: 5px; /* Decreased gap to give more space to content */
 }
 
 /* Sidebars for controls */
@@ -116,25 +116,44 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 15px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
 .sidebar button {
-  background-color: #66D9EF; /* Monokai blue/cyan */
-  color: #272822;
+  background-color: #3e3d32; /* Darker background */
+  color: #66D9EF; /* Monokai blue */
   border: none;
-  padding: 8px 5px;
-  border-radius: 5px;
+  padding: 10px 2px;
   cursor: pointer;
-  font-size: 0.7em;
-  transition: background-color 0.2s;
-  writing-mode: horizontal-tb;
-  width: 60px;
+  font-size: 0.6em; /* Smaller font for 8-bit look */
+  font-family: 'Fira Code', monospace;
+  font-weight: bold;
+  width: 45px; /* Decreased width */
+  text-align: center;
+  position: relative;
+  
+  /* 8-bit pixel border effect using box-shadow */
+  box-shadow: 
+    inset -2px -2px 0px 0px #1e1e1a,
+    inset 2px 2px 0px 0px #75715e,
+    0px 0px 0px 2px #1e1e1a;
+  
+  transition: transform 0.1s;
 }
 
 .sidebar button:hover {
-  background-color: #A6E22E; /* Monokai green */
+  background-color: #49483e;
+  color: #A6E22E; /* Monokai green on hover */
+}
+
+.sidebar button:active {
+  /* Depressed effect */
+  box-shadow: 
+    inset 2px 2px 0px 0px #1e1e1a,
+    inset -2px -2px 0px 0px #75715e,
+    0px 0px 0px 2px #1e1e1a;
+  transform: translate(1px, 1px);
 }
 
 /* Scrollable Content Area */
