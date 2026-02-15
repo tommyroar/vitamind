@@ -9,9 +9,9 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || process.env.R
 function App() {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null); // Ref to store the map instance
-  const [lng, setLng] = useState(-70.9); // Default longitude
-  const [lat, setLat] = useState(42.35); // Default latitude
-  const [zoom, setZoom] = useState(22);   // Default zoom (max zoom)
+  const [lng, setLng] = useState(-122.3321); // Default longitude for Seattle
+  const [lat, setLat] = useState(47.6062); // Default latitude for Seattle
+  const [zoom, setZoom] = useState(9);   // Default zoom for Seattle
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
