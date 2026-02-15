@@ -398,10 +398,14 @@ function App() {
     if (daysUntilVitaminD === 0 && durationAbove45) {
       // Sun is above 45 today
       const locationPart = cityName !== 'Unknown Location' ? <>In <strong>{cityName}</strong> on </> : <>On </>;
+      const perpetualPart = cityName !== 'Unknown Location' 
+        ? `The sun will always reach above 45° in ${cityName}. Congrats on the vitamin D`
+        : `The sun will always reach above 45° in this location. Congrats on the vitamin D`;
+
       return (
         <>
           {locationPart}<span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span>{daysFromTodayStr}, the sun will be above 45° for {durationAbove45}.
-          {daysUntilBelow45 !== null ? ` It will be below 45° for the whole day in ${daysUntilBelow45} days.` : ` It will always be above 45° for the whole day.`}
+          {daysUntilBelow45 !== null ? ` It will be below 45° for the whole day in ${daysUntilBelow45} days.` : ` ${perpetualPart}`}
         </>
       );
     } else {
