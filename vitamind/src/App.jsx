@@ -109,50 +109,6 @@ function App() {
     localStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
   }, [modalSize]);
 
-  // Effect for IntersectionObserver to handle scroll-based zooming
-  useEffect(() => {
-    if (!showModal || !scrollContainerRef.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        let topmostVisibleId = null;
-        let minTop = Infinity;
-
-        // Filter for elements that are intersecting and at least 50% visible,
-        // and are not fully below the scroll container's top edge.
-        const relevantEntries = entries.filter(entry => 
-            entry.isIntersecting && 
-            entry.intersectionRatio > 0.5 && // Consider element "visible enough"
-            entry.boundingClientRect.top >= 0 // Element's top edge is at or above scroll container's top edge
-        );
-
-        // Find the one that is closest to the top (smallest boundingClientRect.top)
-        if (relevantEntries.length > 0) {
-          relevantEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-          topmostVisibleId = relevantEntries[0].target.id;
-        }
-        
-        setActiveFieldId(topmostVisibleId);
-      },
-      {
-        root: scrollContainerRef.current,
-        rootMargin: '0px',
-        threshold: [0.1], // Observe at 10% visibility to catch elements entering/leaving
-      }
-    );
-
-    // Observe all child <p> elements
-    Array.from(scrollContainerRef.current.children).forEach((child) => {
-      if (child.tagName === 'P') { // Only observe paragraphs containing data
-        observer.observe(child);
-      }
-    });
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [showModal]); // Re-run when modal visibility changes
-
 
   const closeModal = () => {
     setShowModal(false);
