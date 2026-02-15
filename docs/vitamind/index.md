@@ -2,25 +2,7 @@
 
 The Vitamind SPA is a tool designed to calculate sun exposure for Vitamin D production based on geographic location.
 
-## Sun Calculation Methodology
-
-The application uses the [**`suncalc`**](https://github.com/mourner/suncalc) library for its core astronomical calculations.
-
-### How `suncalc` Works
-
-`suncalc` is a powerful, lightweight JavaScript library that computes sun and moon positions and phases. Crucially, it operates using **mathematical formulas** rather than relying on large, pre-calculated datasets.
-
-It performs calculations based on astronomical algorithms that model the Earth's orbit and tilt. By providing a specific `Date`, `latitude`, and `longitude`, it can dynamically and accurately compute celestial positions for any time, past or present.
-
-### Project-Specific Implementation
-
-The `solarCalculations.js` utility in this project builds upon `suncalc` to provide specialized, actionable information related to Vitamin D synthesis.
-
--   **Vitamin D Threshold**: The key feature is the use of a **45-degree sun altitude threshold**. Scientific research indicates that when the sun is below this angle, the atmosphere filters out most of the UVB radiation required for the skin to produce Vitamin D.
--   **Finding the "Vitamin D Window"**: The application iterates through dates to determine the precise start and end times of the day when the sun is above this 45-degree mark.
--   **Seasonal Awareness**: It can also project forward to tell you how many days are left in the "Vitamin D season" before the sun's peak daily altitude drops below 45 degrees.
-
-## Latitude, Sun Angle, and Vitamin D Production
+## Vitamin D Production Overview
 
 Vitamin D production is significantly influenced by latitude and the angle of the sun's rays, as this dictates the amount of UV-B radiation reaching the Earth's surface. UV-B radiation is essential for the skin's synthesis of vitamin D.
 
@@ -53,7 +35,27 @@ For most individuals, 5 to 30 minutes of unprotected sun exposure to the hands, 
 *   **health.vic.gov.au**: [Better Health Channel - Vitamin D - sun exposure](https://www.betterhealth.vic.gov.au/health/healthyliving/vitamin-d-sun-exposure)
 *   **examine.com**: [Vitamin D - Scientific References](https://examine.com/supplements/vitamin-d/research/#how-to-optimize-vitamin-d-levels)
 
-## Mapbox Integration
+## Technical Implementation Details
+
+### Sun Calculation Methodology
+
+The application uses the [**`suncalc`**](https://github.com/mourner/suncalc) library for its core astronomical calculations.
+
+### How `suncalc` Works
+
+`suncalc` is a powerful, lightweight JavaScript library that computes sun and moon positions and phases. Crucially, it operates using **mathematical formulas** rather than relying on large, pre-calculated datasets.
+
+It performs calculations based on astronomical algorithms that model the Earth's orbit and tilt. By providing a specific `Date`, `latitude`, and `longitude`, it can dynamically and accurately compute celestial positions for any time, past or present.
+
+### Project-Specific Implementation
+
+The `solarCalculations.js` utility in this project builds upon `suncalc` to provide specialized, actionable information related to Vitamin D synthesis.
+
+-   **Vitamin D Threshold**: The key feature is the use of a **45-degree sun altitude threshold**. Scientific research indicates that when the sun is below this angle, the atmosphere filters out most of the UVB radiation required for the skin to produce Vitamin D.
+-   **Finding the "Vitamin D Window"**: The application iterates through dates to determine the precise start and end times of the day when the sun is above this 45-degree mark.
+-   **Seasonal Awareness**: It can also project forward to tell you how many days are left in the "Vitamin D season" before the sun's peak daily altitude drops below 45 degrees.
+
+### Mapbox Integration
 
 The application integrates [Mapbox](https://docs.mapbox.com/api/) to provide an interactive geographic interface for sun data analysis.
 
