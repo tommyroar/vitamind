@@ -78,7 +78,7 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
           stroke="#F92672" strokeDasharray="4 2" strokeWidth="1" opacity="0.5"
         />
         <text x={padding} y={padding + graphHeight - (45/90) * graphHeight - 2} fontSize="6" fill="#F92672">45°</text>
-        <polyline points={points} fill="none" stroke="#66D9EF" strokeWidth="2" strokeLinejoin="round" />
+        <polyline points={points} fill="none" stroke="#F8F8F2" strokeWidth="2" strokeLinejoin="round" />
         
         {/* Today point: crossed circle */}
         <g stroke="#A6E22E" strokeWidth="1.5">
@@ -86,7 +86,7 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
           <line x1={currentX - 4} y1={currentY} x2={currentX + 4} y2={currentY} />
           <line x1={currentX} y1={currentY - 4} x2={currentX} y2={currentY + 4} />
         </g>
-        <text x={currentX} y={currentY - 18} fontSize="11" fill="#F8F8F2" fontWeight="bold" textAnchor="middle">T: {highestSunAngle}°</text>
+        <text x={currentX + 8} y={currentY - 18} fontSize="11" fill="#A6E22E" fontWeight="bold">Today: {today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
         
         {vDayX !== null && (
           <>
@@ -96,7 +96,7 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
               <line x1={vDayX - 4} y1={vDayY} x2={vDayX + 4} y2={vDayY} />
               <line x1={vDayX} y1={vDayY - 4} x2={vDayX} y2={vDayY + 4} />
             </g>
-            <text x={vDayX} y={vDayY + 22} fontSize="11" fill="#F8F8F2" fontWeight="bold" textAnchor="middle">V: {vitaminDDate.toLocaleDateString()}</text>
+            <text x={vDayX + 8} y={vDayY + 22} fontSize="11" fill="#66D9EF" fontWeight="bold">V-D Day: {vitaminDDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</text>
           </>
         )}
         
