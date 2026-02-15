@@ -146,6 +146,9 @@ function App() {
   const [yearlyData, setYearlyData] = useState([]);
 
 
+  const [cityName, setCityName] = useState('');
+
+
   useEffect(() => {
     if (!mapboxgl.accessToken) {
       console.error("Mapbox access token is not set. Please ensure VITE_MAPBOX_ACCESS_TOKEN is configured.");
@@ -160,6 +163,22 @@ function App() {
       zoom: zoom
     });
 
+    const fetchCityName = async (lng, lat) => {
+      try {
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=place&access_token=${mapboxgl.accessToken}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.features && data.features.length > 0) {
+          setCityName(data.features[0].text);
+        } else {
+          setCityName('Unknown Location');
+        }
+      } catch (error) {
+        console.error("Error fetching city name:", error);
+        setCityName('Unknown Location');
+      }
+    };
+
     mapRef.current.on('click', (e) => {
       const currentMapZoom = mapRef.current.getZoom();
       const clickLat = e.lngLat.lat;
@@ -170,6 +189,8 @@ function App() {
       setClickedLat(clickLat.toFixed(4));
       setClickedLng(clickLng.toFixed(4));
       setCurrentDateFormatted(today.toLocaleDateString());
+
+      fetchCityName(clickLng, clickLat);
 
       const sunStats = getSunStats(clickLat, clickLng, today);
       setHighestSunAngle(sunStats.highestSunAngle);
@@ -263,9 +284,9 @@ function App() {
       'BEGIN:VEVENT',
       `DTSTART:${start}`,
       `DTEND:${end}`,
-      'SUMMARY:V Day!',
-      'DESCRIPTION:Sun is above 45° at this location. Perfect time for Vitamin D!',
-      `LOCATION:${clickedLat},${clickedLng}`,
+      `SUMMARY:V Day in ${cityName}!`,
+      `DESCRIPTION:Sun is above 45° in ${cityName}. Perfect time for Vitamin D!`,
+      `LOCATION:${cityName} (${clickedLat}, ${clickedLng})`,
       'END:VEVENT',
       'END:VCALENDAR'
     ].join('\r\n');
@@ -281,7 +302,7 @@ function App() {
 
   const vitaminDMessage = () => {
     if (!vitaminDDate) {
-      return "The sun will not reach 45° above the horizon at this location within a year, making Vitamin D production unlikely naturally.";
+      return `In ${cityName}, the sun will not reach 45° above the horizon at this location within a year, making Vitamin D production unlikely naturally.`;
     }
 
     const dateStr = vitaminDDate.toLocaleDateString();
@@ -299,7 +320,7 @@ function App() {
       // Sun is above 45 today
       return (
         <>
-          On <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will be above 45° for {durationAbove45}.
+          In <strong>{cityName}</strong> on <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will be above 45° for {durationAbove45}.
           {daysUntilBelow45 !== null ? ` It will be below 45° for the whole day in ${daysUntilBelow45} days.` : ` It will always be above 45° for the whole day.`}
         </>
       );
@@ -307,7 +328,7 @@ function App() {
       // Sun will be above 45 in the future
       return (
         <>
-          On <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.
+          In <strong>{cityName}</strong> on <span className="calendar-link" onClick={triggerCalendar}>{linkContent}</span> {daysFromTodayStr}, the sun will get higher than 45° above the horizon, which allows your body to naturally create Vitamin D.
         </>
       );
     }
@@ -333,7 +354,7 @@ function App() {
               <h2>
                 {modalView === 'calendar' 
                   ? 'Add to Calendar' 
-                  : (daysUntilVitaminD === 0 ? 'V-D Day!' : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD}` : 'Sun Statistics \u2600;')
+                  : (daysUntilVitaminD === 0 ? `V-D Day in ${cityName}!` : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD} in ${cityName}` : `Sun Stats: ${cityName}`)
                 }
               </h2>
               <button className="close-button" onClick={closeModal}>&times;</button>
@@ -442,7 +463,7 @@ function App() {
               <div className="calendar-view">
                 <div className="calendar-options">
                   <a 
-                    href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day!&details=Sun+is+above+45°+at+this+location.+Perfect+time+for+Vitamin+D!&location=${clickedLat},${clickedLng}&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
+                    href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day+in+${encodeURIComponent(cityName)}!&details=Sun+is+above+45°+in+${encodeURIComponent(cityName)}.+Perfect+time+for+Vitamin+D!&location=${encodeURIComponent(cityName)}+(${clickedLat},${clickedLng})&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="calendar-button google-button"
