@@ -14,7 +14,7 @@ const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
 const BASE_MODAL_WIDTH = 400; // Base width in pixels
 const BASE_MODAL_HEIGHT = 350; // Base height in pixels
 
-const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVitaminD }) => {
+const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   if (!yearlyData || !yearlyData.length) return null;
 
   const width = 350;
@@ -64,11 +64,6 @@ const SunAngleGraph = ({ yearlyData, highestSunAngle, vitaminDDate, daysUntilVit
   const maxEntry = yearlyData[maxIdx];
   const minEntry = yearlyData[minIdx];
   
-  const maxX = padding + (maxIdx / 11) * graphWidth;
-  const maxY = padding + graphHeight - (maxVal / 90) * graphHeight;
-  const minX = padding + (minIdx / 11) * graphWidth;
-  const minY = padding + graphHeight - (minVal / 90) * graphHeight;
-
   return (
     <div className="sun-graph-container">
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
@@ -379,7 +374,6 @@ function App() {
                 <div ref={scrollContainerRef} className="modal-scroll-content">
                   <SunAngleGraph 
                     yearlyData={yearlyData} 
-                    highestSunAngle={highestSunAngle} 
                     vitaminDDate={vitaminDDate}
                     daysUntilVitaminD={daysUntilVitaminD}
                   />
@@ -460,6 +454,13 @@ function App() {
                     {copyFeedback.show && copyFeedback.id === 'zoom-level' && (
                       <span className="copy-feedback">{copyFeedback.message}</span>
                     )}
+                  </p>
+                  <p 
+                    id="mkdocs-link" 
+                    className={activeFieldId === 'mkdocs-link' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('mkdocs-link')}
+                  >
+                    Documentation: <a href="https://tommyroar.github.io/maps/docs/vitamind/" target="_blank" rel="noopener noreferrer" className="calendar-link">Vitamind Docs</a>
                   </p>
                 </div>
 
