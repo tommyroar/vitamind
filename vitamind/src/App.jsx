@@ -242,12 +242,23 @@ function App() {
         source: 'terminator',
         layout: {},
         paint: {
-          'line-color': '#F92672', // Monokai Pink - extremely visible
+          'line-color': '#66D9EF', // Monokai Blue
           'line-width': 2,
           'line-opacity': 0.8
         }
       });
       
+      // Update map labels to use monospaced-like font if possible
+      const style = mapRef.current.getStyle();
+      if (style && style.layers) {
+        style.layers.forEach(layer => {
+          if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+            mapRef.current.setLayoutProperty(layer.id, 'text-font', ['DIN Offc Pro Bold', 'Arial Unicode MS Regular']);
+            mapRef.current.setLayoutProperty(layer.id, 'text-letter-spacing', 0.1);
+          }
+        });
+      }
+
       // Add atmosphere for the globe
       mapRef.current.setFog({
         'color': 'rgb(186, 210, 235)', // Lower atmosphere
