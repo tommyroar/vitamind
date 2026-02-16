@@ -358,6 +358,9 @@ body {
 /* Intro Modal Specifics */
 .intro-modal {
   text-align: center !important;
+  max-width: 600px;
+  width: 90vw;
+  transition: width 0.3s ease-in-out, height 0.3s ease-in-out;
 }
 
 .intro-links {
