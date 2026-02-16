@@ -79,7 +79,7 @@ body {
 /* Modal Content */
 .modal-content {
   background-color: #272822; /* Monokai background */
-  padding: 15px 25px; /* Adjusted padding */
+  padding: 10px 15px; /* Reduced padding */
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
   text-align: left; /* Left justify text */
@@ -89,6 +89,7 @@ body {
   display: flex; /* Use flexbox for layout */
   flex-direction: column; /* Arrange content vertically */
   overflow: hidden; /* Contain growing children */
+  overflow-x: hidden; /* Ensure no horizontal scroll */
   transition: width 0.3s ease-in-out, height 0.3s ease-in-out; /* Dynamic transition */
   width: 90vw;   /* Responsive width */
   max-width: 600px; /* Limit width on large screens */
@@ -161,7 +162,7 @@ body {
   flex-direction: row;
   flex-grow: 1; /* Take up all remaining space */
   overflow: hidden; /* Ensure scroll stays internal */
-  gap: 5px; /* Decreased gap to give more space to content */
+  gap: 2px; /* Further decreased gap */
 }
 
 /* Sidebars for controls */
@@ -169,7 +170,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 10px;
+  gap: 5px; /* Reduced gap between buttons */
   flex-shrink: 0;
 }
 
@@ -177,12 +178,12 @@ body {
   background-color: #3e3d32; /* Darker background */
   color: #66D9EF; /* Monokai blue */
   border: none;
-  padding: 10px 2px;
+  padding: 8px 2px; /* Reduced padding */
   cursor: pointer;
   font-size: 0.6em; /* Smaller font for 8-bit look */
   font-family: 'Fira Code', monospace;
   font-weight: bold;
-  width: 45px; /* Decreased width */
+  width: 40px; /* Further decreased width */
   text-align: center;
   position: relative;
   
@@ -213,7 +214,8 @@ body {
 .modal-scroll-content {
   flex-grow: 1;
   overflow-y: auto; /* Enable vertical scrolling */
-  padding-right: 10px; /* Space for scrollbar */
+  overflow-x: hidden; /* Prevent horizontal scrollbar */
+  padding-right: 5px; /* Reduced space for scrollbar */
   max-height: 100%; /* Take up all parent height */
 }
 
