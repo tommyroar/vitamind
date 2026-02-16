@@ -25,7 +25,6 @@ body {
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
-  /* background-attachment: fixed; Optional: keeps background fixed during scroll if overflow:hidden wasn't used */
 }
 
 /* Main container for the app, to allow centering of the map */
@@ -97,63 +96,79 @@ body {
   overflow: hidden; /* Contain growing children */
   overflow-x: hidden; /* Ensure no horizontal scroll */
   transition: width 0.3s ease-in-out, height 0.3s ease-in-out; /* Dynamic transition */
-  width: 90vw;   /* Responsive width */
-  max-width: 600px; /* Limit width on large screens */
-  max-height: 90vh;  /* Max height 90% of viewport height */
-  height: auto !important; /* Override inline style for height */
+  max-width: 95vw;   /* Responsive max-width */
+  max-height: 95vh;  /* Max height 90% of viewport height */
   box-sizing: border-box; /* Include padding in width/height */
 }
 
-/* Media query for smaller screens */
-@media (max-width: 768px) {
-  .modal-content {
-    max-width: 95vw;
-    max-height: 95vh;
-  }
-  .modal-body-container {
-    flex-direction: column; /* Stack content vertically on smaller screens */
-  }
-  .sidebar {
-    flex-direction: row; /* Make sidebars horizontal */
-    justify-content: space-around;
-    padding: 5px 0;
-  }
-  .sidebar button {
-    width: auto; /* Let buttons take natural width */
-    padding: 8px 10px;
-    font-size: 0.8em;
-  }
-}
-
-
 /* Modal Header */
 .modal-header {
-  display: flex;
-  justify-content: center; /* Center the title */
-  align-items: center;
   margin-bottom: 10px;
   padding-bottom: 5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0; /* Header doesn't shrink */
-  position: relative; /* For absolute positioning of close button */
+}
+
+.menu-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.menu-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.title-group {
+  flex-grow: 1;
+  justify-content: center;
+}
+
+.menu-label {
+  font-size: 0.6em;
+  color: #75715e;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.menu-bar button {
+  background-color: #3e3d32;
+  color: #66D9EF;
+  border: none;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-family: 'Fira Code', monospace;
+  font-weight: bold;
+  box-shadow: 
+    inset -1px -1px 0px 0px #1e1e1a,
+    inset 1px 1px 0px 0px #75715e;
+}
+
+.menu-bar button:hover {
+  color: #A6E22E;
+  background-color: #49483e;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.2em;
+  font-size: 1em;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .close-button {
-  position: absolute;
-  right: -10px;
-  top: -5px;
   background: none;
   border: none;
   color: #75715e;
   font-size: 1.5em;
   cursor: pointer;
-  padding: 5px;
+  padding: 0 5px;
   line-height: 1;
   transition: color 0.2s;
 }
@@ -162,58 +177,12 @@ body {
   color: #F92672; /* Monokai pink */
 }
 
-/* New Body Container */
+/* Body Container */
 .modal-body-container {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex-grow: 1; /* Take up all remaining space */
   overflow: hidden; /* Ensure scroll stays internal */
-  gap: 2px; /* Further decreased gap */
-}
-
-/* Sidebars for controls */
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px; /* Reduced gap between buttons */
-  flex-shrink: 0;
-}
-
-.sidebar button {
-  background-color: #3e3d32; /* Darker background */
-  color: #66D9EF; /* Monokai blue */
-  border: none;
-  padding: 8px 2px; /* Reduced padding */
-  cursor: pointer;
-  font-size: 0.6em; /* Smaller font for 8-bit look */
-  font-family: 'Fira Code', monospace;
-  font-weight: bold;
-  width: 40px; /* Further decreased width */
-  text-align: center;
-  position: relative;
-  
-  /* 8-bit pixel border effect using box-shadow */
-  box-shadow: 
-    inset -2px -2px 0px 0px #1e1e1a,
-    inset 2px 2px 0px 0px #75715e,
-    0px 0px 0px 2px #1e1e1a;
-  
-  transition: transform 0.1s;
-}
-
-.sidebar button:hover {
-  background-color: #49483e;
-  color: #A6E22E; /* Monokai green on hover */
-}
-
-.sidebar button:active {
-  /* Depressed effect */
-  box-shadow: 
-    inset 2px 2px 0px 0px #1e1e1a,
-    inset -2px -2px 0px 0px #75715e,
-    0px 0px 0px 2px #1e1e1a;
-  transform: translate(1px, 1px);
 }
 
 /* Scrollable Content Area */
@@ -221,7 +190,7 @@ body {
   flex-grow: 1;
   overflow-y: auto; /* Enable vertical scrolling */
   overflow-x: hidden; /* Prevent horizontal scrollbar */
-  padding-right: 5px; /* Reduced space for scrollbar */
+  padding-right: 5px; /* Space for scrollbar */
   max-height: 100%; /* Take up all parent height */
 }
 

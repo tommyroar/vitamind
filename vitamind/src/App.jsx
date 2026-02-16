@@ -8,6 +8,10 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const FONT_SIZE_STORAGE_KEY = 'vitamind_modal_font_size';
 const DEFAULT_FONT_SIZE = 1.0; // Corresponds to 1em
+const MODAL_SIZE_STORAGE_KEY = 'vitamind_modal_size';
+const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
+const BASE_MODAL_WIDTH = 600; // Base width in pixels
+const BASE_MODAL_HEIGHT = 500; // Base height in pixels
 
 const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   if (!yearlyData || !yearlyData.length) return null;
@@ -210,6 +214,10 @@ function App() {
     const storedFontSize = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
     return storedFontSize ? parseFloat(storedFontSize) : DEFAULT_FONT_SIZE;
   });
+  const [modalSize, setModalSize] = useState(() => {
+    const storedModalSize = localStorage.getItem(MODAL_SIZE_STORAGE_KEY);
+    return storedModalSize ? parseFloat(storedModalSize) : DEFAULT_MODAL_SIZE;
+  });
 
   // Vitamin D related states
   const [vitaminDDate, setVitaminDDate] = useState(null);
@@ -377,6 +385,11 @@ function App() {
     localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
   }, [fontSize]);
 
+  // Effect to update localStorage when modalSize changes
+  useEffect(() => {
+    localStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
+  }, [modalSize]);
+
 
   const closeModal = () => {
     setShowModal(false);
@@ -390,8 +403,11 @@ function App() {
     });
   };
 
-  const handleFieldClick = (id) => {
-    // No longer doing anything here, could remove entirely if clicking shouldn't do anything
+  const adjustModalSize = (amount) => {
+    setModalSize((prevSize) => {
+      const newSize = Math.max(0.7, Math.min(1.5, prevSize + amount)); // Limit min/max size
+      return parseFloat(newSize.toFixed(1)); // Keep 1 decimal place
+    });
   };
 
   const handleDoubleClick = async (e, id) => {
@@ -496,28 +512,39 @@ function App() {
             className="modal-content" 
             onClick={e => e.stopPropagation()} 
             style={{ 
-              fontSize: `${fontSize}em`, 
+              fontSize: `${fontSize}em`,
+              width: `calc(${BASE_MODAL_WIDTH}px * ${modalSize})`,
+              height: `calc(${BASE_MODAL_HEIGHT}px * ${modalSize})`
             }}
           >
             <div className="modal-header">
-              <h2>
-                {modalView === 'calendar' 
-                  ? 'Add to Calendar' 
-                  : (cityName === 'Unknown Location' 
-                      ? (daysUntilVitaminD === 0 ? 'V-D Day!' : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD}` : 'Sun Stats')
-                      : (daysUntilVitaminD === 0 ? `V-D Day in ${cityName}!` : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD} in ${cityName}` : `Sun Stats: ${cityName}`))
-                }
-              </h2>
-              <button className="close-button" onClick={closeModal}>&times;</button>
+              <div className="menu-bar">
+                <div className="menu-group">
+                  <span className="menu-label">Text</span>
+                  <button onClick={() => adjustFontSize(0.1)}>+</button>
+                  <button onClick={() => adjustFontSize(-0.1)}>-</button>
+                </div>
+                <div className="menu-group">
+                  <span className="menu-label">Win</span>
+                  <button onClick={() => adjustModalSize(0.1)}>+</button>
+                  <button onClick={() => adjustModalSize(-0.1)}>-</button>
+                </div>
+                <div className="menu-group title-group">
+                  <h2>
+                    {modalView === 'calendar' 
+                      ? 'Add to Calendar' 
+                      : (cityName === 'Unknown Location' 
+                          ? (daysUntilVitaminD === 0 ? 'V-D Day!' : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD}` : 'Sun Stats')
+                          : (daysUntilVitaminD === 0 ? `V-D Day in ${cityName}!` : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD} in ${cityName}` : `Sun Stats: ${cityName}`))
+                    }
+                  </h2>
+                </div>
+                <button className="close-button" onClick={closeModal}>&times;</button>
+              </div>
             </div>
             
             {modalView === 'stats' ? (
               <div className="modal-body-container">
-                <div className="sidebar left-sidebar">
-                  <button onClick={() => adjustFontSize(0.1)}>Text +</button>
-                  <button onClick={() => adjustFontSize(-0.1)}>Text -</button>
-                </div>
-                
                 <div ref={scrollContainerRef} className="modal-scroll-content">
                   <SunAngleGraph 
                     yearlyData={yearlyData} 
