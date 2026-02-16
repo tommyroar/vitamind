@@ -529,6 +529,9 @@ function App() {
                   <button onClick={() => adjustModalSize(0.1)}>+</button>
                   <button onClick={() => adjustModalSize(-0.1)}>-</button>
                 </div>
+                <div className="menu-group">
+                  <span className="menu-label" style={{ opacity: 0.5 }}>v2</span>
+                </div>
                 <div className="menu-group title-group">
                   <h2>
                     {modalView === 'calendar' 
