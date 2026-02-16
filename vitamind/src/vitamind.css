@@ -124,13 +124,18 @@ body {
 }
 
 .right-controls {
-  gap: 15px;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .title-group {
   flex-grow: 1;
+  flex-shrink: 1;
+  display: flex;
   justify-content: center;
-  min-width: 0; /* Allow title to shrink if needed */
+  min-width: 0; /* Critical for truncation to work in flex */
+  padding: 0 5px;
 }
 
 .menu-label {
