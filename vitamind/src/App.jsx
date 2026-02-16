@@ -13,40 +13,6 @@ const MODAL_SIZE_STORAGE_KEY = 'vitamind_modal_size';
 const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
 const BASE_MODAL_WIDTH = 600; // Base width in pixels
 const BASE_MODAL_HEIGHT = 500; // Base height in pixels
-const HAS_VISITED_KEY = 'vitamind_has_visited';
-
-const IntroModal = ({ onGetStarted }) => {
-  return (
-    <div className="modal-content intro-modal">
-      <div className="modal-header">
-        <h2>Welcome to VitaminD!</h2>
-      </div>
-      <div className="modal-body-container">
-        <div className="modal-scroll-content">
-          <p>
-            This application helps you track when the sun's angle is optimal for natural Vitamin D production. 
-            We've automatically zoomed to your current location to get you started.
-          </p>
-          <p style={{ color: '#A6E22E', fontWeight: 'bold' }}>
-            Tip: You can click anywhere on the global map to instantly view solar statistics and Vitamin D windows for that specific location!
-          </p>
-          <p>
-            The highlighted area on the globe represents the "Vitamin D Zone" where the sun reaches at least 45° altitude today.
-          </p>
-          <div className="intro-links">
-            <p>
-              <a href="https://tommyroar.github.io/maps/docs/vitamind/" target="_blank" rel="noopener noreferrer" className="calendar-link">Read the Documentation</a>
-            </p>
-            <p>
-              <a href="https://github.com/tommyroar/maps" target="_blank" rel="noopener noreferrer" className="calendar-link">View Source on GitHub</a>
-            </p>
-          </div>
-          <button className="get-started-button" onClick={onGetStarted}>Get Started</button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   if (!yearlyData || !yearlyData.length) return null;
@@ -240,9 +206,6 @@ function App() {
   const [zoom] = useState(4);   // Default zoom for Seattle (showing Western US)
 
   const [showModal, setShowModal] = useState(false);
-  const [showIntro, setShowIntro] = useState(() => {
-    return !localStorage.getItem(HAS_VISITED_KEY);
-  });
   const [currentZoom, setCurrentZoom] = useState(zoom);
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
@@ -317,13 +280,9 @@ function App() {
 
     setYearlyData(getYearlySunData(lat, lng));
 
-    if (showIntro) {
-      setShowIntro(false);
-      localStorage.setItem(HAS_VISITED_KEY, 'true');
-    }
     setShowModal(true);
     setModalView('stats');
-  }, [fetchCityName, zoom, showIntro]);
+  }, [fetchCityName, zoom]);
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -414,17 +373,9 @@ function App() {
           mapRef.current.setZoom(10); // Zoom in a bit on user location
         }
         
-        if (!localStorage.getItem(HAS_VISITED_KEY)) {
-          setShowIntro(true);
-          setShowModal(true);
-        }
         updateStatsForLocation(userLng, userLat);
       }, (error) => {
         console.warn("Geolocation access denied or failed:", error.message);
-        if (!localStorage.getItem(HAS_VISITED_KEY)) {
-          setShowIntro(true);
-          setShowModal(true);
-        }
       });
     }
 
@@ -448,21 +399,9 @@ function App() {
 
 
   const closeModal = () => {
-    if (showIntro) {
-      setShowIntro(false);
-      localStorage.setItem(HAS_VISITED_KEY, 'true');
-    }
     setShowModal(false);
     setModalView('stats');
     setActiveFieldId('vitamind-info'); // Reset active field on close
-  };
-
-  const handleGetStarted = () => {
-    setShowIntro(false);
-    localStorage.setItem(HAS_VISITED_KEY, 'true');
-    // If we've already loaded some stats (which we should have for current location), 
-    // we keep the modal open but it transitions to stats view.
-    setModalView('stats');
   };
 
   const adjustFontSize = (amount) => {
@@ -581,155 +520,151 @@ function App() {
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          {showIntro ? (
-            <IntroModal onGetStarted={handleGetStarted} />
-          ) : (
-            <div 
-              className="modal-content" 
-              onClick={e => e.stopPropagation()} 
-              style={{ 
-                fontSize: `${fontSize}em`, 
-              }}
-            >
-              <div className="modal-header">
-                <h2>
-                  {modalView === 'calendar' 
-                    ? 'Add to Calendar' 
-                    : (cityName === 'Unknown Location' 
-                        ? (daysUntilVitaminD === 0 ? 'V-D Day!' : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD}` : 'Sun Stats')
-                        : (daysUntilVitaminD === 0 ? `V-D Day in ${cityName}!` : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD} in ${cityName}` : `Sun Stats: ${cityName}`))
-                  }
-                </h2>
-                <button className="close-button" onClick={closeModal}>&times;</button>
-              </div>
-              
-              {modalView === 'stats' ? (
-                <div className="modal-body-container">
-                  <div className="sidebar left-sidebar">
-                    <button onClick={() => adjustFontSize(0.1)}>Text +</button>
-                    <button onClick={() => adjustFontSize(-0.1)}>Text -</button>
-                  </div>
-                  
-                  <div ref={scrollContainerRef} className="modal-scroll-content">
-                    <SunAngleGraph 
-                      yearlyData={yearlyData} 
-                      vitaminDDate={vitaminDDate}
-                      daysUntilVitaminD={daysUntilVitaminD}
-                    />
-                    {/* Reversed order of fields */}
-                    <p 
-                      id="vitamind-info" 
-                      className={activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}
-                      onClick={() => handleFieldClick('vitamind-info')}
-                      onDoubleClick={(e) => handleDoubleClick(e, 'vitamind-info')}
-                    >
-                      {vitaminDMessage()}
-                      {copyFeedback.show && copyFeedback.id === 'vitamind-info' && (
-                        <span className="copy-feedback">{copyFeedback.message}</span>
-                      )}
-                    </p>
-                    <p 
-                      id="day-length" 
-                      className={activeFieldId === 'day-length' ? 'zoomed-field' : ''}
-                      onClick={() => handleFieldClick('day-length')}
-                      onDoubleClick={(e) => handleDoubleClick(e, 'day-length')}
-                    >
-                      Day Length: {dayLength}
-                      {copyFeedback.show && copyFeedback.id === 'day-length' && (
-                        <span className="copy-feedback">{copyFeedback.message}</span>
-                      )}
-                    </p>
-                    <p 
-                      id="solar-noon" 
-                      className={activeFieldId === 'solar-noon' ? 'zoomed-field' : ''}
-                      onClick={() => handleFieldClick('solar-noon')}
-                      onDoubleClick={(e) => handleDoubleClick(e, 'solar-noon')}
-                    >
-                      Solar Noon Time: {solarNoonTime}
-                      {copyFeedback.show && copyFeedback.id === 'solar-noon' && (
-                        <span className="copy-feedback">{copyFeedback.message}</span>
-                      )}
-                    </p>
-                    <p 
-                      id="highest-angle" 
-                      className={activeFieldId === 'highest-angle' ? 'zoomed-field' : ''}
-                      onClick={() => handleFieldClick('highest-angle')}
-                      onDoubleClick={(e) => handleDoubleClick(e, 'highest-angle')}
-                    >
-                      Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°
-                      {copyFeedback.show && copyFeedback.id === 'highest-angle' && (
-                        <span className="copy-feedback">{copyFeedback.message}</span>
-                      )}
-                    </p>
-                    <p 
-                      id="longitude" 
-                      className={activeFieldId === 'longitude' ? 'zoomed-field' : ''}
-                      onClick={() => handleFieldClick('longitude')}
-                      onDoubleClick={(e) => handleDoubleClick(e, 'longitude')}
-                    >
-                      Longitude: {clickedLng}
-                      {copyFeedback.show && copyFeedback.id === 'longitude' && (
-                        <span className="copy-feedback">{copyFeedback.message}</span>
-                      )}
-                    </p>
-                    <p 
-                      id="latitude" 
-                      className={activeFieldId === 'latitude' ? 'zoomed-field' : ''}
-                      onClick={() => handleFieldClick('latitude')}
-                      onDoubleClick={(e) => handleDoubleClick(e, 'latitude')}
-                    >
-                      Latitude: {clickedLat}
-                      {copyFeedback.show && copyFeedback.id === 'latitude' && (
-                        <span className="copy-feedback">{copyFeedback.message}</span>
-                      )}
-                    </p>
-                    <p 
-                      id="zoom-level" 
-                      className={activeFieldId === 'zoom-level' ? 'zoomed-field' : ''}
-                      onClick={() => handleFieldClick('zoom-level')}
-                      onDoubleClick={(e) => handleDoubleClick(e, 'zoom-level')}
-                    >
-                      Zoom Level: {currentZoom}
-                      {copyFeedback.show && copyFeedback.id === 'zoom-level' && (
-                        <span className="copy-feedback">{copyFeedback.message}</span>
-                      )}
-                    </p>
-                    <p 
-                      id="mkdocs-link" 
-                      className={activeFieldId === 'mkdocs-link' ? 'zoomed-field' : ''}
-                      onClick={() => handleFieldClick('mkdocs-link')}
-                    >
-                      Documentation: <a href="https://tommyroar.github.io/maps/docs/vitamind/" target="_blank" rel="noopener noreferrer" className="calendar-link">Vitamind Docs</a>
-                    </p>
-                  </div>
-
-                  <div className="sidebar right-sidebar">
-                    <button onClick={() => adjustModalSize(0.1)}>Win +</button>
-                    <button onClick={() => adjustModalSize(-0.1)}>Win -</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="calendar-view">
-                  <div className="calendar-options">
-                    <a 
-                      href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day+in+${encodeURIComponent(cityName)}!&details=Sun+is+above+45°+in+${encodeURIComponent(cityName)}.+Perfect+time+for+Vitamin+D!&location=${encodeURIComponent(cityName)}+(${clickedLat},${clickedLng})&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="calendar-button google-button"
-                    >
-                      <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.82 2.07-1.74 2.7v2.24h2.81c1.65-1.52 2.6-3.76 2.6-6.3z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.84-2.2c-.79.53-1.8.85-3.12.85-2.39 0-4.41-1.61-5.14-3.77H1.03v2.32C2.51 16.03 5.52 18 9 18z"/><path fill="#FBBC05" d="M3.86 10.7c-.18-.53-.29-1.1-.29-1.7s.11-1.17.29-1.7V4.98H1.03C.37 6.19 0 7.56 0 9s.37 2.81 1.03 4.02l2.83-2.32z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59C13.47.89 11.43 0 9 0 5.52 0 2.51 1.97 1.03 4.98l2.83 2.32C4.59 5.19 6.61 3.58 9 3.58z"/></svg>
-                      Google Calendar
-                    </a>
-                    <button onClick={generateICS} className="calendar-button apple-button">
-                      <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path fill="currentColor" d="M14.1 9.5c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.8.8-3.5.8s-1.9-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.8-.4 6.9 1.1 8.6.8 1.1 1.7 2.3 2.9 2.3s1.6-.7 3.1-.7 1.9.7 3.1.7c1.2 0 2-.1 2.8-1.2.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.9zm-2.6-6.6c.6-.8 1.1-1.9.9-3-.9.1-2 1.1-2.6 1.9-.6.7-1.1 1.8-.9 2.9 1 .1 2-.8 2.6-1.8z"/></svg>
-                      Apple / iCal
-                    </button>
-                  </div>
-                  <button className="back-button" onClick={() => setModalView('stats')}>Back</button>
-                </div>
-              )}
+          <div 
+            className="modal-content" 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              fontSize: `${fontSize}em`, 
+            }}
+          >
+            <div className="modal-header">
+              <h2>
+                {modalView === 'calendar' 
+                  ? 'Add to Calendar' 
+                  : (cityName === 'Unknown Location' 
+                      ? (daysUntilVitaminD === 0 ? 'V-D Day!' : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD}` : 'Sun Stats')
+                      : (daysUntilVitaminD === 0 ? `V-D Day in ${cityName}!` : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD} in ${cityName}` : `Sun Stats: ${cityName}`))
+                }
+              </h2>
+              <button className="close-button" onClick={closeModal}>&times;</button>
             </div>
-          )}
+            
+            {modalView === 'stats' ? (
+              <div className="modal-body-container">
+                <div className="sidebar left-sidebar">
+                  <button onClick={() => adjustFontSize(0.1)}>Text +</button>
+                  <button onClick={() => adjustFontSize(-0.1)}>Text -</button>
+                </div>
+                
+                <div ref={scrollContainerRef} className="modal-scroll-content">
+                  <SunAngleGraph 
+                    yearlyData={yearlyData} 
+                    vitaminDDate={vitaminDDate}
+                    daysUntilVitaminD={daysUntilVitaminD}
+                  />
+                  {/* Reversed order of fields */}
+                  <p 
+                    id="vitamind-info" 
+                    className={activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('vitamind-info')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'vitamind-info')}
+                  >
+                    {vitaminDMessage()}
+                    {copyFeedback.show && copyFeedback.id === 'vitamind-info' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="day-length" 
+                    className={activeFieldId === 'day-length' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('day-length')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'day-length')}
+                  >
+                    Day Length: {dayLength}
+                    {copyFeedback.show && copyFeedback.id === 'day-length' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="solar-noon" 
+                    className={activeFieldId === 'solar-noon' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('solar-noon')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'solar-noon')}
+                  >
+                    Solar Noon Time: {solarNoonTime}
+                    {copyFeedback.show && copyFeedback.id === 'solar-noon' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="highest-angle" 
+                    className={activeFieldId === 'highest-angle' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('highest-angle')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'highest-angle')}
+                  >
+                    Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°
+                    {copyFeedback.show && copyFeedback.id === 'highest-angle' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="longitude" 
+                    className={activeFieldId === 'longitude' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('longitude')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'longitude')}
+                  >
+                    Longitude: {clickedLng}
+                    {copyFeedback.show && copyFeedback.id === 'longitude' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="latitude" 
+                    className={activeFieldId === 'latitude' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('latitude')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'latitude')}
+                  >
+                    Latitude: {clickedLat}
+                    {copyFeedback.show && copyFeedback.id === 'latitude' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="zoom-level" 
+                    className={activeFieldId === 'zoom-level' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('zoom-level')}
+                    onDoubleClick={(e) => handleDoubleClick(e, 'zoom-level')}
+                  >
+                    Zoom Level: {currentZoom}
+                    {copyFeedback.show && copyFeedback.id === 'zoom-level' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="mkdocs-link" 
+                    className={activeFieldId === 'mkdocs-link' ? 'zoomed-field' : ''}
+                    onClick={() => handleFieldClick('mkdocs-link')}
+                  >
+                    Documentation: <a href="https://tommyroar.github.io/maps/docs/vitamind/" target="_blank" rel="noopener noreferrer" className="calendar-link">Vitamind Docs</a>
+                  </p>
+                </div>
+
+                <div className="sidebar right-sidebar">
+                  <button onClick={() => adjustModalSize(0.1)}>Win +</button>
+                  <button onClick={() => adjustModalSize(-0.1)}>Win -</button>
+                </div>
+              </div>
+            ) : (
+              <div className="calendar-view">
+                <div className="calendar-options">
+                  <a 
+                    href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day+in+${encodeURIComponent(cityName)}!&details=Sun+is+above+45°+in+${encodeURIComponent(cityName)}.+Perfect+time+for+Vitamin+D!&location=${encodeURIComponent(cityName)}+(${clickedLat},${clickedLng})&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="calendar-button google-button"
+                  >
+                    <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.82 2.07-1.74 2.7v2.24h2.81c1.65-1.52 2.6-3.76 2.6-6.3z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.84-2.2c-.79.53-1.8.85-3.12.85-2.39 0-4.41-1.61-5.14-3.77H1.03v2.32C2.51 16.03 5.52 18 9 18z"/><path fill="#FBBC05" d="M3.86 10.7c-.18-.53-.29-1.1-.29-1.7s.11-1.17.29-1.7V4.98H1.03C.37 6.19 0 7.56 0 9s.37 2.81 1.03 4.02l2.83-2.32z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59C13.47.89 11.43 0 9 0 5.52 0 2.51 1.97 1.03 4.98l2.83 2.32C4.59 5.19 6.61 3.58 9 3.58z"/></svg>
+                    Google Calendar
+                  </a>
+                  <button onClick={generateICS} className="calendar-button apple-button">
+                    <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path fill="currentColor" d="M14.1 9.5c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.8.8-3.5.8s-1.9-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.8-.4 6.9 1.1 8.6.8 1.1 1.7 2.3 2.9 2.3s1.6-.7 3.1-.7 1.9.7 3.1.7c1.2 0 2-.1 2.8-1.2.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.9zm-2.6-6.6c.6-.8 1.1-1.9.9-3-.9.1-2 1.1-2.6 1.9-.6.7-1.1 1.8-.9 2.9 1 .1 2-.8 2.6-1.8z"/></svg>
+                    Apple / iCal
+                  </button>
+                </div>
+                <button className="back-button" onClick={() => setModalView('stats')}>Back</button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
