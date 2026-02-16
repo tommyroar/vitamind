@@ -204,39 +204,28 @@ export function getSubsolarPoint(date) {
 }
 
 /**
- * Generates a GeoJSON polygon representing the area where the sun is above 45 degrees.
+ * Generates a GeoJSON polygon representing the area where the sun will rise above 45 degrees today.
+ * This is a latitude band from (declination - 45) to (declination + 45).
  * @param {Date} [date=new Date()] - The date for which to calculate.
  * @returns {object} GeoJSON Feature representing the Vitamin D area.
  */
 export function getVitaminDAreaGeoJSON(date = new Date()) {
-  const { lat: lat0, lng: lon0 } = getSubsolarPoint(date);
-  const r = 45 * Math.PI / 180; // 45 degree angular radius
-  const lat0Rad = lat0 * Math.PI / 180;
-  const lon0Rad = lon0 * Math.PI / 180;
-
-  const points = [];
-  const resolution = 64; // number of points in the circle
-
-  for (let i = 0; i <= resolution; i++) {
-    const theta = (i / resolution) * 2 * Math.PI;
-    const latRad = Math.asin(Math.sin(lat0Rad) * Math.cos(r) + Math.cos(lat0Rad) * Math.sin(r) * Math.cos(theta));
-    const lonRad = lon0Rad + Math.atan2(Math.sin(theta) * Math.sin(r) * Math.cos(lat0Rad), Math.cos(r) - Math.sin(lat0Rad) * Math.sin(latRad));
-    
-    let lon = lonRad * 180 / Math.PI;
-    const lat = latRad * 180 / Math.PI;
-
-    // Normalize longitude to [-180, 180]
-    while (lon > 180) lon -= 360;
-    while (lon < -180) lon += 360;
-
-    points.push([lon, lat]);
-  }
-
-  // Handle wrapping issues by ensuring the polygon doesn't have huge jumps
-  // Mapbox's globe projection and standard GeoJSON can be sensitive to jumps across the antimeridian.
-  // For a circle that doesn't touch the poles (which a 45-deg circle centered at +/- 23.44 won't),
-  // we can just ensure the points are ordered.
+  const { lat: decDeg } = getSubsolarPoint(date);
   
+  const minLat = Math.max(-90, decDeg - 45);
+  const maxLat = Math.min(90, decDeg + 45);
+
+  // Define the band. We use multiple points along the top and bottom to ensure 
+  // correct rendering on a globe projection.
+  const points = [];
+  for (let lng = -180; lng <= 180; lng += 10) {
+    points.push([lng, minLat]);
+  }
+  for (let lng = 180; lng >= -180; lng -= 10) {
+    points.push([lng, maxLat]);
+  }
+  points.push(points[0]); // Close the polygon
+
   return {
     type: 'Feature',
     properties: { name: 'Vitamin D Area' },

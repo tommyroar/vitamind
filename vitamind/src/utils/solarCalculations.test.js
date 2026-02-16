@@ -143,24 +143,19 @@ describe('getVitaminDAreaGeoJSON', () => {
     expect(geojson.properties.name).toBe('Vitamin D Area');
   });
 
-  it('should be centered around the subsolar point (Equinox)', () => {
+  it('should be a latitude band from (dec-45) to (dec+45)', () => {
     const date = new Date('2024-03-20T12:00:00Z'); 
-    const { lat: lat0, lng: lon0 } = getSubsolarPoint(date);
+    const { lat: dec } = getSubsolarPoint(date);
     const geojson = getVitaminDAreaGeoJSON(date);
     const coords = geojson.geometry.coordinates[0];
-    
-    // Check some points. With center (lat0, lon0) and 45 degree radius:
-    // Max lat should be lat0 + 45
-    // Min lat should be lat0 - 45
-    // Max lng (at equator) should be lon0 + 45
     
     const lats = coords.map(c => c[1]);
     const lngs = coords.map(c => c[0]);
     
-    expect(Math.max(...lats)).toBeCloseTo(lat0 + 45, 0);
-    expect(Math.min(...lats)).toBeCloseTo(lat0 - 45, 0);
-    expect(Math.max(...lngs)).toBeCloseTo(lon0 + 45, 0);
-    expect(Math.min(...lngs)).toBeCloseTo(lon0 - 45, 0);
+    expect(Math.max(...lats)).toBeCloseTo(dec + 45, 0);
+    expect(Math.min(...lats)).toBeCloseTo(dec - 45, 0);
+    expect(Math.min(...lngs)).toBe(-180);
+    expect(Math.max(...lngs)).toBe(180);
   });
 });
 
