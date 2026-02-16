@@ -90,9 +90,9 @@ body {
   flex-direction: column; /* Arrange content vertically */
   overflow: hidden; /* Contain growing children */
   transition: width 0.3s ease-in-out, height 0.3s ease-in-out; /* Dynamic transition */
-  max-width: 90vw;   /* Max width 90% of viewport width */
+  width: 90vw;   /* Responsive width */
+  max-width: 600px; /* Limit width on large screens */
   max-height: 90vh;  /* Max height 90% of viewport height */
-  width: auto !important; /* Override inline style for width */
   height: auto !important; /* Override inline style for height */
   box-sizing: border-box; /* Include padding in width/height */
 }
