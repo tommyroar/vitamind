@@ -609,7 +609,7 @@ function App() {
                   <p 
                     id="mkdocs-link" 
                   >
-                    Documentation: <a href="https://tommyroar.github.io/maps/docs/vitamind/" target="_blank" rel="noopener noreferrer" className="calendar-link">Vitamind Docs</a>
+                    Documentation: <a href="https://tommyroar.github.io/vitamind/docs/" target="_blank" rel="noopener noreferrer" className="calendar-link">Vitamind Docs</a>
                   </p>
                 </div>
               </div>

@@ -97,7 +97,7 @@ Gemini CLI will perform the following actions automatically:
 1.  Retrieve the SHA of your latest commit.
 2.  Identify the workflow ID for the "Deploy Vitamind SPA to GitHub Pages" workflow.
 3.  Continuously monitor for the latest successful workflow run associated with your commit. This includes waiting for the run to appear and complete.
-4.  Once a successful run is found, it will attempt to fetch and verify the content of your deployed SPA at `https://tommyroar.github.io/maps/vitamind/`. It will check for the expected title "vitamind".
+4.  Once a successful run is found, it will attempt to fetch and verify the content of your deployed SPA at `https://tommyroar.github.io/vitamind/`. It will check for the expected title "vitamind".
 
 ```
 # Internal Logic of Gemini CLI (equivalent to parts of the removed deploy.py script)

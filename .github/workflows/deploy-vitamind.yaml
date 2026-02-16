@@ -1,10 +1,10 @@
-name: Combined App and Docs Deployment
+name: Deploy Vitamind SPA to GitHub Pages
 
 on:
   push:
     branches:
-      - main # Triggers on push to main
-  workflow_dispatch: # Allows manual trigger
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -33,7 +33,7 @@ jobs:
         working-directory: vitamind
 
       - name: Build Vitamind SPA
-        run: npm run build -- --base=/maps/vitamind/ --outDir ../gh-pages-staging/vitamind
+        run: npm run build -- --base=/vitamind/ --outDir ../gh-pages-staging/
         working-directory: vitamind
         env:
           VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
@@ -70,4 +70,12 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} # Explicitly pass the GITHUB_TOKEN
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Central Index
+        run: |
+          curl -f -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.INDEX_UPDATE_TOKEN }}" \
+            https://api.github.com/repos/tommyroar/tommyroar.github.io/dispatches \
+            -d '{"event_type": "update_project"}'
