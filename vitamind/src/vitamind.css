@@ -1,5 +1,11 @@
 /* vitamind/src/vitamind.css */
 
+:root {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -244,11 +250,6 @@ body {
   margin-bottom: 5px; /* Decreased margin */
   line-height: 1.3; /* Decreased line spacing */
   color: #F8F8F2; /* Monokai light grey for paragraphs */
-  transition: font-size 0.2s ease-in-out; /* Smooth transition for zoom effect */
-}
-
-.modal-content p.zoomed-field {
-  font-size: 1.1em; /* Increased font size for zoomed effect */
 }
 
 /* Copy Feedback */

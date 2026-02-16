@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import './vitamind.css';
 import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
@@ -9,10 +8,6 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const FONT_SIZE_STORAGE_KEY = 'vitamind_modal_font_size';
 const DEFAULT_FONT_SIZE = 1.0; // Corresponds to 1em
-const MODAL_SIZE_STORAGE_KEY = 'vitamind_modal_size';
-const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
-const BASE_MODAL_WIDTH = 600; // Base width in pixels
-const BASE_MODAL_HEIGHT = 500; // Base height in pixels
 
 const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   if (!yearlyData || !yearlyData.length) return null;
@@ -206,20 +201,14 @@ function App() {
   const [zoom] = useState(4);   // Default zoom for Seattle (showing Western US)
 
   const [showModal, setShowModal] = useState(false);
-  const [currentZoom, setCurrentZoom] = useState(zoom);
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
   const [highestSunAngle, setHighestSunAngle] = useState(null);
   const [solarNoonTime, setSolarNoonTime] = useState(null);
   const [dayLength, setDayLength] = useState(null);
-  const [currentDateFormatted, setCurrentDateFormatted] = useState('');
   const [fontSize, setFontSize] = useState(() => {
     const storedFontSize = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
     return storedFontSize ? parseFloat(storedFontSize) : DEFAULT_FONT_SIZE;
-  });
-  const [modalSize, setModalSize] = useState(() => {
-    const storedModalSize = localStorage.getItem(MODAL_SIZE_STORAGE_KEY);
-    return storedModalSize ? parseFloat(storedModalSize) : DEFAULT_MODAL_SIZE;
   });
 
   // Vitamin D related states
@@ -230,7 +219,6 @@ function App() {
   const [durationAbove45, setDurationAbove45] = useState(null);
   const [daysUntilBelow45, setDaysUntilBelow45] = useState(null);
   
-  const [activeFieldId, setActiveFieldId] = useState('vitamind-info'); // State to track the currently zoomed field
   const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
   const [modalView, setModalView] = useState('stats'); // 'stats' or 'calendar'
   const [yearlyData, setYearlyData] = useState([]);
@@ -256,12 +244,9 @@ function App() {
 
   const updateStatsForLocation = useCallback(async (lng, lat) => {
     const today = new Date();
-    const currentMapZoom = mapRef.current ? mapRef.current.getZoom() : zoom;
 
-    setCurrentZoom(currentMapZoom.toFixed(2));
     setClickedLat(lat.toFixed(4));
     setClickedLng(lng.toFixed(4));
-    setCurrentDateFormatted(today.toLocaleDateString());
 
     fetchCityName(lng, lat);
 
@@ -282,7 +267,7 @@ function App() {
 
     setShowModal(true);
     setModalView('stats');
-  }, [fetchCityName, zoom]);
+  }, [fetchCityName]);
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -392,16 +377,10 @@ function App() {
     localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
   }, [fontSize]);
 
-  // Effect to update localStorage when modalSize changes
-  useEffect(() => {
-    localStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
-  }, [modalSize]);
-
 
   const closeModal = () => {
     setShowModal(false);
     setModalView('stats');
-    setActiveFieldId('vitamind-info'); // Reset active field on close
   };
 
   const adjustFontSize = (amount) => {
@@ -411,15 +390,8 @@ function App() {
     });
   };
 
-  const adjustModalSize = (amount) => {
-    setModalSize((prevSize) => {
-      const newSize = Math.max(0.7, Math.min(1.5, prevSize + amount)); // Limit min/max size
-      return parseFloat(newSize.toFixed(1)); // Keep 1 decimal place
-    });
-  };
-
   const handleFieldClick = (id) => {
-    setActiveFieldId(id);
+    // No longer doing anything here, could remove entirely if clicking shouldn't do anything
   };
 
   const handleDoubleClick = async (e, id) => {
@@ -555,8 +527,6 @@ function App() {
                   {/* Reversed order of fields */}
                   <p 
                     id="vitamind-info" 
-                    className={activeFieldId === 'vitamind-info' ? 'zoomed-field' : ''}
-                    onClick={() => handleFieldClick('vitamind-info')}
                     onDoubleClick={(e) => handleDoubleClick(e, 'vitamind-info')}
                   >
                     {vitaminDMessage()}
@@ -566,8 +536,6 @@ function App() {
                   </p>
                   <p 
                     id="day-length" 
-                    className={activeFieldId === 'day-length' ? 'zoomed-field' : ''}
-                    onClick={() => handleFieldClick('day-length')}
                     onDoubleClick={(e) => handleDoubleClick(e, 'day-length')}
                   >
                     Day Length: {dayLength}
@@ -577,8 +545,6 @@ function App() {
                   </p>
                   <p 
                     id="solar-noon" 
-                    className={activeFieldId === 'solar-noon' ? 'zoomed-field' : ''}
-                    onClick={() => handleFieldClick('solar-noon')}
                     onDoubleClick={(e) => handleDoubleClick(e, 'solar-noon')}
                   >
                     Solar Noon Time: {solarNoonTime}
@@ -588,19 +554,15 @@ function App() {
                   </p>
                   <p 
                     id="highest-angle" 
-                    className={activeFieldId === 'highest-angle' ? 'zoomed-field' : ''}
-                    onClick={() => handleFieldClick('highest-angle')}
                     onDoubleClick={(e) => handleDoubleClick(e, 'highest-angle')}
                   >
-                    Highest Daily Sun Angle for {currentDateFormatted}: {highestSunAngle}°
+                    Highest Daily Sun Angle: {highestSunAngle}°
                     {copyFeedback.show && copyFeedback.id === 'highest-angle' && (
                       <span className="copy-feedback">{copyFeedback.message}</span>
                     )}
                   </p>
                   <p 
                     id="longitude" 
-                    className={activeFieldId === 'longitude' ? 'zoomed-field' : ''}
-                    onClick={() => handleFieldClick('longitude')}
                     onDoubleClick={(e) => handleDoubleClick(e, 'longitude')}
                   >
                     Longitude: {clickedLng}
@@ -610,8 +572,6 @@ function App() {
                   </p>
                   <p 
                     id="latitude" 
-                    className={activeFieldId === 'latitude' ? 'zoomed-field' : ''}
-                    onClick={() => handleFieldClick('latitude')}
                     onDoubleClick={(e) => handleDoubleClick(e, 'latitude')}
                   >
                     Latitude: {clickedLat}
@@ -620,28 +580,10 @@ function App() {
                     )}
                   </p>
                   <p 
-                    id="zoom-level" 
-                    className={activeFieldId === 'zoom-level' ? 'zoomed-field' : ''}
-                    onClick={() => handleFieldClick('zoom-level')}
-                    onDoubleClick={(e) => handleDoubleClick(e, 'zoom-level')}
-                  >
-                    Zoom Level: {currentZoom}
-                    {copyFeedback.show && copyFeedback.id === 'zoom-level' && (
-                      <span className="copy-feedback">{copyFeedback.message}</span>
-                    )}
-                  </p>
-                  <p 
                     id="mkdocs-link" 
-                    className={activeFieldId === 'mkdocs-link' ? 'zoomed-field' : ''}
-                    onClick={() => handleFieldClick('mkdocs-link')}
                   >
                     Documentation: <a href="https://tommyroar.github.io/maps/docs/vitamind/" target="_blank" rel="noopener noreferrer" className="calendar-link">Vitamind Docs</a>
                   </p>
-                </div>
-
-                <div className="sidebar right-sidebar">
-                  <button onClick={() => adjustModalSize(0.1)}>Win +</button>
-                  <button onClick={() => adjustModalSize(-0.1)}>Win -</button>
                 </div>
               </div>
             ) : (
