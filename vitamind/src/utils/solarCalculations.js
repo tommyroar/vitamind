@@ -173,30 +173,91 @@ export function getYearlySunData(latitude, longitude) {
 }
 
 /**
+ * Calculates the subsolar point (latitude and longitude) for a given date.
+ * @param {Date} date 
+ * @returns {{lat: number, lng: number}}
+ */
+export function getSubsolarPoint(date) {
+  const sunPosAtNorthPole = SunCalc.getPosition(date, 90, 0);
+  const decDeg = sunPosAtNorthPole.altitude * 180 / Math.PI;
+  
+  // Calculate Subsolar Longitude
+  // Sun is over 0° longitude at solar noon at the prime meridian.
+  const timesAtZero = SunCalc.getTimes(date, 0, 0);
+  const solarNoonAtZero = timesAtZero.solarNoon;
+  
+  if (!solarNoonAtZero) {
+    // Fallback to simple approximation if SunCalc fails
+    const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+    return { lat: decDeg, lng: (12 - utcHours) * 15 };
+  }
+
+  const utcTime = date.getTime();
+  const solarNoonTime = solarNoonAtZero.getTime();
+  
+  // Each hour difference is 15 degrees. 
+  // If date is BEFORE solar noon, the sun is to the EAST (positive longitude).
+  // If date is AFTER solar noon, the sun is to the WEST (negative longitude).
+  const sunLng = (solarNoonTime - utcTime) / (1000 * 60 * 60) * 15;
+
+  return { lat: decDeg, lng: sunLng };
+}
+
+/**
+ * Generates a GeoJSON polygon representing the area where the sun is above 45 degrees.
+ * @param {Date} [date=new Date()] - The date for which to calculate.
+ * @returns {object} GeoJSON Feature representing the Vitamin D area.
+ */
+export function getVitaminDAreaGeoJSON(date = new Date()) {
+  const { lat: lat0, lng: lon0 } = getSubsolarPoint(date);
+  const r = 45 * Math.PI / 180; // 45 degree angular radius
+  const lat0Rad = lat0 * Math.PI / 180;
+  const lon0Rad = lon0 * Math.PI / 180;
+
+  const points = [];
+  const resolution = 64; // number of points in the circle
+
+  for (let i = 0; i <= resolution; i++) {
+    const theta = (i / resolution) * 2 * Math.PI;
+    const latRad = Math.asin(Math.sin(lat0Rad) * Math.cos(r) + Math.cos(lat0Rad) * Math.sin(r) * Math.cos(theta));
+    const lonRad = lon0Rad + Math.atan2(Math.sin(theta) * Math.sin(r) * Math.cos(lat0Rad), Math.cos(r) - Math.sin(lat0Rad) * Math.sin(latRad));
+    
+    let lon = lonRad * 180 / Math.PI;
+    const lat = latRad * 180 / Math.PI;
+
+    // Normalize longitude to [-180, 180]
+    while (lon > 180) lon -= 360;
+    while (lon < -180) lon += 360;
+
+    points.push([lon, lat]);
+  }
+
+  // Handle wrapping issues by ensuring the polygon doesn't have huge jumps
+  // Mapbox's globe projection and standard GeoJSON can be sensitive to jumps across the antimeridian.
+  // For a circle that doesn't touch the poles (which a 45-deg circle centered at +/- 23.44 won't),
+  // we can just ensure the points are ordered.
+  
+  return {
+    type: 'Feature',
+    properties: { name: 'Vitamin D Area' },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [points]
+    }
+  };
+}
+
+/**
  * Generates a GeoJSON polygon representing the nighttime area (solar terminator).
  * @param {Date} [date=new Date()] - The date for which to calculate the terminator.
  * @returns {object} GeoJSON Feature representing the nighttime polygon.
  */
 export function getTerminatorGeoJSON(date = new Date()) {
-  // 1. Calculate Sun's declination (approximate but sufficient for visualization)
-  const msInDay = 86400000;
-  const time = date.getTime();
-  const day = (time / msInDay) - (new Date('2000-01-01T12:00:00Z').getTime() / msInDay);
-  
-  // Solar coordinates
-  const m = 6.24006 + 6.283019552 * day;
-  const l = m + 0.03341 * Math.sin(m) + 0.000348 * Math.sin(2 * m);
-  const eps = 0.40909 - 0.000000226 * day;
-  const dec = Math.asin(Math.sin(eps) * Math.sin(l));
-  
-  // 2. Calculate Subsolar Longitude (based on UTC time)
-  // Sun is over 0Â° longitude at approximately 12:00 UTC (ignoring equation of time for now)
-  const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
-  const sunLng = (12 - utcHours) * 15;
+  const { lat: decDeg, lng: sunLng } = getSubsolarPoint(date);
+  const dec = decDeg * Math.PI / 180;
 
   const points = [];
   const resolution = 2; // degrees
-  const decDeg = dec * 180 / Math.PI;
 
   // 3. Generate the terminator line
   // tan(phi) = -cos(lng - sunLng) / tan(dec)
@@ -208,9 +269,6 @@ export function getTerminatorGeoJSON(date = new Date()) {
   }
 
   // 4. Construct the nighttime polygon
-  // We need to decide whether to wrap around the North or South pole.
-  // If declination > 0 (Summer in N. Hemisphere), the South Pole is in darkness.
-  // If declination < 0 (Winter in N. Hemisphere), the North Pole is in darkness.
   const nightPoints = [...points];
   if (decDeg > 0) {
     // South Pole is in dark

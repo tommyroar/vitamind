@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSunStats, getVitaminDInfo } from './solarCalculations';
+import { getSunStats, getVitaminDInfo, getVitaminDAreaGeoJSON, getTerminatorGeoJSON, getSubsolarPoint } from './solarCalculations';
 
 describe('getSunStats', () => {
   it('should calculate the highest daily sun angle, solar noon time, and day length for a given location and date (equator, equinox)', () => {
@@ -131,5 +131,43 @@ describe('getVitaminDInfo', () => {
     const [hours] = info.durationAbove45.split('h').map(Number);
     expect(hours).toBeGreaterThanOrEqual(5);
     expect(info.daysUntilBelow45).toBeNull(); // Never drops below 45 for the whole day
+  });
+});
+
+describe('getVitaminDAreaGeoJSON', () => {
+  it('should generate a GeoJSON Polygon with the correct structure', () => {
+    const geojson = getVitaminDAreaGeoJSON(new Date('2024-03-20T12:00:00Z'));
+    expect(geojson.type).toBe('Feature');
+    expect(geojson.geometry.type).toBe('Polygon');
+    expect(geojson.geometry.coordinates[0].length).toBeGreaterThan(60);
+    expect(geojson.properties.name).toBe('Vitamin D Area');
+  });
+
+  it('should be centered around the subsolar point (Equinox)', () => {
+    const date = new Date('2024-03-20T12:00:00Z'); 
+    const { lat: lat0, lng: lon0 } = getSubsolarPoint(date);
+    const geojson = getVitaminDAreaGeoJSON(date);
+    const coords = geojson.geometry.coordinates[0];
+    
+    // Check some points. With center (lat0, lon0) and 45 degree radius:
+    // Max lat should be lat0 + 45
+    // Min lat should be lat0 - 45
+    // Max lng (at equator) should be lon0 + 45
+    
+    const lats = coords.map(c => c[1]);
+    const lngs = coords.map(c => c[0]);
+    
+    expect(Math.max(...lats)).toBeCloseTo(lat0 + 45, 0);
+    expect(Math.min(...lats)).toBeCloseTo(lat0 - 45, 0);
+    expect(Math.max(...lngs)).toBeCloseTo(lon0 + 45, 0);
+    expect(Math.min(...lngs)).toBeCloseTo(lon0 - 45, 0);
+  });
+});
+
+describe('getTerminatorGeoJSON', () => {
+  it('should generate a GeoJSON Polygon', () => {
+    const geojson = getTerminatorGeoJSON(new Date('2024-03-20T12:00:00Z'));
+    expect(geojson.type).toBe('Feature');
+    expect(geojson.geometry.type).toBe('Polygon');
   });
 });

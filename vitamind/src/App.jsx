@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './vitamind.css';
-import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getTerminatorGeoJSON } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -300,37 +300,37 @@ function App() {
     });
 
     mapRef.current.on('load', () => {
-      const terminatorData = getTerminatorGeoJSON();
+      const vitaminDAreaData = getVitaminDAreaGeoJSON();
       
-      if (mapRef.current.getSource('terminator')) return;
+      if (mapRef.current.getSource('vitamin-d-area')) return;
 
-      mapRef.current.addSource('terminator', {
+      mapRef.current.addSource('vitamin-d-area', {
         type: 'geojson',
-        data: terminatorData
+        data: vitaminDAreaData
       });
 
-      // Night fill layer - use a more distinct blue-tinted dark color
+      // Vitamin D Area fill layer - Monokai Yellow
       mapRef.current.addLayer({
-        id: 'terminator-layer',
+        id: 'vitamin-d-area-layer',
         type: 'fill',
-        source: 'terminator',
+        source: 'vitamin-d-area',
         layout: {},
         paint: {
-          'fill-color': '#0a0a23',
-          'fill-opacity': 0.5
+          'fill-color': '#E6DB74',
+          'fill-opacity': 0.4
         }
       });
 
-      // Very bright boundary line to ensure visibility
+      // Warm boundary line
       mapRef.current.addLayer({
-        id: 'terminator-boundary',
+        id: 'vitamin-d-area-boundary',
         type: 'line',
-        source: 'terminator',
+        source: 'vitamin-d-area',
         layout: {},
         paint: {
-          'line-color': '#66D9EF', // Monokai Blue
+          'line-color': '#FD971F', // Monokai Orange
           'line-width': 2,
-          'line-opacity': 0.8
+          'line-opacity': 0.6
         }
       });
       
