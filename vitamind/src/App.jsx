@@ -239,10 +239,8 @@ function App() {
   const [lat] = useState(47.6062); // Default latitude for Seattle
   const [zoom] = useState(4);   // Default zoom for Seattle (showing Western US)
 
+  const [showModal, setShowModal] = useState(false);
   const [showIntro, setShowIntro] = useState(() => {
-    return !localStorage.getItem(HAS_VISITED_KEY);
-  });
-  const [showModal, setShowModal] = useState(() => {
     return !localStorage.getItem(HAS_VISITED_KEY);
   });
   const [currentZoom, setCurrentZoom] = useState(zoom);
@@ -419,9 +417,19 @@ function App() {
           mapRef.current.setZoom(10); // Zoom in a bit on user location
         }
         
+        const hasVisited = localStorage.getItem(HAS_VISITED_KEY);
+        if (!hasVisited) {
+          setShowIntro(true);
+          setShowModal(true);
+        }
         updateStatsForLocation(userLng, userLat, true); // Pass true for isInitialLoad
       }, (error) => {
         console.warn("Geolocation access denied or failed:", error.message);
+        const hasVisited = localStorage.getItem(HAS_VISITED_KEY);
+        if (!hasVisited) {
+          setShowIntro(true);
+          setShowModal(true);
+        }
       });
     }
 
