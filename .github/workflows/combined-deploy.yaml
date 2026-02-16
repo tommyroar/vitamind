@@ -1,10 +1,7 @@
 name: Combined App and Docs Deployment
 
 on:
-  push:
-    branches:
-      - main # Triggers on push to main
-  workflow_dispatch: # Allows manual trigger
+  workflow_dispatch: # Allows manual trigger only
 
 permissions:
   contents: write
