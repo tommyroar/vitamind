@@ -15,9 +15,9 @@ const BASE_MODAL_WIDTH = 600; // Base width in pixels
 const BASE_MODAL_HEIGHT = 500; // Base height in pixels
 const HAS_VISITED_KEY = 'vitamind_has_visited';
 
-const IntroModal = ({ onGetStarted, fontSize }) => {
+const IntroModal = ({ onGetStarted }) => {
   return (
-    <div className="modal-content intro-modal" style={{ fontSize: `${fontSize}em` }}>
+    <div className="modal-content intro-modal">
       <div className="modal-header">
         <h2>Welcome to VitaminD!</h2>
       </div>
@@ -291,7 +291,7 @@ function App() {
     }
   }, []);
 
-  const updateStatsForLocation = useCallback(async (lng, lat, isInitialLoad = false) => {
+  const updateStatsForLocation = useCallback(async (lng, lat) => {
     const today = new Date();
     const currentMapZoom = mapRef.current ? mapRef.current.getZoom() : zoom;
 
@@ -317,15 +317,12 @@ function App() {
 
     setYearlyData(getYearlySunData(lat, lng));
 
-    // Only transition to stats if it's not the initial load or if intro is already dismissed
-    if (!isInitialLoad) {
-      if (showIntro) {
-        setShowIntro(false);
-        localStorage.setItem(HAS_VISITED_KEY, 'true');
-      }
-      setShowModal(true);
-      setModalView('stats');
+    if (showIntro) {
+      setShowIntro(false);
+      localStorage.setItem(HAS_VISITED_KEY, 'true');
     }
+    setShowModal(true);
+    setModalView('stats');
   }, [fetchCityName, zoom, showIntro]);
 
   useEffect(() => {
@@ -417,16 +414,14 @@ function App() {
           mapRef.current.setZoom(10); // Zoom in a bit on user location
         }
         
-        const hasVisited = localStorage.getItem(HAS_VISITED_KEY);
-        if (!hasVisited) {
+        if (!localStorage.getItem(HAS_VISITED_KEY)) {
           setShowIntro(true);
           setShowModal(true);
         }
-        updateStatsForLocation(userLng, userLat, true); // Pass true for isInitialLoad
+        updateStatsForLocation(userLng, userLat);
       }, (error) => {
         console.warn("Geolocation access denied or failed:", error.message);
-        const hasVisited = localStorage.getItem(HAS_VISITED_KEY);
-        if (!hasVisited) {
+        if (!localStorage.getItem(HAS_VISITED_KEY)) {
           setShowIntro(true);
           setShowModal(true);
         }
@@ -587,7 +582,7 @@ function App() {
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           {showIntro ? (
-            <IntroModal onGetStarted={handleGetStarted} fontSize={fontSize} />
+            <IntroModal onGetStarted={handleGetStarted} />
           ) : (
             <div 
               className="modal-content" 
