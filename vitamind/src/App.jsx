@@ -524,14 +524,6 @@ function App() {
                   <button onClick={() => adjustFontSize(0.1)}>+</button>
                   <button onClick={() => adjustFontSize(-0.1)}>-</button>
                 </div>
-                <div className="menu-group">
-                  <span className="menu-label">Win</span>
-                  <button onClick={() => adjustModalSize(0.1)}>+</button>
-                  <button onClick={() => adjustModalSize(-0.1)}>-</button>
-                </div>
-                <div className="menu-group">
-                  <span className="menu-label" style={{ opacity: 0.5 }}>v2</span>
-                </div>
                 <div className="menu-group title-group">
                   <h2>
                     {modalView === 'calendar' 
@@ -542,7 +534,14 @@ function App() {
                     }
                   </h2>
                 </div>
-                <button className="close-button" onClick={closeModal}>&times;</button>
+                <div className="menu-group right-controls">
+                  <div className="menu-group">
+                    <span className="menu-label">Win</span>
+                    <button onClick={() => adjustModalSize(0.1)}>+</button>
+                    <button onClick={() => adjustModalSize(-0.1)}>-</button>
+                  </div>
+                  <button className="close-button" onClick={closeModal}>&times;</button>
+                </div>
               </div>
             </div>
             

@@ -84,7 +84,7 @@ body {
 /* Modal Content */
 .modal-content {
   background-color: #272822; /* Monokai background */
-  padding: 10px 15px; /* Reduced padding */
+  padding: 10px 15px 5px 15px; /* Reduced bottom padding */
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
   text-align: left; /* Left justify text */
@@ -103,7 +103,7 @@ body {
 
 /* Modal Header */
 .modal-header {
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   padding-bottom: 5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0; /* Header doesn't shrink */
@@ -123,9 +123,14 @@ body {
   flex-shrink: 0;
 }
 
+.right-controls {
+  gap: 15px;
+}
+
 .title-group {
   flex-grow: 1;
   justify-content: center;
+  min-width: 0; /* Allow title to shrink if needed */
 }
 
 .menu-label {
@@ -222,6 +227,10 @@ body {
   color: #F8F8F2; /* Monokai light grey for paragraphs */
 }
 
+.modal-content p:last-child {
+  margin-bottom: 5px;
+}
+
 /* Copy Feedback */
 .copy-feedback {
   margin-left: 10px;
@@ -236,8 +245,8 @@ body {
 /* Sun Graph */
 .sun-graph-container {
   width: 100%;
-  height: 120px; /* Reduced height for minimalist look */
-  margin-bottom: 15px;
+  aspect-ratio: 3.5 / 1;
+  margin-bottom: 10px;
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 5px;
   padding: 5px;
