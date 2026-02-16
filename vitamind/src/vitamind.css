@@ -354,3 +354,41 @@ body {
   color: #F8F8F2;
   border-color: #F8F8F2;
 }
+
+/* Intro Modal Specifics */
+.intro-modal {
+  text-align: center !important;
+}
+
+.intro-links {
+  margin: 15px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.get-started-button {
+  background-color: #A6E22E; /* Monokai green */
+  color: #272822;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 5px;
+  font-weight: bold;
+  font-family: 'Fira Code', monospace;
+  cursor: pointer;
+  margin-top: 10px;
+  box-shadow: 
+    inset -2px -2px 0px 0px #75715e,
+    inset 2px 2px 0px 0px #e0e0e0,
+    0px 0px 0px 2px #272822;
+  transition: transform 0.1s, background-color 0.2s;
+}
+
+.get-started-button:hover {
+  background-color: #bfef45;
+  transform: scale(1.05);
+}
+
+.get-started-button:active {
+  transform: scale(0.95);
+}
