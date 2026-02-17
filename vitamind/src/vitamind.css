@@ -339,3 +339,31 @@ body {
   color: #F8F8F2;
   border-color: #F8F8F2;
 }
+
+/* Click Hint */
+.click-hint {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(39, 40, 34, 0.7);
+  color: #F8F8F2;
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(102, 217, 239, 0.3);
+  pointer-events: auto;
+  cursor: pointer;
+  font-size: 0.9em;
+  animation: fade-in 1s ease-out;
+  z-index: 500;
+}
+
+@keyframes slide-down {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
