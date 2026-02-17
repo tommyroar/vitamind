@@ -6,6 +6,7 @@ nav:
 
 theme:
   name: material
+  favicon: vitamind/public/favicon.svg
   palette:
     # Palette toggle for light mode
     - scheme: default
