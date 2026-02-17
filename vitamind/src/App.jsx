@@ -286,8 +286,6 @@ function App() {
   const updateStatsForLocation = useCallback(async (lng, lat) => {
     const today = new Date();
 
-    if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
-
     setClickedLat(lat.toFixed(4));
     setClickedLng(lng.toFixed(4));
 
@@ -349,7 +347,6 @@ function App() {
   const handleAllowLocation = useCallback(() => {
     setShowIntroDrawer(false);
     setIntroSeen();
-    triggerClickHint(0);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -375,7 +372,7 @@ function App() {
     } else {
       returnToPugetSound();
     }
-  }, [setIntroSeen, updateStatsForLocation, returnToPugetSound, triggerClickHint]);
+  }, [setIntroSeen, updateStatsForLocation, returnToPugetSound]);
 
   const handleDenyLocation = useCallback(() => {
     setShowIntroDrawer(false);
@@ -684,7 +681,7 @@ function App() {
         </div>
       )}
 
-      {showClickHint && (
+      {showClickHint && !showModal && !showIntroDrawer && (
         <div className="click-hint" onClick={() => setShowClickHint(false)} style={{ pointerEvents: 'auto', cursor: 'pointer' }}>
           <span>Click anywhere on the map to view Vitamin D statistics</span>
         </div>
