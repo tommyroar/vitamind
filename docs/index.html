@@ -10,8 +10,6 @@
       
       
       
-        <link rel="next" href="vitamind/">
-      
       
         
       
@@ -74,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#welcome-to-my-github-pages-site" class="md-skip">
+        <a href="#vitamind" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              VitaminD
             
           </span>
         </div>
@@ -250,6 +248,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VitaminD
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="." class="md-nav__link md-nav__link--active">
         
   
@@ -257,7 +273,7 @@
   <span class="md-ellipsis">
     
   
-    Home
+    VitaminD
   
 
     
@@ -267,33 +283,170 @@
 
       </a>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="vitamind/" class="md-nav__link">
         
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
-  <span class="md-ellipsis">
+  
     
   
-    Vitamind
   
-
-    
-  </span>
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#latitude-sun-angle-and-vitamin-d-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Latitude, Sun Angle, and Vitamin D Production
+      
+    </span>
+  </a>
   
+    <nav class="md-nav" aria-label="Latitude, Sun Angle, and Vitamin D Production">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Relationships:
+      
+    </span>
+  </a>
   
-
-      </a>
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monthly-sun-exposure-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monthly Sun Exposure Recommendations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-implementation-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technical Implementation Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technical Implementation Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sun-calculation-methodology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sun Calculation Methodology
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sun Calculation Methodology">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-suncalc-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How suncalc Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-specific-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project-Specific Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapbox-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mapbox Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mapbox Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#visualization-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualization &amp; Rendering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#location-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Location Services
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -315,9 +468,64 @@
 
 
 
-<h1 id="welcome-to-my-github-pages-site">Welcome to My GitHub Pages Site</h1>
-<p>This is the main index page.</p>
-<p><a href="vitamind/">Go to Vitamind</a></p>
+<h1 id="vitamind">VitaminD</h1>
+<p>The <a href="https://tommyroar.github.io/vitamind/">VitaminD web application</a> is a tool designed to predict when sufficient sun exposure for Vitamin D production will occur based on geographic location and sun data. It is built as a Single Page App (React) deployed via GitHub Pages.</p>
+<h2 id="latitude-sun-angle-and-vitamin-d-production">Latitude, Sun Angle, and Vitamin D Production</h2>
+<p>Vitamin D production is significantly influenced by latitude and the angle of the sun's rays, as this dictates the amount of UV-B radiation reaching the Earth's surface. UV-B radiation is essential for the skin's synthesis of Vitamin D.</p>
+<h3 id="key-relationships">Key Relationships:</h3>
+<ul>
+<li><strong>Solar Zenith Angle</strong>: This is the angle of the sun's light relative to the vertical. At higher latitudes, in the early morning or late afternoon, and during winter months, the solar zenith angle increases. As this angle increases, more UV-B radiation is absorbed by the ozone layer, reducing the amount that reaches the Earth's surface and thus limiting vitamin D production. <a href="https://ods.od.nih.gov/factsheets/VitaminD-Consumer/">Source: National Institutes of Health</a></li>
+<li><strong>"Vitamin D Winter"</strong>: In regions at higher latitudes (generally above 34 degrees), the sun is too low in the sky during winter months for effective UV-B penetration, making vitamin D synthesis nearly impossible. This period is often referred to as a "vitamin D winter." For example, in Boston, Massachusetts (above 34 degrees latitude), vitamin D synthesis is impossible for four months of the year, and in Edmonton, Canada, for six months. Some models suggest that at latitudes beyond 50 degrees, no vitamin D synthesis occurs outside of summer. <a href="https://www.westonaprice.org/health-topics/modern-diseases/the-miracle-of-vitamin-d/">Source: Weston A. Price Foundation</a></li>
+<li><strong>Equator vs. Higher Latitudes</strong>: Those closer to the equator, where the midday sun is high in the sky year-round, can produce vitamin D throughout the year. Even small migrations from equatorial regions can lead to significant decreases in vitamin D synthesis during non-summer months at higher latitudes. <a href="https://www.grassrootshealth.net/blog/sun-exposure-vitamin-d-benefits/">Source: GrassrootsHealth</a></li>
+<li><strong>Optimal Sun Angle</strong>: Studies suggest significant vitamin D3 production occurs when the solar altitude angle is greater than 45 degrees. A common guideline is that if your shadow is shorter than you are, the sun's angle is sufficient for vitamin D production. <a href="https://ods.od.nih.gov/factsheets/VitaminD-HealthProfessional/">Source: National Institutes of Health (Health Professional Fact Sheet)</a></li>
+<li><strong>Other Factors</strong>: Beyond latitude and sun angle, other factors like clouds, air pollution (e.g., sulfur dioxide, nitrous oxide, ozone), altitude, and reflective surfaces (like snow) can also affect the amount of UV-B radiation reaching the skin and, consequently, vitamin D production. <a href="https://ods.od.nih.gov/factsheets/VitaminD-Consumer/">Source: National Institutes of Health</a></li>
+</ul>
+<h3 id="monthly-sun-exposure-recommendations">Monthly Sun Exposure Recommendations</h3>
+<p>General guidelines for sun exposure to produce Vitamin D focus on daily or weekly exposure, which can be extrapolated over a month. Key factors influencing the duration of exposure required:</p>
+<ul>
+<li><strong>UV Index</strong>: A UV Index of 3 or higher is generally required for effective Vitamin D synthesis. When the UV Index is below 3 (common during winter months in many regions), Vitamin D production is significantly limited or impossible. [Source: health.vic.gov.au]</li>
+<li><strong>Skin Type</strong>: Individuals with darker skin tones possess more melanin, which acts as a natural sunscreen, necessitating three to six times more sun exposure than those with lighter skin to produce an equivalent amount of Vitamin D. <a href="https://ods.od.nih.gov/factsheets/VitaminD-Consumer/">Source: National Institutes of Health</a></li>
+<li><strong>Time of Day</strong>: The most effective period for Vitamin D production is typically between 10 a.m. and 3 p.m. when UVB rays are strongest. [Source: examine.com]</li>
+<li><strong>Amount of Skin Exposed</strong>: Exposing areas like the face, arms, and hands for a few minutes most days when the UV index is 3 or above can be sufficient for many.</li>
+<li><strong>Latitude and Season</strong>: As previously discussed, higher latitudes and winter months drastically reduce the potential for Vitamin D synthesis.</li>
+</ul>
+<p><strong>General Exposure Guidelines:</strong>
+For most individuals, 5 to 30 minutes of unprotected sun exposure to the hands, face, and arms, at least three times a week, between 10 a.m. and 3 p.m., is often considered sufficient to prevent Vitamin D deficiency when conditions (UV Index &gt; 3) are optimal. It's crucial to balance this with minimizing the risk of skin damage and cancer. Longer exposure periods do not necessarily lead to more Vitamin D production, as UVB rays eventually degrade the vitamin D already synthesized, acting as a natural safety mechanism. In situations where adequate sun exposure is not feasible, dietary intake or supplementation may be necessary. [Source: examine.com, health.vic.gov.au]</p>
+<h3 id="sources">Sources:</h3>
+<ul>
+<li><strong>National Institutes of Health</strong>: <a href="https://ods.od.nih.gov/factsheets/VitaminD-Consumer/">Consumer Fact Sheet</a>, <a href="https://ods.od.nih.gov/factsheets/VitaminD-HealthProfessional/">Health Professional Fact Sheet</a></li>
+<li><strong>Weston A. Price Foundation</strong>: <a href="https://www.westonaprice.org/health-topics/modern-diseases/the-miracle-of-vitamin-d/">The Miracle of Vitamin D</a></li>
+<li><strong>GrassrootsHealth</strong>: <a href="https://www.grassrootshealth.net/blog/sun-exposure-vitamin-d-benefits/">Sun Exposure &amp; Vitamin D Benefits</a></li>
+<li><strong>health.vic.gov.au</strong>: <a href="https://www.betterhealth.vic.gov.au/health/healthyliving/vitamin-d-sun-exposure">Better Health Channel - Vitamin D - sun exposure</a></li>
+<li><strong>examine.com</strong>: <a href="https://examine.com/supplements/vitamin-d/research/#how-to-optimize-vitamin-d-levels">Vitamin D - Scientific References</a></li>
+</ul>
+<h2 id="technical-implementation-details">Technical Implementation Details</h2>
+<h3 id="sun-calculation-methodology">Sun Calculation Methodology</h3>
+<p>The application uses the <a href="https://github.com/mourner/suncalc"><strong><code>suncalc</code></strong></a> library for its core astronomical calculations.</p>
+<h4 id="how-suncalc-works">How <code>suncalc</code> Works</h4>
+<p><code>suncalc</code> is a powerful, lightweight JavaScript library that computes sun and moon positions and phases. Crucially, it operates using <strong>mathematical formulas</strong> rather than relying on large, pre-calculated datasets.</p>
+<p>It performs calculations based on astronomical algorithms that model the Earth's orbit and tilt. By providing a specific <code>Date</code>, <code>latitude</code>, and <code>longitude</code>, it can dynamically and accurately compute celestial positions for any time, past or present.</p>
+<h4 id="project-specific-implementation">Project-Specific Implementation</h4>
+<p>The <code>solarCalculations.js</code> utility in this project builds upon <code>suncalc</code> to provide specialized, actionable information related to Vitamin D synthesis.</p>
+<ul>
+<li><strong>Vitamin D Threshold</strong>: The key feature is the use of a <strong>45-degree sun altitude threshold</strong>. Scientific research indicates that when the sun is below this angle, the atmosphere filters out most of the UVB radiation required for the skin to produce Vitamin D.</li>
+<li><strong>Finding the "Vitamin D Window"</strong>: The application iterates through dates to determine the precise start and end times of the day when the sun is above this 45-degree mark.</li>
+<li><strong>Seasonal Awareness</strong>: It can also project forward to tell you how many days are left in the "Vitamin D season" before the sun's peak daily altitude drops below 45 degrees.</li>
+</ul>
+<h3 id="mapbox-integration">Mapbox Integration</h3>
+<p>The application integrates <a href="https://docs.mapbox.com/api/">Mapbox</a> to provide an interactive geographic interface for sun data analysis.</p>
+<h4 id="visualization-rendering">Visualization &amp; Rendering</h4>
+<ul>
+<li><strong><a href="https://docs.mapbox.com/mapbox-gl-js/">Mapbox GL JS</a></strong>: The project utilizes the Mapbox GL JS library for high-performance, WebGL-based map rendering.</li>
+<li><strong>Basemap</strong>: The map uses the <a href="https://docs.mapbox.com/api/maps/styles/#mapbox-navigation-night-v1"><code>navigation-night-v1</code></a> style, which provides a clean, dark aesthetic that minimizes visual noise and ensures the UI elements remain highly legible.</li>
+<li><strong>Navigation Controls</strong>: Standard zoom and rotation controls are integrated to allow for easy map manipulation.</li>
+</ul>
+<h4 id="location-services">Location Services</h4>
+<ul>
+<li><strong><a href="https://docs.mapbox.com/api/search/geocoding/">Geocoding API</a></strong>: When a user clicks the map or retrieves their position via GPS, the application calls the Mapbox Geocoding API. Specifically, it uses reverse geocoding to transform geographic coordinates (longitude and latitude) into descriptive city names.</li>
+<li><strong>User Geolocation</strong>: On initial load, the SPA utilizes the browser's Geolocation API to identify the user's current location. This data is used to automatically center the map and immediately present relevant solar statistics for the user's actual environment.</li>
+<li><strong>Interactive Selection</strong>: Users can click anywhere on the global map to instantly recalculate solar data for that specific point, enabling cross-comparison of Vitamin D potential across different regions.</li>
+</ul>
 
 
 
