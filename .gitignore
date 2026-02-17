@@ -286,3 +286,5 @@ mapbox.key
 
 # GitHub App credentials
 gha-creds-*.json
+.DS_Store
+**/.DS_Store
