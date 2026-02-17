@@ -9,6 +9,9 @@ The deployment has three tracks:
 2.  **Vitamind SPA (Production)**: Deploys automatically on **merge to `main`**.
 3.  **Documentation**: Must be manually triggered via `.github/workflows/deploy-docs.yaml`.
 
+## MacOS Environment Note
+Always ensure `.DS_Store` files are ignored globally and within the project `.gitignore`. These files frequently cause merge conflicts and dirty Git states on macOS environments. If found in a `git status`, they must be removed from the index and ignored before proceeding.
+
 ## Gemini Task Protocol
 
 When performing development or deployment-related tasks:
