@@ -1,0 +1,8 @@
+{
+  "name": "Vitamind",
+  "root_path": "/vitamind/",
+  "docs_path": "/vitamind/docs/",
+  "description": "A React SPA that visualizes Vitamin D synthesis potential across different geographical locations using Mapbox.",
+  "status": "Active",
+  "tags": ["React", "Mapbox", "Health", "Visualization"]
+}

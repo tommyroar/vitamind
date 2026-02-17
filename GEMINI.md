@@ -1,20 +1,4 @@
-# Project Indexing and Registration
 
-**Objective:** Ensure all new applications and documentation sites are correctly registered with the central index.
-
-**Gemini Task:**
-Whenever a new application is added or the site structure is modified, you must read and follow the instructions in **`INDEX.md`**.
-
-```
-read_file(file_path="INDEX.md")
-```
-
-Follow the three-step process outlined in that document:
-1.  **Create an App Stub**: Create or update the relevant JSON file in the `apps/` directory.
-2.  **Automate Updates**: Ensure the GitHub Actions workflow includes the notification dispatch to the central repository.
-3.  **Local Verification**: If necessary, run the local indexing script as described.
-
----
 
 # Deployment Tasks for Vitamind SPA
 
@@ -88,7 +72,7 @@ run_shell_command(
 **Gemini Task:**
 Always monitor the deployment with `gh cli`. For example, to monitor the latest run for a workflow named "deploy-vitamind.yaml" on the "vitamind" branch, you would use:
 ```
-gh run list --workflow="deploy-vitamind.yaml" --branch="vitamind" --json databaseId,status,conclusion --limit 1
+gh run list --workflow="deploy-vitamind.yaml" --branch="main" --json databaseId,status,conclusion --limit 1
 # Then, to watch a specific run:
 # gh run watch <RUN_DATABASE_ID>
 ```

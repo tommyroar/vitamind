@@ -281,5 +281,8 @@ cython_debug/
 mapbox.key
 .mapbox.key.swp
 
+# gemini-cli settings
 .gemini/
+
+# GitHub App credentials
 gha-creds-*.json
