@@ -14,6 +14,26 @@ const BASE_MODAL_WIDTH = 600; // Base width in pixels
 const BASE_MODAL_HEIGHT = 500; // Base height in pixels
 
 const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
+  const todayTextRef = useRef(null);
+  const [todayRectWidth, setTodayRectWidth] = useState(0);
+  const vDayTextRef = useRef(null);
+  const [vDayRectWidth, setVDayRectWidth] = useState(0);
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString();
+  const vitaminDDateStr = vitaminDDate?.toLocaleDateString();
+
+  useEffect(() => {
+    if (todayTextRef.current && typeof todayTextRef.current.getBBox === 'function') {
+      const bbox = todayTextRef.current.getBBox();
+      setTodayRectWidth(bbox.width + 10); // Add 10px padding
+    }
+    if (vDayTextRef.current && vitaminDDate && typeof vDayTextRef.current.getBBox === 'function') { // Only measure if vDayTextRef exists and vitaminDDate is valid
+      const bbox = vDayTextRef.current.getBBox();
+      setVDayRectWidth(bbox.width + 10); // Add 10px padding
+    }
+  }, [dateStr, vitaminDDateStr, vitaminDDate]);
+
   if (!yearlyData || !yearlyData.length) return null;
 
   const width = 350;
@@ -22,7 +42,6 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const graphWidth = width - 2 * padding;
   const graphHeight = height - 2 * padding;
 
-  const today = new Date();
   const currentMonthIndex = today.getMonth();
   const currentDay = today.getDate();
   
@@ -74,22 +93,6 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const maxEntry = orderedData[maxIdx];
   const minEntry = orderedData[minIdx];
   
-  const todayTextRef = useRef(null);
-  const [todayRectWidth, setTodayRectWidth] = useState(0);
-  const vDayTextRef = useRef(null);
-  const [vDayRectWidth, setVDayRectWidth] = useState(0);
-
-  useEffect(() => {
-    if (todayTextRef.current && typeof todayTextRef.current.getBBox === 'function') {
-      const bbox = todayTextRef.current.getBBox();
-      setTodayRectWidth(bbox.width + 10); // Add 10px padding
-    }
-    if (vDayTextRef.current && vitaminDDate && typeof vDayTextRef.current.getBBox === 'function') { // Only measure if vDayTextRef exists and vitaminDDate is valid
-      const bbox = vDayTextRef.current.getBBox();
-      setVDayRectWidth(bbox.width + 10); // Add 10px padding
-    }
-  }, [today.toLocaleDateString(), vitaminDDate?.toLocaleDateString()]);
-
   return (
     <div className="sun-graph-container">
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
@@ -200,11 +203,16 @@ function App() {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null); // Ref to store the map instance
   const scrollContainerRef = useRef(null); // Ref for the scrollable modal content
-  const [lng] = useState(-122.3321); // Default longitude for Seattle
-  const [lat] = useState(47.6062); // Default latitude for Seattle
-  const [zoom] = useState(4);   // Default zoom for Seattle (showing Western US)
+  
+  // Initial position: Puget Sound
+  const [lng] = useState(-122.3321);
+  const [lat] = useState(47.6062);
+  const [zoom] = useState(9); // Start at medium zoom
 
   const [showModal, setShowModal] = useState(false);
+  const [showIntroDrawer, setShowIntroDrawer] = useState(false);
+  const [showClickHint, setShowClickHint] = useState(false);
+  
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
   const [highestSunAngle, setHighestSunAngle] = useState(null);
@@ -275,7 +283,71 @@ function App() {
 
     setShowModal(true);
     setModalView('stats');
+    setShowClickHint(false); // Hide hint once a location is clicked
   }, [fetchCityName]);
+
+  const startIntroSequence = useCallback(() => {
+    if (!mapRef.current) return;
+
+    // 1. Zoom out to globe
+    mapRef.current.flyTo({
+      center: [0, 20],
+      zoom: 1.5,
+      duration: 4000,
+      essential: true
+    });
+
+    // 2. Open drawer after zoom-out starts
+    setTimeout(() => {
+      setShowIntroDrawer(true);
+    }, 1000);
+  }, []);
+
+  const handleAllowLocation = () => {
+    setShowIntroDrawer(false);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLng = position.coords.longitude;
+          const userLat = position.coords.latitude;
+          
+          if (mapRef.current) {
+            mapRef.current.flyTo({
+              center: [userLng, userLat],
+              zoom: 10,
+              duration: 3000,
+              essential: true
+            });
+          }
+          updateStatsForLocation(userLng, userLat);
+        }, 
+        (error) => {
+          console.warn("Geolocation access denied or failed:", error.message);
+          returnToPugetSound();
+        },
+        { timeout: 8000 }
+      );
+    } else {
+      returnToPugetSound();
+    }
+  };
+
+  const handleDenyLocation = () => {
+    setShowIntroDrawer(false);
+    returnToPugetSound();
+  };
+
+  const returnToPugetSound = () => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [-122.3321, 47.6062],
+        zoom: 9,
+        duration: 3000,
+        essential: true
+      });
+    }
+    setShowClickHint(true);
+  };
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -287,7 +359,6 @@ function App() {
     // Check for WebGL support
     if (!mapboxgl.supported()) {
       console.error("WebGL not supported");
-      // Optional: show a user-friendly message in the UI instead of just console.error
       return;
     }
 
@@ -354,6 +425,9 @@ function App() {
           'space-color': 'rgb(11, 11, 25)', // Background color
           'star-intensity': 0.6 // Background star brightness
         });
+
+        // Trigger intro sequence on load
+        startIntroSequence();
       });
 
       mapRef.current.on('click', (e) => {
@@ -362,36 +436,6 @@ function App() {
 
       // Add navigation controls (optional)
       mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
-
-      // Request user location on load
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const userLng = position.coords.longitude;
-            const userLat = position.coords.latitude;
-            
-            if (mapRef.current) {
-              mapRef.current.setCenter([userLng, userLat]);
-              mapRef.current.setZoom(10); // Zoom in a bit on user location
-            }
-            
-            updateStatsForLocation(userLng, userLat);
-          }, 
-          (error) => {
-            console.warn("Geolocation access denied or failed:", error.message);
-            // Fallback: update stats for the default location so some data is shown
-            updateStatsForLocation(lng, lat);
-          },
-          {
-            enableHighAccuracy: false,
-            timeout: 8000,
-            maximumAge: 60000
-          }
-        );
-      } else {
-        // No geolocation available: show stats for default location
-        updateStatsForLocation(lng, lat);
-      }
 
     } catch (err) {
       console.error("Error initializing Mapbox:", err);
@@ -404,7 +448,7 @@ function App() {
         mapRef.current = null;
       }
     };
-  }, [lat, lng, zoom, updateStatsForLocation]); // dependencies for Mapbox init
+  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence]); // dependencies for Mapbox init
 
   // Effect to update localStorage when fontSize changes
   useEffect(() => {
@@ -531,6 +575,33 @@ function App() {
   return (
     <div className="app-main-container">
       <div ref={mapContainerRef} data-testid="map-container" className="map-display-area" />
+
+      {showIntroDrawer && (
+        <div className="intro-drawer-overlay">
+          <div className="intro-drawer">
+            <div className="intro-content">
+              <h2>Welcome to Vitamind</h2>
+              <p>
+                This application helps you track when the sun is at the optimal angle (above 45°) for your body to naturally produce Vitamin D. 
+                Sufficient UV-B exposure is crucial for bone health and can help mitigate Seasonal Affective Disorder (SAD) by regulating mood and circadian rhythms.
+              </p>
+              <p className="location-prompt">
+                To provide accurate data for your current environment, we'd like to access your location.
+              </p>
+              <div className="drawer-actions">
+                <button className="primary-btn" onClick={handleAllowLocation}>Allow Location</button>
+                <button className="secondary-btn" onClick={handleDenyLocation}>Not Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showClickHint && (
+        <div className="click-hint">
+          <span>Click anywhere on the map to view Vitamin D statistics</span>
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
