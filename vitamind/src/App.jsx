@@ -13,6 +13,9 @@ const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
 const BASE_MODAL_WIDTH = 600; // Base width in pixels
 const BASE_MODAL_HEIGHT = 500; // Base height in pixels
 
+const INTRO_SEEN_KEY = 'vitamind_intro_seen';
+const INTRO_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
 const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const todayTextRef = useRef(null);
   const [todayRectWidth, setTodayRectWidth] = useState(0);
@@ -219,11 +222,11 @@ function App() {
   const [solarNoonTime, setSolarNoonTime] = useState(null);
   const [dayLength, setDayLength] = useState(null);
   const [fontSize, setFontSize] = useState(() => {
-    const storedFontSize = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
+    const storedFontSize = sessionStorage.getItem(FONT_SIZE_STORAGE_KEY);
     return storedFontSize ? parseFloat(storedFontSize) : DEFAULT_FONT_SIZE;
   });
   const [modalSize, setModalSize] = useState(() => {
-    const storedModalSize = localStorage.getItem(MODAL_SIZE_STORAGE_KEY);
+    const storedModalSize = sessionStorage.getItem(MODAL_SIZE_STORAGE_KEY);
     return storedModalSize ? parseFloat(storedModalSize) : DEFAULT_MODAL_SIZE;
   });
 
@@ -303,8 +306,26 @@ function App() {
     }, 1000);
   }, []);
 
-  const handleAllowLocation = () => {
+  const setIntroSeen = useCallback(() => {
+    const expiry = Date.now() + INTRO_TTL;
+    localStorage.setItem(INTRO_SEEN_KEY, JSON.stringify({ value: true, expiry }));
+  }, []);
+
+  const returnToPugetSound = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [-122.3321, 47.6062],
+        zoom: 9,
+        duration: 3000,
+        essential: true
+      });
+    }
+    setShowClickHint(true);
+  }, []);
+
+  const handleAllowLocation = useCallback(() => {
     setShowIntroDrawer(false);
+    setIntroSeen();
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -330,24 +351,13 @@ function App() {
     } else {
       returnToPugetSound();
     }
-  };
+  }, [setIntroSeen, updateStatsForLocation, returnToPugetSound]);
 
-  const handleDenyLocation = () => {
+  const handleDenyLocation = useCallback(() => {
     setShowIntroDrawer(false);
+    setIntroSeen();
     returnToPugetSound();
-  };
-
-  const returnToPugetSound = () => {
-    if (mapRef.current) {
-      mapRef.current.flyTo({
-        center: [-122.3321, 47.6062],
-        zoom: 9,
-        duration: 3000,
-        essential: true
-      });
-    }
-    setShowClickHint(true);
-  };
+  }, [setIntroSeen, returnToPugetSound]);
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -426,8 +436,17 @@ function App() {
           'star-intensity': 0.6 // Background star brightness
         });
 
-        // Trigger intro sequence on load
-        startIntroSequence();
+        // Check if intro was seen in last 30 days
+        const introData = JSON.parse(localStorage.getItem(INTRO_SEEN_KEY) || '{}');
+        const now = Date.now();
+        
+        if (!introData.expiry || now > introData.expiry) {
+          // Play intro and reset TTL once user interacts
+          startIntroSequence();
+        } else {
+          // Skip intro, request location immediately
+          handleAllowLocation();
+        }
       });
 
       mapRef.current.on('click', (e) => {
@@ -448,16 +467,16 @@ function App() {
         mapRef.current = null;
       }
     };
-  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence]); // dependencies for Mapbox init
+  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, handleAllowLocation]); // dependencies for Mapbox init
 
-  // Effect to update localStorage when fontSize changes
+  // Effect to update sessionStorage when fontSize changes
   useEffect(() => {
-    localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
+    sessionStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
   }, [fontSize]);
 
-  // Effect to update localStorage when modalSize changes
+  // Effect to update sessionStorage when modalSize changes
   useEffect(() => {
-    localStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
+    sessionStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
   }, [modalSize]);
 
 
@@ -575,6 +594,14 @@ function App() {
   return (
     <div className="app-main-container">
       <div ref={mapContainerRef} data-testid="map-container" className="map-display-area" />
+
+      <button 
+        className="reset-cache-btn" 
+        onClick={() => { localStorage.clear(); window.location.reload(); }}
+        title="Reset App Cache (Clear intro seen flag)"
+      >
+        &times;
+      </button>
 
       {showIntroDrawer && (
         <div className="modal-overlay">

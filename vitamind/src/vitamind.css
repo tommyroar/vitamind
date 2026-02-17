@@ -340,6 +340,28 @@ body {
   border-color: #F8F8F2;
 }
 
+/* Reset Cache Button */
+.reset-cache-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #F8F8F2;
+  opacity: 0.2;
+  font-size: 1.2em;
+  cursor: pointer;
+  z-index: 3000;
+  transition: opacity 0.2s;
+  padding: 5px;
+  line-height: 1;
+}
+
+.reset-cache-btn:hover {
+  opacity: 0.8;
+  color: #F92672;
+}
+
 /* Click Hint */
 .click-hint {
   position: absolute;
