@@ -286,6 +286,8 @@ function App() {
   const updateStatsForLocation = useCallback(async (lng, lat) => {
     const today = new Date();
 
+    if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+
     setClickedLat(lat.toFixed(4));
     setClickedLng(lng.toFixed(4));
 
