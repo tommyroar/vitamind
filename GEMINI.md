@@ -13,7 +13,8 @@ The deployment has three tracks:
 
 When performing development or deployment-related tasks:
 
-1.  **Reference DEPLOY.md & ISSUES.md**: Always read [DEPLOY.md](./DEPLOY.md) and [ISSUES.md](./ISSUES.md) to ensure compliance with the project's staging-first deployment strategy and lifecycle management.
+1.  **Workspace Isolation**: Each session **MUST** use `git worktree` to create an isolated working directory. This prevents interference with simultaneous agent sessions.
+2.  **Reference DEPLOY.md & ISSUES.md**: Always read [DEPLOY.md](./DEPLOY.md) and [ISSUES.md](./ISSUES.md) to ensure compliance with the project's staging-first deployment strategy and lifecycle management.
 2.  **Verify Domain Coexistence**: Ensure that any changes to workflows maintain the `keep_files: true` configuration to prevent the SPA from overwriting the Docs (or vice-versa).
 3.  **PR Feedback Loop**: The Gemini CLI is configured to respond to `@gemini-cli` commands in standard comments, PR reviews, and individual code line comments. Monitor all three for feedback.
 
