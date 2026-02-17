@@ -80,11 +80,11 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const [vDayRectWidth, setVDayRectWidth] = useState(0);
 
   useEffect(() => {
-    if (todayTextRef.current) {
+    if (todayTextRef.current && typeof todayTextRef.current.getBBox === 'function') {
       const bbox = todayTextRef.current.getBBox();
       setTodayRectWidth(bbox.width + 10); // Add 10px padding
     }
-    if (vDayTextRef.current && vitaminDDate) { // Only measure if vDayTextRef exists and vitaminDDate is valid
+    if (vDayTextRef.current && vitaminDDate && typeof vDayTextRef.current.getBBox === 'function') { // Only measure if vDayTextRef exists and vitaminDDate is valid
       const bbox = vDayTextRef.current.getBBox();
       setVDayRectWidth(bbox.width + 10); // Add 10px padding
     }
@@ -284,98 +284,124 @@ function App() {
     }
     if (mapRef.current) return; // Initialize map only once
 
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/navigation-night-v1', // Night navigation basemap
-      center: [lng, lat],
-      zoom: zoom,
-      projection: 'globe' // Enable globe projection for better terminator visualization
-    });
+    // Check for WebGL support
+    if (!mapboxgl.supported()) {
+      console.error("WebGL not supported");
+      // Optional: show a user-friendly message in the UI instead of just console.error
+      return;
+    }
 
-    mapRef.current.on('load', () => {
-      const vitaminDAreaData = getVitaminDAreaGeoJSON();
-      
-      if (mapRef.current.getSource('vitamin-d-area')) return;
-
-      mapRef.current.addSource('vitamin-d-area', {
-        type: 'geojson',
-        data: vitaminDAreaData
+    try {
+      mapRef.current = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: 'mapbox://styles/mapbox/navigation-night-v1', // Night navigation basemap
+        center: [lng, lat],
+        zoom: zoom,
+        projection: 'globe' // Enable globe projection for better terminator visualization
       });
 
-      // Vitamin D Area fill layer - Monokai Yellow
-      mapRef.current.addLayer({
-        id: 'vitamin-d-area-layer',
-        type: 'fill',
-        source: 'vitamin-d-area',
-        layout: {},
-        paint: {
-          'fill-color': '#E6DB74',
-          'fill-opacity': 0.4
-        }
-      });
+      mapRef.current.on('load', () => {
+        const vitaminDAreaData = getVitaminDAreaGeoJSON();
+        
+        if (mapRef.current.getSource('vitamin-d-area')) return;
 
-      // Warm boundary line
-      mapRef.current.addLayer({
-        id: 'vitamin-d-area-boundary',
-        type: 'line',
-        source: 'vitamin-d-area',
-        layout: {},
-        paint: {
-          'line-color': '#FD971F', // Monokai Orange
-          'line-width': 2,
-          'line-opacity': 0.6
-        }
-      });
-      
-      // Update map labels to use monospaced-like font if possible
-      const style = mapRef.current.getStyle();
-      if (style && style.layers) {
-        style.layers.forEach(layer => {
-          if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
-            mapRef.current.setLayoutProperty(layer.id, 'text-font', ['DIN Offc Pro Bold', 'Arial Unicode MS Regular']);
-            mapRef.current.setLayoutProperty(layer.id, 'text-letter-spacing', 0.1);
+        mapRef.current.addSource('vitamin-d-area', {
+          type: 'geojson',
+          data: vitaminDAreaData
+        });
+
+        // Vitamin D Area fill layer - Monokai Yellow
+        mapRef.current.addLayer({
+          id: 'vitamin-d-area-layer',
+          type: 'fill',
+          source: 'vitamin-d-area',
+          layout: {},
+          paint: {
+            'fill-color': '#E6DB74',
+            'fill-opacity': 0.4
           }
         });
+
+        // Warm boundary line
+        mapRef.current.addLayer({
+          id: 'vitamin-d-area-boundary',
+          type: 'line',
+          source: 'vitamin-d-area',
+          layout: {},
+          paint: {
+            'line-color': '#FD971F', // Monokai Orange
+            'line-width': 2,
+            'line-opacity': 0.6
+          }
+        });
+        
+        // Update map labels to use monospaced-like font if possible
+        const style = mapRef.current.getStyle();
+        if (style && style.layers) {
+          style.layers.forEach(layer => {
+            if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+              mapRef.current.setLayoutProperty(layer.id, 'text-font', ['DIN Offc Pro Bold', 'Arial Unicode MS Regular']);
+              mapRef.current.setLayoutProperty(layer.id, 'text-letter-spacing', 0.1);
+            }
+          });
+        }
+
+        // Add atmosphere for the globe
+        mapRef.current.setFog({
+          'color': 'rgb(186, 210, 235)', // Lower atmosphere
+          'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
+          'horizon-blend': 0.02, // Atmosphere thickness
+          'space-color': 'rgb(11, 11, 25)', // Background color
+          'star-intensity': 0.6 // Background star brightness
+        });
+      });
+
+      mapRef.current.on('click', (e) => {
+        updateStatsForLocation(e.lngLat.lng, e.lngLat.lat);
+      });
+
+      // Add navigation controls (optional)
+      mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
+      // Request user location on load
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLng = position.coords.longitude;
+            const userLat = position.coords.latitude;
+            
+            if (mapRef.current) {
+              mapRef.current.setCenter([userLng, userLat]);
+              mapRef.current.setZoom(10); // Zoom in a bit on user location
+            }
+            
+            updateStatsForLocation(userLng, userLat);
+          }, 
+          (error) => {
+            console.warn("Geolocation access denied or failed:", error.message);
+            // Fallback: update stats for the default location so some data is shown
+            updateStatsForLocation(lng, lat);
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 8000,
+            maximumAge: 60000
+          }
+        );
+      } else {
+        // No geolocation available: show stats for default location
+        updateStatsForLocation(lng, lat);
       }
 
-      // Add atmosphere for the globe
-      mapRef.current.setFog({
-        'color': 'rgb(186, 210, 235)', // Lower atmosphere
-        'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
-        'horizon-blend': 0.02, // Atmosphere thickness
-        'space-color': 'rgb(11, 11, 25)', // Background color
-        'star-intensity': 0.6 // Background star brightness
-      });
-    });
-
-    mapRef.current.on('click', (e) => {
-      updateStatsForLocation(e.lngLat.lng, e.lngLat.lat);
-    });
-
-    // Add navigation controls (optional)
-    mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
-
-    // Request user location on load
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const userLng = position.coords.longitude;
-        const userLat = position.coords.latitude;
-        
-        if (mapRef.current) {
-          mapRef.current.setCenter([userLng, userLat]);
-          mapRef.current.setZoom(10); // Zoom in a bit on user location
-        }
-        
-        updateStatsForLocation(userLng, userLat);
-      }, (error) => {
-        console.warn("Geolocation access denied or failed:", error.message);
-      });
+    } catch (err) {
+      console.error("Error initializing Mapbox:", err);
     }
 
     // Clean up on unmount
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
+        mapRef.current = null;
       }
     };
   }, [lat, lng, zoom, updateStatsForLocation]); // dependencies for Mapbox init
