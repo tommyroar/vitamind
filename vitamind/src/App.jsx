@@ -479,11 +479,9 @@ function App() {
 
       // Close intro modal when map animation finishes
       mapRef.current.on('moveend', (e) => {
-        // Only trigger if the intro modal is still showing
-        // We use a functional update or direct check if possible, 
-        // but since this is inside a listener, we'll check the DOM/state carefully.
-        // Actually, it's better to use a ref for the intro modal state to check here safely.
-        if (e.originalEvent === undefined) { // Check if it was triggered by flyTo/programmatic
+        // Only trigger if the intro modal is still showing and we have zoomed IN
+        // (Initial globe view is ~1.5, Puget Sound is 9, User is 10)
+        if (e.originalEvent === undefined && mapRef.current.getZoom() > 5) { 
            setShowIntroDrawer(prev => {
              if (prev) {
                setIntroSeen();
@@ -664,9 +662,6 @@ function App() {
                 <p>
                   This application helps you track when the sun is at the optimal angle (above 45°) for your body to naturally produce Vitamin D. 
                   Sufficient UV-B exposure is crucial for bone health and can help mitigate Seasonal Affective Disorder (SAD) by regulating mood and circadian rhythms.
-                </p>
-                <p style={{ color: '#E6DB74', fontWeight: 'bold', margin: '20px 0' }}>
-                  To provide accurate data for your current environment, we'd like to access your location.
                 </p>
               </div>
             </div>
