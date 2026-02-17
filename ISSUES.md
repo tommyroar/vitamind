@@ -19,15 +19,20 @@ All code changes must be verified locally before being shared.
 
 ## Phase 3: Pull Request & Staging Lifecycle
 All new features and fixes must pass through the staging environment before production.
+
+**CRITICAL: The Gemini CLI is PROHIBITED from merging its own Pull Requests. It must only propose changes and wait for a human maintainer to perform the merge.**
+
 1. **Create PR to Staging**: Open a GitHub PR targeting the `staging` branch, linked to the original issue (e.g., "Fixes #123").
 2. **Feedback Loop**: 
     - Monitor for tagged comments or review feedback on the PR.
     - Respond to feedback by pushing new revisions (commits) to the same branch.
+    - **Do NOT merge.** Keep the PR open until it is merged by the user.
 3. **Staging Verification**: 
-    - Once the PR is merged into `staging`, monitor the `deploy-staging.yaml` workflow.
+    - Once the PR is merged BY THE USER into `staging`, monitor the `deploy-staging.yaml` workflow.
     - Verify the fix at the staging URL: `https://tommyroar.github.io/vitamind/staging/`.
 4. **Promotion to Production**: 
-    - Once verified in staging, open a PR from `staging` to `main` (or merge directly if authorized).
+    - Once verified in staging, open a PR from `staging` to `main`. 
+    - Again, wait for the user to perform the merge.
 
 ## Phase 4: Deployment & Closure
 An issue is only considered resolved when the fix is live in the production environment.
