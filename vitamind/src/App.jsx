@@ -229,17 +229,12 @@ function App() {
   const [showClickHint, setShowClickHint] = useState(false);
   
   const hintTimeoutRef = useRef(null);
-  const hintHideTimeoutRef = useRef(null);
 
   const triggerClickHint = useCallback((delay = 0) => {
     if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
-    if (hintHideTimeoutRef.current) clearTimeout(hintHideTimeoutRef.current);
 
     hintTimeoutRef.current = setTimeout(() => {
       setShowClickHint(true);
-      hintHideTimeoutRef.current = setTimeout(() => {
-        setShowClickHint(false);
-      }, 5000);
     }, delay);
   }, []);
 
@@ -688,7 +683,7 @@ function App() {
       )}
 
       {showClickHint && (
-        <div className="click-hint">
+        <div className="click-hint" onClick={() => setShowClickHint(false)} style={{ pointerEvents: 'auto', cursor: 'pointer' }}>
           <span>Click anywhere on the map to view Vitamin D statistics</span>
         </div>
       )}

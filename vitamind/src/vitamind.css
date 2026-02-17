@@ -351,7 +351,8 @@ body {
   padding: 10px 20px;
   border-radius: 20px;
   border: 1px solid rgba(102, 217, 239, 0.3);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   font-size: 0.9em;
   animation: fade-in 1s ease-out;
   z-index: 500;
