@@ -207,6 +207,18 @@ function App() {
   const mapRef = useRef(null); // Ref to store the map instance
   const scrollContainerRef = useRef(null); // Ref for the scrollable modal content
   
+  // Clear localStorage if "clear" query param is present
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('clear')) {
+      localStorage.clear();
+      // Remove the clear param from URL without refreshing
+      const url = new URL(window.location);
+      url.searchParams.delete('clear');
+      window.history.replaceState({}, '', url);
+    }
+  }, []);
+
   // Initial position: Puget Sound
   const [lng] = useState(-122.3321);
   const [lat] = useState(47.6062);
@@ -594,14 +606,6 @@ function App() {
   return (
     <div className="app-main-container">
       <div ref={mapContainerRef} data-testid="map-container" className="map-display-area" />
-
-      <button 
-        className="reset-cache-btn" 
-        onClick={() => { localStorage.clear(); window.location.reload(); }}
-        title="Reset App Cache (Clear intro seen flag)"
-      >
-        &times;
-      </button>
 
       {showIntroDrawer && (
         <div className="modal-overlay">
