@@ -477,6 +477,24 @@ function App() {
         updateStatsForLocation(e.lngLat.lng, e.lngLat.lat);
       });
 
+      // Close intro modal when map animation finishes
+      mapRef.current.on('moveend', (e) => {
+        // Only trigger if the intro modal is still showing
+        // We use a functional update or direct check if possible, 
+        // but since this is inside a listener, we'll check the DOM/state carefully.
+        // Actually, it's better to use a ref for the intro modal state to check here safely.
+        if (e.originalEvent === undefined) { // Check if it was triggered by flyTo/programmatic
+           setShowIntroDrawer(prev => {
+             if (prev) {
+               setIntroSeen();
+               triggerClickHint(0);
+               return false;
+             }
+             return prev;
+           });
+        }
+      });
+
       // Add navigation controls (optional)
       mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
@@ -491,7 +509,7 @@ function App() {
         mapRef.current = null;
       }
     };
-  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, requestLocation]); // dependencies for Mapbox init
+  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, requestLocation, setIntroSeen, triggerClickHint]); // dependencies for Mapbox init
 
   // Effect to update sessionStorage when fontSize changes
   useEffect(() => {
@@ -636,6 +654,9 @@ function App() {
                 <div className="menu-group title-group">
                   <h2 style={{ color: '#A6E22E' }}>Welcome to Vitamind</h2>
                 </div>
+                <div className="menu-group right-controls">
+                  <button className="close-button" onClick={handleContinue}>&times;</button>
+                </div>
               </div>
             </div>
             <div className="modal-body-container">
@@ -647,22 +668,6 @@ function App() {
                 <p style={{ color: '#E6DB74', fontWeight: 'bold', margin: '20px 0' }}>
                   To provide accurate data for your current environment, we'd like to access your location.
                 </p>
-                <div className="drawer-actions" style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '10px' }}>
-                  <button 
-                    style={{ 
-                      backgroundColor: '#A6E22E', 
-                      color: '#272822',
-                      padding: '8px 24px',
-                      border: 'none',
-                      fontFamily: 'Fira Code, monospace',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
-                    }} 
-                    onClick={handleContinue}
-                  >
-                    Continue
-                  </button>
-                </div>
               </div>
             </div>
           </div>
