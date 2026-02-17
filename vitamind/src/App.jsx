@@ -577,20 +577,62 @@ function App() {
       <div ref={mapContainerRef} data-testid="map-container" className="map-display-area" />
 
       {showIntroDrawer && (
-        <div className="intro-drawer-overlay">
-          <div className="intro-drawer">
-            <div className="intro-content">
-              <h2>Welcome to Vitamind</h2>
-              <p>
-                This application helps you track when the sun is at the optimal angle (above 45°) for your body to naturally produce Vitamin D. 
-                Sufficient UV-B exposure is crucial for bone health and can help mitigate Seasonal Affective Disorder (SAD) by regulating mood and circadian rhythms.
-              </p>
-              <p className="location-prompt">
-                To provide accurate data for your current environment, we'd like to access your location.
-              </p>
-              <div className="drawer-actions">
-                <button className="primary-btn" onClick={handleAllowLocation}>Allow Location</button>
-                <button className="secondary-btn" onClick={handleDenyLocation}>Not Now</button>
+        <div className="modal-overlay">
+          <div 
+            className="modal-content" 
+            style={{ 
+              fontSize: `${fontSize}em`,
+              width: `calc(${BASE_MODAL_WIDTH}px * ${modalSize})`,
+              height: `auto`,
+              maxHeight: `calc(${BASE_MODAL_HEIGHT}px * ${modalSize})`
+            }}
+          >
+            <div className="modal-header">
+              <div className="menu-bar">
+                <div className="menu-group title-group">
+                  <h2 style={{ color: '#A6E22E' }}>Welcome to Vitamind</h2>
+                </div>
+              </div>
+            </div>
+            <div className="modal-body-container">
+              <div className="modal-scroll-content" style={{ textAlign: 'center', padding: '10px' }}>
+                <p>
+                  This application helps you track when the sun is at the optimal angle (above 45°) for your body to naturally produce Vitamin D. 
+                  Sufficient UV-B exposure is crucial for bone health and can help mitigate Seasonal Affective Disorder (SAD) by regulating mood and circadian rhythms.
+                </p>
+                <p style={{ color: '#E6DB74', fontWeight: 'bold', margin: '20px 0' }}>
+                  To provide accurate data for your current environment, we'd like to access your location.
+                </p>
+                <div className="drawer-actions" style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '10px' }}>
+                  <button 
+                    style={{ 
+                      backgroundColor: '#A6E22E', 
+                      color: '#272822',
+                      padding: '8px 16px',
+                      border: 'none',
+                      fontFamily: 'Fira Code, monospace',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }} 
+                    onClick={handleAllowLocation}
+                  >
+                    Allow Location
+                  </button>
+                  <button 
+                    style={{ 
+                      backgroundColor: '#3e3d32', 
+                      color: '#66D9EF',
+                      padding: '8px 16px',
+                      border: 'none',
+                      fontFamily: 'Fira Code, monospace',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }} 
+                    onClick={handleDenyLocation}
+                  >
+                    Not Now
+                  </button>
+                </div>
               </div>
             </div>
           </div>
