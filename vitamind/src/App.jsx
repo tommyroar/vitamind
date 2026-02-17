@@ -283,6 +283,17 @@ function App() {
     }
   }, []);
 
+  const returnToPugetSound = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [-122.3321, 47.6062],
+        zoom: 9,
+        duration: 3000,
+        essential: true
+      });
+    }
+  }, []);
+
   const updateStatsForLocation = useCallback(async (lng, lat) => {
     const today = new Date();
 
@@ -311,42 +322,7 @@ function App() {
     setShowClickHint(false); // Hide hint once a location is clicked
   }, [fetchCityName]);
 
-  const startIntroSequence = useCallback(() => {
-    if (!mapRef.current) return;
-
-    // 1. Zoom out to globe
-    mapRef.current.flyTo({
-      center: [0, 20],
-      zoom: 1.5,
-      duration: 4000,
-      essential: true
-    });
-
-    // 2. Open drawer after zoom-out starts
-    setTimeout(() => {
-      setShowIntroDrawer(true);
-    }, 1000);
-  }, []);
-
-  const setIntroSeen = useCallback(() => {
-    const expiry = Date.now() + INTRO_TTL;
-    localStorage.setItem(INTRO_SEEN_KEY, JSON.stringify({ value: true, expiry }));
-  }, []);
-
-  const returnToPugetSound = useCallback(() => {
-    if (mapRef.current) {
-      mapRef.current.flyTo({
-        center: [-122.3321, 47.6062],
-        zoom: 9,
-        duration: 3000,
-        essential: true
-      });
-    }
-  }, []);
-
-  const handleAllowLocation = useCallback(() => {
-    setShowIntroDrawer(false);
-    setIntroSeen();
+  const requestLocation = useCallback(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -372,14 +348,40 @@ function App() {
     } else {
       returnToPugetSound();
     }
-  }, [setIntroSeen, updateStatsForLocation, returnToPugetSound]);
+  }, [updateStatsForLocation, returnToPugetSound]);
 
-  const handleDenyLocation = useCallback(() => {
+  const startIntroSequence = useCallback(() => {
+    if (!mapRef.current) return;
+
+    // 1. Zoom out to globe
+    mapRef.current.flyTo({
+      center: [0, 20],
+      zoom: 1.5,
+      duration: 4000,
+      essential: true
+    });
+
+    // 2. Open drawer after zoom-out starts
+    setTimeout(() => {
+      setShowIntroDrawer(true);
+    }, 1000);
+
+    // 3. Trigger browser location prompt after 1s delay
+    setTimeout(() => {
+      requestLocation();
+    }, 2000); // 1s after drawer opens
+  }, [requestLocation]);
+
+  const setIntroSeen = useCallback(() => {
+    const expiry = Date.now() + INTRO_TTL;
+    localStorage.setItem(INTRO_SEEN_KEY, JSON.stringify({ value: true, expiry }));
+  }, []);
+
+  const handleContinue = useCallback(() => {
     setShowIntroDrawer(false);
     setIntroSeen();
-    returnToPugetSound();
     triggerClickHint(0);
-  }, [setIntroSeen, returnToPugetSound, triggerClickHint]);
+  }, [setIntroSeen, triggerClickHint]);
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -467,7 +469,7 @@ function App() {
           startIntroSequence();
         } else {
           // Skip intro, request location immediately
-          handleAllowLocation();
+          requestLocation();
         }
       });
 
@@ -489,7 +491,7 @@ function App() {
         mapRef.current = null;
       }
     };
-  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, handleAllowLocation]); // dependencies for Mapbox init
+  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, requestLocation]); // dependencies for Mapbox init
 
   // Effect to update sessionStorage when fontSize changes
   useEffect(() => {
@@ -650,29 +652,15 @@ function App() {
                     style={{ 
                       backgroundColor: '#A6E22E', 
                       color: '#272822',
-                      padding: '8px 16px',
+                      padding: '8px 24px',
                       border: 'none',
                       fontFamily: 'Fira Code, monospace',
                       fontWeight: 'bold',
                       cursor: 'pointer'
                     }} 
-                    onClick={handleAllowLocation}
+                    onClick={handleContinue}
                   >
-                    Allow Location
-                  </button>
-                  <button 
-                    style={{ 
-                      backgroundColor: '#3e3d32', 
-                      color: '#66D9EF',
-                      padding: '8px 16px',
-                      border: 'none',
-                      fontFamily: 'Fira Code, monospace',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
-                    }} 
-                    onClick={handleDenyLocation}
-                  >
-                    Not Now
+                    Continue
                   </button>
                 </div>
               </div>
