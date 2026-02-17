@@ -54,6 +54,7 @@ vi.mock('mapbox-gl', () => {
       setLngLat: vi.fn().mockReturnThis(),
       addTo: vi.fn().mockReturnThis(),
     })),
+    supported: vi.fn(() => true),
     accessToken: 'pk.test-token',
   };
   return {
