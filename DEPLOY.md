@@ -14,12 +14,12 @@ This project uses a branch-based deployment strategy to GitHub Pages, allowing f
 
 ### 1. Staging Deployment (`deploy-staging.yaml`)
 - **Trigger**: Automatic on every push to the `staging` branch.
-- **Usage**: **All new features and PRs must be merged into `staging` first.** This allows for testing in a live-like environment before production.
+- **Usage**: All new features and PRs must be merged into `staging` first. **Merging must be performed by a human maintainer after reviewing the agent's PR.**
 - **Action**: Builds the SPA with base path `/vitamind/staging/` and deploys to the `staging/` directory on `gh-pages`.
 
 ### 2. Production SPA Deployment (`deploy-spa.yaml`)
 - **Trigger**: Automatic on every push or merge to the `main` branch. 
-- **Usage**: Merging the `staging` branch (or a verified PR) into `main` triggers the live site update.
+- **Usage**: **A human maintainer** merging the `staging` branch (or a verified PR) into `main` triggers the live site update.
 - **Action**: Builds the React application and pushes the contents to the root of the `gh-pages` branch.
 
 ### 3. Documentation Deployment (`deploy-docs.yaml`)

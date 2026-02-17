@@ -13,7 +13,30 @@ const DEFAULT_MODAL_SIZE = 1.0; // Corresponds to 100% of base dimensions
 const BASE_MODAL_WIDTH = 600; // Base width in pixels
 const BASE_MODAL_HEIGHT = 500; // Base height in pixels
 
+const INTRO_SEEN_KEY = 'vitamind_intro_seen';
+const INTRO_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
 const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
+  const todayTextRef = useRef(null);
+  const [todayRectWidth, setTodayRectWidth] = useState(0);
+  const vDayTextRef = useRef(null);
+  const [vDayRectWidth, setVDayRectWidth] = useState(0);
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString();
+  const vitaminDDateStr = vitaminDDate?.toLocaleDateString();
+
+  useEffect(() => {
+    if (todayTextRef.current && typeof todayTextRef.current.getBBox === 'function') {
+      const bbox = todayTextRef.current.getBBox();
+      setTodayRectWidth(bbox.width + 10); // Add 10px padding
+    }
+    if (vDayTextRef.current && vitaminDDate && typeof vDayTextRef.current.getBBox === 'function') { // Only measure if vDayTextRef exists and vitaminDDate is valid
+      const bbox = vDayTextRef.current.getBBox();
+      setVDayRectWidth(bbox.width + 10); // Add 10px padding
+    }
+  }, [dateStr, vitaminDDateStr, vitaminDDate]);
+
   if (!yearlyData || !yearlyData.length) return null;
 
   const width = 350;
@@ -22,7 +45,6 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const graphWidth = width - 2 * padding;
   const graphHeight = height - 2 * padding;
 
-  const today = new Date();
   const currentMonthIndex = today.getMonth();
   const currentDay = today.getDate();
   
@@ -74,22 +96,6 @@ const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const maxEntry = orderedData[maxIdx];
   const minEntry = orderedData[minIdx];
   
-  const todayTextRef = useRef(null);
-  const [todayRectWidth, setTodayRectWidth] = useState(0);
-  const vDayTextRef = useRef(null);
-  const [vDayRectWidth, setVDayRectWidth] = useState(0);
-
-  useEffect(() => {
-    if (todayTextRef.current && typeof todayTextRef.current.getBBox === 'function') {
-      const bbox = todayTextRef.current.getBBox();
-      setTodayRectWidth(bbox.width + 10); // Add 10px padding
-    }
-    if (vDayTextRef.current && vitaminDDate && typeof vDayTextRef.current.getBBox === 'function') { // Only measure if vDayTextRef exists and vitaminDDate is valid
-      const bbox = vDayTextRef.current.getBBox();
-      setVDayRectWidth(bbox.width + 10); // Add 10px padding
-    }
-  }, [today.toLocaleDateString(), vitaminDDate?.toLocaleDateString()]);
-
   return (
     <div className="sun-graph-container">
       <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
@@ -200,22 +206,49 @@ function App() {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null); // Ref to store the map instance
   const scrollContainerRef = useRef(null); // Ref for the scrollable modal content
-  const [lng] = useState(-122.3321); // Default longitude for Seattle
-  const [lat] = useState(47.6062); // Default latitude for Seattle
-  const [zoom] = useState(4);   // Default zoom for Seattle (showing Western US)
+  
+  // Clear localStorage if "clear" query param is present
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('clear')) {
+      localStorage.clear();
+      // Remove the clear param from URL without refreshing
+      const url = new URL(window.location);
+      url.searchParams.delete('clear');
+      window.history.replaceState({}, '', url);
+    }
+  }, []);
+
+  // Initial position: Puget Sound
+  const [lng] = useState(-122.3321);
+  const [lat] = useState(47.6062);
+  const [zoom] = useState(9); // Start at medium zoom
 
   const [showModal, setShowModal] = useState(false);
+  const [showIntroDrawer, setShowIntroDrawer] = useState(false);
+  const [showClickHint, setShowClickHint] = useState(false);
+  
+  const hintTimeoutRef = useRef(null);
+
+  const triggerClickHint = useCallback((delay = 0) => {
+    if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+
+    hintTimeoutRef.current = setTimeout(() => {
+      setShowClickHint(true);
+    }, delay);
+  }, []);
+
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
   const [highestSunAngle, setHighestSunAngle] = useState(null);
   const [solarNoonTime, setSolarNoonTime] = useState(null);
   const [dayLength, setDayLength] = useState(null);
   const [fontSize, setFontSize] = useState(() => {
-    const storedFontSize = localStorage.getItem(FONT_SIZE_STORAGE_KEY);
+    const storedFontSize = sessionStorage.getItem(FONT_SIZE_STORAGE_KEY);
     return storedFontSize ? parseFloat(storedFontSize) : DEFAULT_FONT_SIZE;
   });
   const [modalSize, setModalSize] = useState(() => {
-    const storedModalSize = localStorage.getItem(MODAL_SIZE_STORAGE_KEY);
+    const storedModalSize = sessionStorage.getItem(MODAL_SIZE_STORAGE_KEY);
     return storedModalSize ? parseFloat(storedModalSize) : DEFAULT_MODAL_SIZE;
   });
 
@@ -250,6 +283,17 @@ function App() {
     }
   }, []);
 
+  const returnToPugetSound = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [-122.3321, 47.6062],
+        zoom: 9,
+        duration: 3000,
+        essential: true
+      });
+    }
+  }, []);
+
   const updateStatsForLocation = useCallback(async (lng, lat) => {
     const today = new Date();
 
@@ -275,7 +319,69 @@ function App() {
 
     setShowModal(true);
     setModalView('stats');
+    setShowClickHint(false); // Hide hint once a location is clicked
   }, [fetchCityName]);
+
+  const requestLocation = useCallback(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLng = position.coords.longitude;
+          const userLat = position.coords.latitude;
+          
+          if (mapRef.current) {
+            mapRef.current.flyTo({
+              center: [userLng, userLat],
+              zoom: 10,
+              duration: 3000,
+              essential: true
+            });
+          }
+          updateStatsForLocation(userLng, userLat);
+        }, 
+        (error) => {
+          console.warn("Geolocation access denied or failed:", error.message);
+          returnToPugetSound();
+        },
+        { timeout: 8000 }
+      );
+    } else {
+      returnToPugetSound();
+    }
+  }, [updateStatsForLocation, returnToPugetSound]);
+
+  const startIntroSequence = useCallback(() => {
+    if (!mapRef.current) return;
+
+    // 1. Zoom out to globe
+    mapRef.current.flyTo({
+      center: [0, 20],
+      zoom: 1.5,
+      duration: 4000,
+      essential: true
+    });
+
+    // 2. Open drawer after zoom-out starts
+    setTimeout(() => {
+      setShowIntroDrawer(true);
+    }, 1000);
+
+    // 3. Trigger browser location prompt after 1s delay
+    setTimeout(() => {
+      requestLocation();
+    }, 2000); // 1s after drawer opens
+  }, [requestLocation]);
+
+  const setIntroSeen = useCallback(() => {
+    const expiry = Date.now() + INTRO_TTL;
+    localStorage.setItem(INTRO_SEEN_KEY, JSON.stringify({ value: true, expiry }));
+  }, []);
+
+  const handleContinue = useCallback(() => {
+    setShowIntroDrawer(false);
+    setIntroSeen();
+    triggerClickHint(0);
+  }, [setIntroSeen, triggerClickHint]);
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -287,7 +393,6 @@ function App() {
     // Check for WebGL support
     if (!mapboxgl.supported()) {
       console.error("WebGL not supported");
-      // Optional: show a user-friendly message in the UI instead of just console.error
       return;
     }
 
@@ -354,44 +459,42 @@ function App() {
           'space-color': 'rgb(11, 11, 25)', // Background color
           'star-intensity': 0.6 // Background star brightness
         });
+
+        // Check if intro was seen in last 30 days
+        const introData = JSON.parse(localStorage.getItem(INTRO_SEEN_KEY) || '{}');
+        const now = Date.now();
+        
+        if (!introData.expiry || now > introData.expiry) {
+          // Play intro and reset TTL once user interacts
+          startIntroSequence();
+        } else {
+          // Skip intro, request location immediately
+          requestLocation();
+        }
       });
 
       mapRef.current.on('click', (e) => {
         updateStatsForLocation(e.lngLat.lng, e.lngLat.lat);
       });
 
+      // Close intro modal when map animation finishes
+      mapRef.current.on('moveend', (e) => {
+        // Only trigger if the intro modal is still showing and we have zoomed IN
+        // (Initial globe view is ~1.5, Puget Sound is 9, User is 10)
+        if (e.originalEvent === undefined && mapRef.current.getZoom() > 5) { 
+           setShowIntroDrawer(prev => {
+             if (prev) {
+               setIntroSeen();
+               triggerClickHint(0);
+               return false;
+             }
+             return prev;
+           });
+        }
+      });
+
       // Add navigation controls (optional)
       mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
-
-      // Request user location on load
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const userLng = position.coords.longitude;
-            const userLat = position.coords.latitude;
-            
-            if (mapRef.current) {
-              mapRef.current.setCenter([userLng, userLat]);
-              mapRef.current.setZoom(10); // Zoom in a bit on user location
-            }
-            
-            updateStatsForLocation(userLng, userLat);
-          }, 
-          (error) => {
-            console.warn("Geolocation access denied or failed:", error.message);
-            // Fallback: update stats for the default location so some data is shown
-            updateStatsForLocation(lng, lat);
-          },
-          {
-            enableHighAccuracy: false,
-            timeout: 8000,
-            maximumAge: 60000
-          }
-        );
-      } else {
-        // No geolocation available: show stats for default location
-        updateStatsForLocation(lng, lat);
-      }
 
     } catch (err) {
       console.error("Error initializing Mapbox:", err);
@@ -404,22 +507,23 @@ function App() {
         mapRef.current = null;
       }
     };
-  }, [lat, lng, zoom, updateStatsForLocation]); // dependencies for Mapbox init
+  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, requestLocation, setIntroSeen, triggerClickHint]); // dependencies for Mapbox init
 
-  // Effect to update localStorage when fontSize changes
+  // Effect to update sessionStorage when fontSize changes
   useEffect(() => {
-    localStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
+    sessionStorage.setItem(FONT_SIZE_STORAGE_KEY, fontSize.toString());
   }, [fontSize]);
 
-  // Effect to update localStorage when modalSize changes
+  // Effect to update sessionStorage when modalSize changes
   useEffect(() => {
-    localStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
+    sessionStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
   }, [modalSize]);
 
 
   const closeModal = () => {
     setShowModal(false);
     setModalView('stats');
+    triggerClickHint(2000);
   };
 
   const adjustFontSize = (amount) => {
@@ -531,6 +635,45 @@ function App() {
   return (
     <div className="app-main-container">
       <div ref={mapContainerRef} data-testid="map-container" className="map-display-area" />
+
+      {showIntroDrawer && (
+        <div className="modal-overlay">
+          <div 
+            className="modal-content" 
+            style={{ 
+              fontSize: `${fontSize}em`,
+              width: `calc(${BASE_MODAL_WIDTH}px * ${modalSize})`,
+              height: `auto`,
+              maxHeight: `calc(${BASE_MODAL_HEIGHT}px * ${modalSize})`
+            }}
+          >
+            <div className="modal-header">
+              <div className="menu-bar">
+                <div className="menu-group title-group">
+                  <h2 style={{ color: '#A6E22E' }}>Welcome to Vitamind</h2>
+                </div>
+                <div className="menu-group right-controls">
+                  <button className="close-button" onClick={handleContinue}>&times;</button>
+                </div>
+              </div>
+            </div>
+            <div className="modal-body-container">
+              <div className="modal-scroll-content" style={{ textAlign: 'center', padding: '10px' }}>
+                <p>
+                  This application helps you track when the sun is at the optimal angle (above 45°) for your body to naturally produce Vitamin D. 
+                  Sufficient UV-B exposure is crucial for bone health and can help mitigate Seasonal Affective Disorder (SAD) by regulating mood and circadian rhythms.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showClickHint && !showModal && !showIntroDrawer && (
+        <div className="click-hint" onClick={() => setShowClickHint(false)} style={{ pointerEvents: 'auto', cursor: 'pointer' }}>
+          <span>Click anywhere on the map to view Vitamin D statistics</span>
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
