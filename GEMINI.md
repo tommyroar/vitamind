@@ -5,8 +5,8 @@
 ## Overview
 
 The deployment has three tracks:
-1.  **Staging**: Deploys automatically on push to `staging` via `.github/workflows/deploy-staging.yaml`. **All PRs should be verified here first.**
-2.  **Vitamind SPA (Production)**: Deploys automatically on merge to `main` via `.github/workflows/deploy-spa.yaml`.
+1.  **Staging Preview**: Deploys automatically on any **Pull Request** targeting `main`. Used for pre-merge verification.
+2.  **Vitamind SPA (Production)**: Deploys automatically on **merge to `main`**.
 3.  **Documentation**: Must be manually triggered via `.github/workflows/deploy-docs.yaml`.
 
 ## Gemini Task Protocol
