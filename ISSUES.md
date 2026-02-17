@@ -2,6 +2,11 @@
 
 This document defines the mandatory procedure for the Gemini CLI when addressing GitHub issues.
 
+## Phase 0: Workspace Isolation
+To prevent overwriting simultaneous agent modifications, each session MUST use `git worktree`.
+- Create a new worktree in the provided temporary directory for the duration of the task.
+- Ensure the worktree is removed upon completion or session termination.
+
 ## Phase 1: Exploration & Understanding
 Before proposing any changes, the agent must thoroughly understand the codebase context.
 - Use `grep_search` and `glob` to locate relevant components, logic, and tests.
