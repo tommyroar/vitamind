@@ -228,6 +228,21 @@ function App() {
   const [showIntroDrawer, setShowIntroDrawer] = useState(false);
   const [showClickHint, setShowClickHint] = useState(false);
   
+  const hintTimeoutRef = useRef(null);
+  const hintHideTimeoutRef = useRef(null);
+
+  const triggerClickHint = useCallback((delay = 0) => {
+    if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+    if (hintHideTimeoutRef.current) clearTimeout(hintHideTimeoutRef.current);
+
+    hintTimeoutRef.current = setTimeout(() => {
+      setShowClickHint(true);
+      hintHideTimeoutRef.current = setTimeout(() => {
+        setShowClickHint(false);
+      }, 5000);
+    }, delay);
+  }, []);
+
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
   const [highestSunAngle, setHighestSunAngle] = useState(null);
@@ -332,12 +347,12 @@ function App() {
         essential: true
       });
     }
-    setShowClickHint(true);
   }, []);
 
   const handleAllowLocation = useCallback(() => {
     setShowIntroDrawer(false);
     setIntroSeen();
+    triggerClickHint(0);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -363,13 +378,14 @@ function App() {
     } else {
       returnToPugetSound();
     }
-  }, [setIntroSeen, updateStatsForLocation, returnToPugetSound]);
+  }, [setIntroSeen, updateStatsForLocation, returnToPugetSound, triggerClickHint]);
 
   const handleDenyLocation = useCallback(() => {
     setShowIntroDrawer(false);
     setIntroSeen();
     returnToPugetSound();
-  }, [setIntroSeen, returnToPugetSound]);
+    triggerClickHint(0);
+  }, [setIntroSeen, returnToPugetSound, triggerClickHint]);
 
   useEffect(() => {
     if (!mapboxgl.accessToken) {
@@ -495,6 +511,7 @@ function App() {
   const closeModal = () => {
     setShowModal(false);
     setModalView('stats');
+    triggerClickHint(2000);
   };
 
   const adjustFontSize = (amount) => {
