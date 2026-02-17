@@ -1,6 +1,6 @@
 # Deployment Tasks for Vitamind SPA and Documentation
 
-**CRITICAL: All future deployments must follow the strategy outlined in [DEPLOY.md](./DEPLOY.md).**
+**CRITICAL: All future deployments must follow the strategy outlined in [DEPLOY.md](./DEPLOY.md) and the issue handling protocol in [ISSUES.md](./ISSUES.md).**
 
 ## Overview
 
@@ -11,20 +11,16 @@ The deployment has three tracks:
 
 ## Gemini Task Protocol
 
-When performing deployment-related tasks:
+When performing development or deployment-related tasks:
 
-1.  **Reference DEPLOY.md**: Always read [DEPLOY.md](./DEPLOY.md) to understand the current architecture and branch strategy (`gh-pages`).
+1.  **Reference DEPLOY.md & ISSUES.md**: Always read [DEPLOY.md](./DEPLOY.md) and [ISSUES.md](./ISSUES.md) to ensure compliance with the project's staging-first deployment strategy and lifecycle management.
 2.  **Verify Domain Coexistence**: Ensure that any changes to workflows maintain the `keep_files: true` configuration to prevent the SPA from overwriting the Docs (or vice-versa).
-3.  **Monitor Correct Workflows**:
-    - For application changes, monitor `deploy-spa.yaml`.
-    - For documentation changes, manually trigger and monitor `deploy-docs.yaml`.
+3.  **PR Feedback Loop**: The Gemini CLI is configured to respond to `@gemini-cli` commands in standard comments, PR reviews, and individual code line comments. Monitor all three for feedback.
 
-## Automated Deployment Monitoring (SPA)
+## Automated Deployment Monitoring (Staging & Production)
 
-After pushing changes to `main`, Gemini CLI should:
-1.  Identify the latest run for `deploy-spa.yaml`.
-2.  Monitor until completion.
-3.  Verify the SPA is live at `https://tommyroar.github.io/vitamind/`.
+1.  **Staging**: After merging a feature into `staging`, monitor the `deploy-staging.yaml` workflow and verify the fix at `https://tommyroar.github.io/vitamind/staging/`.
+2.  **Production**: After merging into `main`, monitor the `deploy-spa.yaml` workflow and verify the live site at `https://tommyroar.github.io/vitamind/`.
 
 ## Manual Documentation Deployment
 
