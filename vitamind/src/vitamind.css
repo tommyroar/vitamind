@@ -353,6 +353,48 @@ body {
   z-index: 500;
 }
 
+/* WebGL / Map Error Overlay */
+.map-error-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  background-color: #272822;
+  border-radius: 14px;
+}
+
+.map-error-content {
+  color: #F8F8F2;
+  font-family: 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace;
+  text-align: center;
+  max-width: 420px;
+  padding: 30px;
+}
+
+.map-error-content h2 {
+  color: #F92672;
+  margin-bottom: 16px;
+}
+
+.map-error-content p {
+  color: #F8F8F2;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.map-error-content ol {
+  text-align: left;
+  color: #E6DB74;
+  margin-top: 8px;
+  padding-left: 20px;
+  line-height: 1.8;
+}
+
 @keyframes slide-down {
   from { transform: translateY(-100%); }
   to { transform: translateY(0); }

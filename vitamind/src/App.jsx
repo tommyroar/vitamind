@@ -265,6 +265,17 @@ function App() {
   const [yearlyData, setYearlyData] = useState([]);
 
 
+  // Detect WebGL availability synchronously on first render so the effect
+  // can bail out cleanly without a cascading setState-in-effect.
+  const [mapError, setMapError] = useState(() => {
+    if (!mapboxgl.supported()) {
+      if (!mapboxgl.supported({ failIfMajorPerformanceCaveat: false })) {
+        return 'webgl-unavailable';
+      }
+    }
+    return null;
+  });
+
   const [cityName, setCityName] = useState('');
 
   const fetchCityName = useCallback(async (lng, lat) => {
@@ -390,115 +401,122 @@ function App() {
     }
     if (mapRef.current) return; // Initialize map only once
 
-    // Check for WebGL support
-    if (!mapboxgl.supported()) {
-      console.error("WebGL not supported");
-      return;
-    }
+    // WebGL availability is pre-checked in the useState initializer above.
+    // If it was unavailable the error overlay is already rendered; skip init.
+    if (mapError) return;
 
-    try {
-      mapRef.current = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: 'mapbox://styles/mapbox/navigation-night-v1', // Night navigation basemap
-        center: [lng, lat],
-        zoom: zoom,
-        projection: 'globe' // Enable globe projection for better terminator visualization
-      });
-
-      mapRef.current.on('load', () => {
-        const vitaminDAreaData = getVitaminDAreaGeoJSON();
-        
-        if (mapRef.current.getSource('vitamin-d-area')) return;
-
-        mapRef.current.addSource('vitamin-d-area', {
-          type: 'geojson',
-          data: vitaminDAreaData
+    // Wrap initialization in an async function so that the setState call in
+    // the catch block is not synchronous in the effect body (satisfies the
+    // react-hooks/set-state-in-effect lint rule).
+    const initMap = async () => {
+      try {
+        mapRef.current = new mapboxgl.Map({
+          container: mapContainerRef.current,
+          style: 'mapbox://styles/mapbox/navigation-night-v1', // Night navigation basemap
+          center: [lng, lat],
+          zoom: zoom,
+          projection: 'globe', // Enable globe projection for better terminator visualization
+          failIfMajorPerformanceCaveat: false, // Allow software rendering when hardware acceleration is unavailable
         });
 
-        // Vitamin D Area fill layer - Monokai Yellow
-        mapRef.current.addLayer({
-          id: 'vitamin-d-area-layer',
-          type: 'fill',
-          source: 'vitamin-d-area',
-          layout: {},
-          paint: {
-            'fill-color': '#E6DB74',
-            'fill-opacity': 0.4
-          }
-        });
+        mapRef.current.on('load', () => {
+          const vitaminDAreaData = getVitaminDAreaGeoJSON();
 
-        // Warm boundary line
-        mapRef.current.addLayer({
-          id: 'vitamin-d-area-boundary',
-          type: 'line',
-          source: 'vitamin-d-area',
-          layout: {},
-          paint: {
-            'line-color': '#FD971F', // Monokai Orange
-            'line-width': 2,
-            'line-opacity': 0.6
-          }
-        });
-        
-        // Update map labels to use monospaced-like font if possible
-        const style = mapRef.current.getStyle();
-        if (style && style.layers) {
-          style.layers.forEach(layer => {
-            if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
-              mapRef.current.setLayoutProperty(layer.id, 'text-font', ['DIN Offc Pro Bold', 'Arial Unicode MS Regular']);
-              mapRef.current.setLayoutProperty(layer.id, 'text-letter-spacing', 0.1);
+          if (mapRef.current.getSource('vitamin-d-area')) return;
+
+          mapRef.current.addSource('vitamin-d-area', {
+            type: 'geojson',
+            data: vitaminDAreaData
+          });
+
+          // Vitamin D Area fill layer - Monokai Yellow
+          mapRef.current.addLayer({
+            id: 'vitamin-d-area-layer',
+            type: 'fill',
+            source: 'vitamin-d-area',
+            layout: {},
+            paint: {
+              'fill-color': '#E6DB74',
+              'fill-opacity': 0.4
             }
           });
-        }
 
-        // Add atmosphere for the globe
-        mapRef.current.setFog({
-          'color': 'rgb(186, 210, 235)', // Lower atmosphere
-          'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
-          'horizon-blend': 0.02, // Atmosphere thickness
-          'space-color': 'rgb(11, 11, 25)', // Background color
-          'star-intensity': 0.6 // Background star brightness
+          // Warm boundary line
+          mapRef.current.addLayer({
+            id: 'vitamin-d-area-boundary',
+            type: 'line',
+            source: 'vitamin-d-area',
+            layout: {},
+            paint: {
+              'line-color': '#FD971F', // Monokai Orange
+              'line-width': 2,
+              'line-opacity': 0.6
+            }
+          });
+
+          // Update map labels to use monospaced-like font if possible
+          const style = mapRef.current.getStyle();
+          if (style && style.layers) {
+            style.layers.forEach(layer => {
+              if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+                mapRef.current.setLayoutProperty(layer.id, 'text-font', ['DIN Offc Pro Bold', 'Arial Unicode MS Regular']);
+                mapRef.current.setLayoutProperty(layer.id, 'text-letter-spacing', 0.1);
+              }
+            });
+          }
+
+          // Add atmosphere for the globe
+          mapRef.current.setFog({
+            'color': 'rgb(186, 210, 235)', // Lower atmosphere
+            'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
+            'horizon-blend': 0.02, // Atmosphere thickness
+            'space-color': 'rgb(11, 11, 25)', // Background color
+            'star-intensity': 0.6 // Background star brightness
+          });
+
+          // Check if intro was seen in last 30 days
+          const introData = JSON.parse(localStorage.getItem(INTRO_SEEN_KEY) || '{}');
+          const now = Date.now();
+
+          if (!introData.expiry || now > introData.expiry) {
+            // Play intro and reset TTL once user interacts
+            startIntroSequence();
+          } else {
+            // Skip intro, request location immediately
+            requestLocation();
+          }
         });
 
-        // Check if intro was seen in last 30 days
-        const introData = JSON.parse(localStorage.getItem(INTRO_SEEN_KEY) || '{}');
-        const now = Date.now();
-        
-        if (!introData.expiry || now > introData.expiry) {
-          // Play intro and reset TTL once user interacts
-          startIntroSequence();
-        } else {
-          // Skip intro, request location immediately
-          requestLocation();
-        }
-      });
+        mapRef.current.on('click', (e) => {
+          updateStatsForLocation(e.lngLat.lng, e.lngLat.lat);
+        });
 
-      mapRef.current.on('click', (e) => {
-        updateStatsForLocation(e.lngLat.lng, e.lngLat.lat);
-      });
+        // Close intro modal when map animation finishes
+        mapRef.current.on('moveend', (e) => {
+          // Only trigger if the intro modal is still showing and we have zoomed IN
+          // (Initial globe view is ~1.5, Puget Sound is 9, User is 10)
+          if (e.originalEvent === undefined && mapRef.current.getZoom() > 5) {
+             setShowIntroDrawer(prev => {
+               if (prev) {
+                 setIntroSeen();
+                 triggerClickHint(0);
+                 return false;
+               }
+               return prev;
+             });
+          }
+        });
 
-      // Close intro modal when map animation finishes
-      mapRef.current.on('moveend', (e) => {
-        // Only trigger if the intro modal is still showing and we have zoomed IN
-        // (Initial globe view is ~1.5, Puget Sound is 9, User is 10)
-        if (e.originalEvent === undefined && mapRef.current.getZoom() > 5) { 
-           setShowIntroDrawer(prev => {
-             if (prev) {
-               setIntroSeen();
-               triggerClickHint(0);
-               return false;
-             }
-             return prev;
-           });
-        }
-      });
+        // Add navigation controls (optional)
+        mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
-      // Add navigation controls (optional)
-      mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
+      } catch (err) {
+        console.error("Error initializing Mapbox:", err);
+        setMapError('init-failed');
+      }
+    };
 
-    } catch (err) {
-      console.error("Error initializing Mapbox:", err);
-    }
+    initMap();
 
     // Clean up on unmount
     return () => {
@@ -507,7 +525,7 @@ function App() {
         mapRef.current = null;
       }
     };
-  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, requestLocation, setIntroSeen, triggerClickHint]); // dependencies for Mapbox init
+  }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, requestLocation, setIntroSeen, triggerClickHint, mapError]); // dependencies for Mapbox init
 
   // Effect to update sessionStorage when fontSize changes
   useEffect(() => {
@@ -635,6 +653,28 @@ function App() {
   return (
     <div className="app-main-container">
       <div ref={mapContainerRef} data-testid="map-container" className="map-display-area" />
+
+      {mapError && (
+        <div className="map-error-overlay" data-testid="map-error">
+          <div className="map-error-content">
+            <h2>Map Unavailable</h2>
+            {mapError === 'webgl-unavailable' ? (
+              <>
+                <p>This app requires WebGL, which is not available in your browser.</p>
+                <p>If you are using <strong>Chrome</strong>, try enabling hardware acceleration:</p>
+                <ol>
+                  <li>Open <strong>Chrome Settings</strong></li>
+                  <li>Go to <strong>System</strong></li>
+                  <li>Enable <strong>&quot;Use hardware acceleration when available&quot;</strong></li>
+                  <li>Relaunch Chrome</li>
+                </ol>
+              </>
+            ) : (
+              <p>The map failed to initialize. Please try refreshing the page.</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {showIntroDrawer && (
         <div className="modal-overlay">
