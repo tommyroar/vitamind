@@ -62,7 +62,7 @@ jobs:
           gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
           gemini_cli_version: '0.29.0'
           gemini_debug: true
-          gemini_model: 'gemini-1.5-flash'
+          gemini_model: 'gemini-1.5-pro-002'
           google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
           use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA }}'
           use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
