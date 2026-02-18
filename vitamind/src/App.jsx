@@ -575,7 +575,7 @@ function App() {
       'BEGIN:VEVENT',
       `DTSTART:${start}`,
       `DTEND:${end}`,
-      `SUMMARY:V Day in ${escapedCityName}!`,
+      `SUMMARY:V-D Day in ${escapedCityName}!`,
       `DESCRIPTION:Sun is above 45° in ${escapedCityName}. Perfect time for Vitamin D!`.replace(/,/g, '\\,'),
       `LOCATION:${location}`,
       'END:VEVENT',
