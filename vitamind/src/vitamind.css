@@ -17,11 +17,6 @@ html, body, #root {
 body {
   font-family: sans-serif;
   color: #e0e0e0; /* Basic light text for contrast */
-  /* background-color: #282c34; Removed to ensure image shows */
-  background-image: url('https://g.co/gemini/share/70f2a2debd32'); /* New background image */
-  background-size: cover; /* Cover the entire viewport */
-  background-position: center; /* Center the background image */
-  background-repeat: no-repeat; /* Do not repeat */
   display: flex; /* Use flexbox for centering */
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
