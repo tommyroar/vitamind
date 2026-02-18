@@ -788,7 +788,7 @@ function App() {
               <div className="calendar-view">
                 <div className="calendar-options">
                   <a 
-                    href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V+Day+in+${encodeURIComponent(cityName)}!&details=Sun+is+above+45°+in+${encodeURIComponent(cityName)}.+Perfect+time+for+Vitamin+D!&location=${encodeURIComponent(cityName)}+(${clickedLat},${clickedLng})&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
+                    href={`https://www.google.com/calendar/render?action=TEMPLATE&text=V-D+Day+in+${encodeURIComponent(cityName)}!&details=Sun+is+above+45°+in+${encodeURIComponent(cityName)}.+Perfect+time+for+Vitamin+D!&location=${encodeURIComponent(cityName)}+(${clickedLat},${clickedLng})&dates=${formatToGoogleCalendarDate(startTimeAbove45)}/${formatToGoogleCalendarDate(endTimeAbove45)}`} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="calendar-button google-button"
