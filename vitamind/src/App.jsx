@@ -585,7 +585,7 @@ function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'v-day.ics');
+    link.setAttribute('download', 'v-d-day.ics');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
