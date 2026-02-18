@@ -4,14 +4,12 @@
 
 ## Deployment Overview
 
-A single workflow (`deploy.yaml`) handles all deployments via **manual trigger** (`workflow_dispatch`).
-Every invocation builds and deploys all three targets in one push to `gh-pages`:
+Two deployment workflows exist:
 
-1. **Production SPA** → `https://tommyroar.github.io/vitamind/`
-2. **Staging SPA** → `https://tommyroar.github.io/vitamind/staging/`
-3. **Documentation (MkDocs)** → `https://tommyroar.github.io/vitamind/docs/`
+1. **Staging Preview** (`deploy-staging.yaml`): Auto-deploys on any Pull Request targeting `main`. After deploy, posts a PR comment with the staging URL. Verify at `https://tommyroar.github.io/vitamind/staging/`.
+2. **Production** (`deploy-spa.yaml`): Auto-deploys on merge to `main`. Verify at `https://tommyroar.github.io/vitamind/`.
 
-To trigger a deployment: `gh workflow run deploy.yaml`
+Docs are built by MkDocs and embedded as static content in both deploys — there is no separate docs workflow.
 
 ## Development Protocol
 
@@ -19,7 +17,8 @@ When performing development or deployment tasks:
 
 1. **Read DEPLOY.md & ISSUES.md first**: Always reference these files to ensure compliance with the project's deployment strategy.
 2. **Branch isolation**: Develop on a descriptive feature branch. Never commit directly to `main`.
-3. **Never merge your own PRs**: Open a PR targeting `main` and wait for a human maintainer to merge.
+3. **Verify domain coexistence**: All workflow changes must preserve `keep_files: true` to prevent the production root and `staging/` directory from overwriting each other on `gh-pages`.
+4. **Never merge your own PRs**: Open a PR targeting `main` and wait for a human maintainer to merge.
 
 ## Issue Lifecycle
 
@@ -32,11 +31,12 @@ When performing development or deployment tasks:
 2. Run unit tests, linting, and smoke tests locally.
 3. Fix any failures before opening a PR.
 
-### Phase 3: Pull Request
+### Phase 3: Pull Request & Staging
 1. Open a PR to `main`, linked to the issue (e.g., "Fixes #123").
-2. Respond to review feedback with new commits on the same branch. Do NOT merge.
+2. `deploy-staging.yaml` triggers automatically and posts a comment on the PR with the staging URL.
+3. Respond to review feedback with new commits on the same branch. Do NOT merge.
 
 ### Phase 4: Deployment & Closure
-1. After the human merges to `main`, trigger the deployment: `gh workflow run deploy.yaml`.
+1. After the human merges to `main`, `deploy-spa.yaml` triggers automatically.
 2. Verify the fix at `https://tommyroar.github.io/vitamind/`.
 3. Only close the issue after confirming the production deployment succeeded.
