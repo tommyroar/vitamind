@@ -1,0 +1,48 @@
+name: Sync Docs to Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone wiki
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki
+
+      - name: Sync docs to wiki
+        run: |
+          for f in docs/*.md; do
+            base=$(basename "$f")
+            if [ "$base" = "index.md" ]; then
+              cp "$f" wiki/Home.md
+            else
+              cp "$f" "wiki/$base"
+            fi
+          done
+
+      - name: Commit and push wiki
+        run: |
+          cd wiki
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No wiki changes to commit."
+          else
+            git commit -m "docs: sync from main @ ${{ github.sha }}"
+            git push
+          fi
