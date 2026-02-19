@@ -222,7 +222,7 @@ function App() {
   // Initial position: Puget Sound
   const [lng] = useState(-122.3321);
   const [lat] = useState(47.6062);
-  const [zoom] = useState(4.5); // Start at medium zoom (reduced from 9)
+  const [zoom] = useState(4); // Start at medium zoom (reduced from 9, now 4)
 
   const [showModal, setShowModal] = useState(false);
   const [showIntroDrawer, setShowIntroDrawer] = useState(false);
@@ -301,7 +301,7 @@ function App() {
     if (mapRef.current) {
       mapRef.current.flyTo({
         center: [-122.3321, 47.6062],
-        zoom: 4.5, // Reduced from 9
+        zoom: 4, // Reduced from 9, now 4
         duration: 3000,
         essential: true
       });
@@ -537,21 +537,15 @@ function App() {
         // #16: navigation controls with larger touch targets (sized via CSS)
         mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
-        // #16: add a locate button only when the user has already granted geolocation
-        if (navigator.permissions) {
-          navigator.permissions.query({ name: 'geolocation' }).then(result => {
-            if (result.state === 'granted' && mapRef.current) {
-              mapRef.current.addControl(
-                new mapboxgl.GeolocateControl({
-                  positionOptions: { enableHighAccuracy: true },
-                  trackUserLocation: false,
-                  showAccuracyCircle: false,
-                }),
-                'top-left'
-              );
-            }
-          }).catch(() => {});
-        }
+        // #16: add a locate button
+        mapRef.current.addControl(
+          new mapboxgl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            trackUserLocation: false,
+            showAccuracyCircle: false,
+          }),
+          'top-left'
+        );
 
       } catch (err) {
         console.error("Error initializing Mapbox:", err);
