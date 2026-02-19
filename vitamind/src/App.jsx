@@ -241,6 +241,7 @@ function App() {
 
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
+  const [mapZoom, setMapZoom] = useState(null);
   const [highestSunAngle, setHighestSunAngle] = useState(null);
   const [solarNoonTime, setSolarNoonTime] = useState(null);
   const [dayLength, setDayLength] = useState(null);
@@ -312,6 +313,9 @@ function App() {
 
     setClickedLat(lat.toFixed(4));
     setClickedLng(lng.toFixed(4));
+    if (mapRef.current) {
+      setMapZoom(mapRef.current.getZoom().toFixed(2));
+    }
 
     fetchCityName(lng, lat);
 
@@ -857,6 +861,15 @@ function App() {
                   >
                     Latitude: {clickedLat}
                     {copyFeedback.show && copyFeedback.id === 'latitude' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="map-zoom" 
+                    onDoubleClick={(e) => handleDoubleClick(e, 'map-zoom')}
+                  >
+                    Map Zoom: {mapZoom}
+                    {copyFeedback.show && copyFeedback.id === 'map-zoom' && (
                       <span className="copy-feedback">{copyFeedback.message}</span>
                     )}
                   </p>
