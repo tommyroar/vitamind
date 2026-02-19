@@ -227,6 +227,7 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [showIntroDrawer, setShowIntroDrawer] = useState(false);
   const [showClickHint, setShowClickHint] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   
   const hintTimeoutRef = useRef(null);
 
@@ -394,6 +395,19 @@ function App() {
     triggerClickHint(0);
   }, [setIntroSeen, triggerClickHint]);
 
+  // #17: Settings panel actions
+  const handleClearCache = useCallback(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    setShowSettings(false);
+    window.location.reload();
+  }, []);
+
+  const handleRelocate = useCallback(() => {
+    setShowSettings(false);
+    requestLocation();
+  }, [requestLocation]);
+
   useEffect(() => {
     if (!mapboxgl.accessToken) {
       console.error("Mapbox access token is not set. Please ensure VITE_MAPBOX_ACCESS_TOKEN is configured.");
@@ -507,8 +521,24 @@ function App() {
           }
         });
 
-        // Add navigation controls (optional)
+        // #16: navigation controls with larger touch targets (sized via CSS)
         mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
+        // #16: add a locate button only when the user has already granted geolocation
+        if (navigator.permissions) {
+          navigator.permissions.query({ name: 'geolocation' }).then(result => {
+            if (result.state === 'granted' && mapRef.current) {
+              mapRef.current.addControl(
+                new mapboxgl.GeolocateControl({
+                  positionOptions: { enableHighAccuracy: true },
+                  trackUserLocation: false,
+                  showAccuracyCircle: false,
+                }),
+                'top-left'
+              );
+            }
+          }).catch(() => {});
+        }
 
       } catch (err) {
         console.error("Error initializing Mapbox:", err);
@@ -693,7 +723,7 @@ function App() {
                   <h2 style={{ color: '#A6E22E' }}>Welcome to Vitamind</h2>
                 </div>
                 <div className="menu-group right-controls">
-                  <button className="close-button" onClick={handleContinue}>&times;</button>
+                  <button className="close-button" onClick={handleContinue}>x</button>
                 </div>
               </div>
             </div>
@@ -728,28 +758,18 @@ function App() {
           >
             <div className="modal-header">
               <div className="menu-bar">
-                <div className="menu-group">
-                  <span className="menu-label">Text</span>
-                  <button onClick={() => adjustFontSize(0.1)}>+</button>
-                  <button onClick={() => adjustFontSize(-0.1)}>-</button>
-                </div>
                 <div className="menu-group title-group">
                   <h2>
-                    {modalView === 'calendar' 
-                      ? 'Add to Calendar' 
-                      : (cityName === 'Unknown Location' 
+                    {modalView === 'calendar'
+                      ? 'Add to Calendar'
+                      : (cityName === 'Unknown Location'
                           ? (daysUntilVitaminD === 0 ? 'V-D Day!' : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD}` : 'Sun Stats')
                           : (daysUntilVitaminD === 0 ? `V-D Day in ${cityName}!` : daysUntilVitaminD > 0 ? `V-D Day -${daysUntilVitaminD} in ${cityName}` : `Sun Stats: ${cityName}`))
                     }
                   </h2>
                 </div>
                 <div className="menu-group right-controls">
-                  <div className="menu-group">
-                    <span className="menu-label">Win</span>
-                    <button onClick={() => adjustModalSize(0.1)}>+</button>
-                    <button onClick={() => adjustModalSize(-0.1)}>-</button>
-                  </div>
-                  <button className="close-button" onClick={closeModal}>&times;</button>
+                  <button className="close-button" onClick={closeModal}>x</button>
                 </div>
               </div>
             </div>
@@ -847,6 +867,40 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* #17: Floating settings FAB — text size, window size, clear cache, re-prompt location */}
+      <div className="settings-fab">
+        {showSettings && (
+          <div className="settings-panel">
+            <div className="settings-block">
+              <span className="settings-label">Text Size</span>
+              <div className="settings-stepper">
+                <button onClick={() => adjustFontSize(-0.1)}>−</button>
+                <span>{fontSize.toFixed(1)}</span>
+                <button onClick={() => adjustFontSize(0.1)}>+</button>
+              </div>
+            </div>
+            <div className="settings-block">
+              <span className="settings-label">Window Size</span>
+              <div className="settings-stepper">
+                <button onClick={() => adjustModalSize(-0.1)}>−</button>
+                <span>{modalSize.toFixed(1)}</span>
+                <button onClick={() => adjustModalSize(0.1)}>+</button>
+              </div>
+            </div>
+            <div className="settings-divider" />
+            <button className="settings-action-button" onClick={handleClearCache}>Clear Cache</button>
+            <button className="settings-action-button" onClick={handleRelocate}>Re-prompt Location</button>
+          </div>
+        )}
+        <button
+          className="settings-hamburger"
+          onClick={() => setShowSettings(prev => !prev)}
+          aria-label="Settings"
+        >
+          {showSettings ? '×' : '☰'}
+        </button>
+      </div>
     </div>
   );
 }
