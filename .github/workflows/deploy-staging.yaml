@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  deployments: write
 
 concurrency:
   group: "github-pages-staging"
@@ -17,6 +18,9 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://tommyroar.github.io/vitamind/staging/
     steps:
       - name: Checkout
         uses: actions/checkout@v4
