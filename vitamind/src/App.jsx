@@ -278,6 +278,7 @@ function App() {
   });
 
   const [cityName, setCityName] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const fetchCityName = useCallback(async (lng, lat) => {
     try {
@@ -411,13 +412,18 @@ function App() {
   useEffect(() => {
     if (!mapboxgl.accessToken) {
       console.error("Mapbox access token is not set. Please ensure VITE_MAPBOX_ACCESS_TOKEN is configured.");
+      setMapError('token-missing');
+      setLoading(false);
       return;
     }
     if (mapRef.current) return; // Initialize map only once
 
     // WebGL availability is pre-checked in the useState initializer above.
     // If it was unavailable the error overlay is already rendered; skip init.
-    if (mapError) return;
+    if (mapError) {
+      setLoading(false);
+      return;
+    }
 
     // Wrap initialization in an async function so that the setState call in
     // the catch block is not synchronous in the effect body (satisfies the
@@ -434,6 +440,7 @@ function App() {
         });
 
         mapRef.current.on('load', () => {
+          setLoading(false);
           const vitaminDAreaData = getVitaminDAreaGeoJSON();
 
           if (mapRef.current.getSource('vitamin-d-area')) return;
@@ -448,7 +455,7 @@ function App() {
             id: 'vitamin-d-area-layer',
             type: 'fill',
             source: 'vitamin-d-area',
-            filter: ['==', ['get', 'type'], 'fill'],
+            filter: ['==', ['get', 'layerType'], 'fill'],
             layout: {},
             paint: {
               'fill-color': '#E6DB74',
@@ -461,7 +468,7 @@ function App() {
             id: 'vitamin-d-area-boundary',
             type: 'line',
             source: 'vitamin-d-area',
-            filter: ['==', ['get', 'type'], 'boundary'],
+            filter: ['==', ['get', 'layerType'], 'boundary'],
             layout: {},
             paint: {
               'line-color': '#FD971F', // Monokai Orange
@@ -701,9 +708,23 @@ function App() {
                   <li>Relaunch Chrome</li>
                 </ol>
               </>
+            ) : mapError === 'token-missing' ? (
+              <>
+                <p><strong>Mapbox Access Token Missing.</strong></p>
+                <p>Please check your environment variables and secrets.</p>
+              </>
             ) : (
               <p>The map failed to initialize. Please try refreshing the page.</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {loading && !mapError && (
+        <div className="map-error-overlay">
+          <div className="map-error-content">
+             <h2 style={{ color: '#66D9EF' }}>Loading Map...</h2>
+             <p>Preparing Vitamin D synthesis data visualization</p>
           </div>
         </div>
       )}

@@ -253,7 +253,7 @@ export function getVitaminDAreaGeoJSON(date = new Date()) {
     features: [
       {
         type: 'Feature',
-        properties: { name: 'Vitamin D Area Fill', type: 'fill' },
+        properties: { name: 'Vitamin D Area Fill', layerType: 'fill' },
         geometry: {
           type: 'Polygon',
           coordinates: polygonCoordinates
@@ -261,7 +261,7 @@ export function getVitaminDAreaGeoJSON(date = new Date()) {
       },
       {
         type: 'Feature',
-        properties: { name: 'Vitamin D Area Boundary', type: 'boundary' },
+        properties: { name: 'Vitamin D Area Boundary', layerType: 'boundary' },
         geometry: {
           type: 'MultiLineString',
           coordinates: [bottomPoints, topPoints]
@@ -312,7 +312,7 @@ export function getTerminatorGeoJSON(date = new Date()) {
     features: [
       {
         type: 'Feature',
-        properties: { name: 'Night Fill', type: 'fill' },
+        properties: { name: 'Night Fill', layerType: 'fill' },
         geometry: {
           type: 'Polygon',
           coordinates: [nightPoints]
@@ -320,7 +320,7 @@ export function getTerminatorGeoJSON(date = new Date()) {
       },
       {
         type: 'Feature',
-        properties: { name: 'Terminator Line', type: 'boundary' },
+        properties: { name: 'Terminator Line', layerType: 'boundary' },
         geometry: {
           type: 'LineString',
           coordinates: points

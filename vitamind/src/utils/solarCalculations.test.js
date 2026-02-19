@@ -141,8 +141,8 @@ describe('getVitaminDAreaGeoJSON', () => {
     expect(geojson.features).toHaveLength(2);
     expect(geojson.features[0].geometry.type).toBe('Polygon');
     expect(geojson.features[1].geometry.type).toBe('MultiLineString');
-    expect(geojson.features[0].properties.type).toBe('fill');
-    expect(geojson.features[1].properties.type).toBe('boundary');
+    expect(geojson.features[0].properties.layerType).toBe('fill');
+    expect(geojson.features[1].properties.layerType).toBe('boundary');
   });
 
   it('should be consistent with getVitaminDInfo for San Diego on Feb 16, 2026', () => {
@@ -157,7 +157,7 @@ describe('getVitaminDAreaGeoJSON', () => {
     
     // Check GeoJSON area at San Diego longitude
     const geojson = getVitaminDAreaGeoJSON(date);
-    const fillFeature = geojson.features.find(f => f.properties.type === 'fill');
+    const fillFeature = geojson.features.find(f => f.properties.layerType === 'fill');
     const coords = fillFeature.geometry.coordinates[0];
     
     // Find points near San Diego's longitude
@@ -176,7 +176,7 @@ describe('getTerminatorGeoJSON', () => {
     const geojson = getTerminatorGeoJSON(new Date('2024-03-20T12:00:00Z'));
     expect(geojson.type).toBe('FeatureCollection');
     expect(geojson.features.length).toBeGreaterThanOrEqual(1);
-    expect(geojson.features.some(f => f.properties.type === 'fill')).toBe(true);
-    expect(geojson.features.some(f => f.properties.type === 'boundary')).toBe(true);
+    expect(geojson.features.some(f => f.properties.layerType === 'fill')).toBe(true);
+    expect(geojson.features.some(f => f.properties.layerType === 'boundary')).toBe(true);
   });
 });
