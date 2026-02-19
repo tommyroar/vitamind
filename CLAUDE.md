@@ -32,7 +32,7 @@ When performing development or deployment tasks:
 3. Fix any failures before opening a PR.
 
 ### Phase 3: Pull Request & Staging
-1. Open a PR to `main`, linked to the issue (e.g., "Fixes #123").
+1. Open a PR to `main`, using `Fixes #N` or `Closes #N` keywords in the PR body so GitHub auto-closes the issue on merge (e.g., "Fixes #123").
 2. `deploy-staging.yaml` triggers automatically and posts a comment on the PR with the staging URL.
 3. Respond to review feedback with new commits on the same branch. Do NOT merge.
 

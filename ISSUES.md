@@ -26,7 +26,7 @@ Before proposing changes, understand the codebase:
 
 ## Phase 3: Pull Request & Staging
 
-1. **Open a PR** targeting `main`, linked to the issue (e.g. "Fixes #123").
+1. **Open a PR** targeting `main`, using `Fixes #N` or `Closes #N` keywords in the PR body so GitHub auto-closes the issue on merge (e.g. "Fixes #123").
 2. **Staging auto-deploys**: `deploy-staging.yaml` triggers automatically and posts a comment on the PR with the staging URL:
    `https://tommyroar.github.io/vitamind/staging/`
 3. **Wait for review**: Push new commits to the same branch in response to feedback. **Do NOT merge** — keep the PR open until the human maintainer merges it.
