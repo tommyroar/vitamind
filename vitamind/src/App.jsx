@@ -869,7 +869,14 @@ function App() {
       )}
 
       {/* #17: Floating settings FAB — text size, window size, clear cache, re-prompt location */}
-      <div className="settings-fab">
+      <div className="settings-fab" onClick={e => e.stopPropagation()}>
+        <button
+          className="settings-hamburger"
+          onClick={() => setShowSettings(prev => !prev)}
+          aria-label="Settings"
+        >
+          {showSettings ? '×' : '☰'}
+        </button>
         {showSettings && (
           <div className="settings-panel">
             <div className="settings-block">
@@ -893,13 +900,6 @@ function App() {
             <button className="settings-action-button" onClick={handleRelocate}>Re-prompt Location</button>
           </div>
         )}
-        <button
-          className="settings-hamburger"
-          onClick={() => setShowSettings(prev => !prev)}
-          aria-label="Settings"
-        >
-          {showSettings ? '×' : '☰'}
-        </button>
       </div>
     </div>
   );

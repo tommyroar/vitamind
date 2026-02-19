@@ -189,6 +189,14 @@ body {
   transition: color 0.2s;
 }
 
+/* Override the .menu-bar button box styles so the close button stays bare */
+.menu-bar .close-button {
+  background: none;
+  box-shadow: none;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
 .close-button:hover {
   color: #F92672; /* Monokai pink */
 }
@@ -415,10 +423,10 @@ body {
   border-radius: 10px !important;
 }
 
-/* #17 — Floating settings FAB (bottom-right corner) */
+/* #17 — Floating settings FAB (top-right corner) */
 .settings-fab {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
   right: 20px;
   z-index: 2000;
   display: flex;
