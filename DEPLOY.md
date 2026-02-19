@@ -11,25 +11,23 @@ This project uses a two-workflow deployment strategy to GitHub Pages via the `gh
 
 ## Docs
 
-Documentation lives in `docs/` and is synced to the [GitHub Wiki](https://github.com/tommyroar/vitamind/wiki) automatically via `sync-wiki.yaml` on every push to `main` that touches `docs/`.
+Documentation is maintained directly in the [GitHub Wiki](https://github.com/tommyroar/vitamind/wiki). Use the `/wiki` slash command to push updates.
 
 ## Workflows
 
 ### 1. Staging Preview (`deploy-staging.yaml`)
 - **Trigger**: Automatic on every **Pull Request** targeting `main`.
 - **What it does**:
-  1. Builds MkDocs docs into `vitamind/public/docs/`.
-  2. Builds the SPA with base path `/vitamind/staging/`.
-  3. Deploys to the `staging/` directory on `gh-pages` (`keep_files: true`).
-  4. Posts a PR comment with the staging URL.
+  1. Builds the SPA with base path `/vitamind/staging/`.
+  2. Deploys to the `staging/` directory on `gh-pages` (`keep_files: true`).
+  3. Posts a PR comment with the staging URL.
 - **Production is not touched** while the PR is open.
 
 ### 2. Production Deployment (`deploy-spa.yaml`)
 - **Trigger**: Automatic on every **push or merge** to `main`.
 - **What it does**:
-  1. Builds MkDocs docs into `vitamind/public/docs/`.
-  2. Builds the SPA with base path `/vitamind/`.
-  3. Deploys to the root of `gh-pages` (`keep_files: true` preserves the `staging/` directory).
+  1. Builds the SPA with base path `/vitamind/`.
+  2. Deploys to the root of `gh-pages` (`keep_files: true` preserves the `staging/` directory).
 
 ## Coexistence Policy
 

@@ -9,7 +9,7 @@ Two deployment workflows exist:
 1. **Staging Preview** (`deploy-staging.yaml`): Auto-deploys on any Pull Request targeting `main`. After deploy, posts a PR comment with the staging URL. Verify at `https://tommyroar.github.io/vitamind/staging/`.
 2. **Production** (`deploy-spa.yaml`): Auto-deploys on merge to `main`. Verify at `https://tommyroar.github.io/vitamind/`.
 
-Docs live in `docs/` and are synced to the [GitHub Wiki](https://github.com/tommyroar/vitamind/wiki) via `sync-wiki.yaml` on push to `main`.
+Docs are maintained directly in the [GitHub Wiki](https://github.com/tommyroar/vitamind/wiki). Use the `/wiki` slash command to push updates.
 
 ## Development Protocol
 
