@@ -222,7 +222,7 @@ function App() {
   // Initial position: Puget Sound
   const [lng] = useState(-122.3321);
   const [lat] = useState(47.6062);
-  const [zoom] = useState(9); // Start at medium zoom
+  const [zoom] = useState(4); // Start at medium zoom (reduced from 9, now 4)
 
   const [showModal, setShowModal] = useState(false);
   const [showIntroDrawer, setShowIntroDrawer] = useState(false);
@@ -241,6 +241,7 @@ function App() {
 
   const [clickedLat, setClickedLat] = useState(null);
   const [clickedLng, setClickedLng] = useState(null);
+  const [mapZoom, setMapZoom] = useState(null);
   const [highestSunAngle, setHighestSunAngle] = useState(null);
   const [solarNoonTime, setSolarNoonTime] = useState(null);
   const [dayLength, setDayLength] = useState(null);
@@ -278,6 +279,7 @@ function App() {
   });
 
   const [cityName, setCityName] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const fetchCityName = useCallback(async (lng, lat) => {
     try {
@@ -299,7 +301,7 @@ function App() {
     if (mapRef.current) {
       mapRef.current.flyTo({
         center: [-122.3321, 47.6062],
-        zoom: 9,
+        zoom: 4, // Reduced from 9, now 4
         duration: 3000,
         essential: true
       });
@@ -311,6 +313,9 @@ function App() {
 
     setClickedLat(lat.toFixed(4));
     setClickedLng(lng.toFixed(4));
+    if (mapRef.current) {
+      setMapZoom(mapRef.current.getZoom().toFixed(2));
+    }
 
     fetchCityName(lng, lat);
 
@@ -344,12 +349,18 @@ function App() {
           if (mapRef.current) {
             mapRef.current.flyTo({
               center: [userLng, userLat],
-              zoom: 10,
+              zoom: 10, // Increased to 10
               duration: 3000,
               essential: true
             });
+            // Trigger statistics after zoom completes
+            mapRef.current.once('moveend', () => {
+              updateStatsForLocation(userLng, userLat);
+            });
+          } else {
+            // Fallback if map isn't ready
+            updateStatsForLocation(userLng, userLat);
           }
-          updateStatsForLocation(userLng, userLat);
         }, 
         (error) => {
           console.warn("Geolocation access denied or failed:", error.message);
@@ -411,13 +422,18 @@ function App() {
   useEffect(() => {
     if (!mapboxgl.accessToken) {
       console.error("Mapbox access token is not set. Please ensure VITE_MAPBOX_ACCESS_TOKEN is configured.");
+      setMapError('token-missing');
+      setLoading(false);
       return;
     }
     if (mapRef.current) return; // Initialize map only once
 
     // WebGL availability is pre-checked in the useState initializer above.
     // If it was unavailable the error overlay is already rendered; skip init.
-    if (mapError) return;
+    if (mapError) {
+      setLoading(false);
+      return;
+    }
 
     // Wrap initialization in an async function so that the setState call in
     // the catch block is not synchronous in the effect body (satisfies the
@@ -434,6 +450,7 @@ function App() {
         });
 
         mapRef.current.on('load', () => {
+          setLoading(false);
           const vitaminDAreaData = getVitaminDAreaGeoJSON();
 
           if (mapRef.current.getSource('vitamin-d-area')) return;
@@ -448,6 +465,7 @@ function App() {
             id: 'vitamin-d-area-layer',
             type: 'fill',
             source: 'vitamin-d-area',
+            filter: ['==', ['get', 'layerType'], 'fill'],
             layout: {},
             paint: {
               'fill-color': '#E6DB74',
@@ -460,6 +478,7 @@ function App() {
             id: 'vitamin-d-area-boundary',
             type: 'line',
             source: 'vitamin-d-area',
+            filter: ['==', ['get', 'layerType'], 'boundary'],
             layout: {},
             paint: {
               'line-color': '#FD971F', // Monokai Orange
@@ -524,21 +543,32 @@ function App() {
         // #16: navigation controls with larger touch targets (sized via CSS)
         mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
-        // #16: add a locate button only when the user has already granted geolocation
-        if (navigator.permissions) {
-          navigator.permissions.query({ name: 'geolocation' }).then(result => {
-            if (result.state === 'granted' && mapRef.current) {
-              mapRef.current.addControl(
-                new mapboxgl.GeolocateControl({
-                  positionOptions: { enableHighAccuracy: true },
-                  trackUserLocation: false,
-                  showAccuracyCircle: false,
-                }),
-                'top-left'
-              );
-            }
-          }).catch(() => {});
-        }
+        // #16: add a locate button
+        const geolocate = new mapboxgl.GeolocateControl({
+          positionOptions: { enableHighAccuracy: true },
+          trackUserLocation: false,
+          showAccuracyCircle: false,
+          showUserLocation: false // We will handle showing/zooming ourselves
+        });
+        mapRef.current.addControl(geolocate, 'top-left');
+
+        geolocate.on('geolocate', (position) => {
+          const userLng = position.coords.longitude;
+          const userLat = position.coords.latitude;
+
+          if (mapRef.current) {
+            mapRef.current.flyTo({
+              center: [userLng, userLat],
+              zoom: 10,
+              duration: 2000,
+              essential: true
+            });
+            // Show stats once flyTo finishes
+            mapRef.current.once('moveend', () => {
+              updateStatsForLocation(userLng, userLat);
+            });
+          }
+        });
 
       } catch (err) {
         console.error("Error initializing Mapbox:", err);
@@ -699,9 +729,23 @@ function App() {
                   <li>Relaunch Chrome</li>
                 </ol>
               </>
+            ) : mapError === 'token-missing' ? (
+              <>
+                <p><strong>Mapbox Access Token Missing.</strong></p>
+                <p>Please check your environment variables and secrets.</p>
+              </>
             ) : (
               <p>The map failed to initialize. Please try refreshing the page.</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {loading && !mapError && (
+        <div className="map-error-overlay">
+          <div className="map-error-content">
+             <h2 style={{ color: '#66D9EF' }}>Loading Map...</h2>
+             <p>Preparing Vitamin D synthesis data visualization</p>
           </div>
         </div>
       )}
@@ -838,6 +882,15 @@ function App() {
                   >
                     Latitude: {clickedLat}
                     {copyFeedback.show && copyFeedback.id === 'latitude' && (
+                      <span className="copy-feedback">{copyFeedback.message}</span>
+                    )}
+                  </p>
+                  <p 
+                    id="map-zoom" 
+                    onDoubleClick={(e) => handleDoubleClick(e, 'map-zoom')}
+                  >
+                    Map Zoom: {mapZoom}
+                    {copyFeedback.show && copyFeedback.id === 'map-zoom' && (
                       <span className="copy-feedback">{copyFeedback.message}</span>
                     )}
                   </p>

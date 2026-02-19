@@ -135,34 +135,48 @@ describe('getVitaminDInfo', () => {
 });
 
 describe('getVitaminDAreaGeoJSON', () => {
-  it('should generate a GeoJSON Polygon with the correct structure', () => {
+  it('should generate a GeoJSON FeatureCollection with Fill and Boundary', () => {
     const geojson = getVitaminDAreaGeoJSON(new Date('2024-03-20T12:00:00Z'));
-    expect(geojson.type).toBe('Feature');
-    expect(geojson.geometry.type).toBe('Polygon');
-    expect(geojson.geometry.coordinates[0].length).toBeGreaterThan(60);
-    expect(geojson.properties.name).toBe('Vitamin D Area');
+    expect(geojson.type).toBe('FeatureCollection');
+    expect(geojson.features).toHaveLength(2);
+    expect(geojson.features[0].geometry.type).toBe('Polygon');
+    expect(geojson.features[1].geometry.type).toBe('MultiLineString');
+    expect(geojson.features[0].properties.layerType).toBe('fill');
+    expect(geojson.features[1].properties.layerType).toBe('boundary');
   });
 
-  it('should be a latitude band from (dec-45) to (dec+45)', () => {
-    const date = new Date('2024-03-20T12:00:00Z'); 
-    const { lat: dec } = getSubsolarPoint(date);
+  it('should be consistent with getVitaminDInfo for San Diego on Feb 16, 2026', () => {
+    const lat = 32.7361;
+    const lng = -117.1611;
+    const date = new Date('2026-02-16T12:00:00Z');
+    
+    // Check info: On Feb 16, San Diego peak altitude is 44.997 (just below 45)
+    // So daysUntilVitaminD should be > 0 (it reaches 45 on Feb 17)
+    const info = getVitaminDInfo(lat, lng, date);
+    expect(info.daysUntilVitaminD).toBeGreaterThan(0);
+    
+    // Check GeoJSON area at San Diego longitude
     const geojson = getVitaminDAreaGeoJSON(date);
-    const coords = geojson.geometry.coordinates[0];
+    const fillFeature = geojson.features.find(f => f.properties.layerType === 'fill');
+    const coords = fillFeature.geometry.coordinates[0];
     
-    const lats = coords.map(c => c[1]);
-    const lngs = coords.map(c => c[0]);
+    // Find points near San Diego's longitude
+    const pointsNearLng = coords.filter(c => Math.abs(c[0] - lng) <= 2);
+    const latsAtLng = pointsNearLng.map(c => c[1]);
+    const maxLatAtLng = Math.max(...latsAtLng);
     
-    expect(Math.max(...lats)).toBeCloseTo(dec + 45, 0);
-    expect(Math.min(...lats)).toBeCloseTo(dec - 45, 0);
-    expect(Math.min(...lngs)).toBe(-180);
-    expect(Math.max(...lngs)).toBe(180);
+    // Since peak altitude < 45, the latitude 32.7361 must be OUTSIDE the band today.
+    // Specifically, for Northern Hemisphere in winter, it's above the band.
+    expect(lat).toBeGreaterThan(maxLatAtLng);
   });
 });
 
 describe('getTerminatorGeoJSON', () => {
-  it('should generate a GeoJSON Polygon', () => {
+  it('should generate a GeoJSON FeatureCollection', () => {
     const geojson = getTerminatorGeoJSON(new Date('2024-03-20T12:00:00Z'));
-    expect(geojson.type).toBe('Feature');
-    expect(geojson.geometry.type).toBe('Polygon');
+    expect(geojson.type).toBe('FeatureCollection');
+    expect(geojson.features.length).toBeGreaterThanOrEqual(1);
+    expect(geojson.features.some(f => f.properties.layerType === 'fill')).toBe(true);
+    expect(geojson.features.some(f => f.properties.layerType === 'boundary')).toBe(true);
   });
 });
