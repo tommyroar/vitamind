@@ -222,7 +222,7 @@ function App() {
   // Initial position: Puget Sound
   const [lng] = useState(-122.3321);
   const [lat] = useState(47.6062);
-  const [zoom] = useState(9); // Start at medium zoom
+  const [zoom] = useState(4.5); // Start at medium zoom (reduced from 9)
 
   const [showModal, setShowModal] = useState(false);
   const [showIntroDrawer, setShowIntroDrawer] = useState(false);
@@ -300,7 +300,7 @@ function App() {
     if (mapRef.current) {
       mapRef.current.flyTo({
         center: [-122.3321, 47.6062],
-        zoom: 9,
+        zoom: 4.5, // Reduced from 9
         duration: 3000,
         essential: true
       });
@@ -345,7 +345,7 @@ function App() {
           if (mapRef.current) {
             mapRef.current.flyTo({
               center: [userLng, userLat],
-              zoom: 10,
+              zoom: 5, // Reduced from 10
               duration: 3000,
               essential: true
             });
