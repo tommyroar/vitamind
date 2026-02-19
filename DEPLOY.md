@@ -9,9 +9,9 @@ This project uses a two-workflow deployment strategy to GitHub Pages via the `gh
 - **Staging URL**: `https://tommyroar.github.io/vitamind/staging/`
 - **GitHub Pages Setting**: Must be set to **"Deploy from a branch"** targeting `gh-pages` at `/ (root)`.
 
-## Docs Are Part of the App
+## Docs
 
-Documentation (from `docs/`) is built by MkDocs and embedded into the app's static output during each deploy. There is no separate docs deployment step. Docs are served at `/vitamind/docs/` in production and `/vitamind/staging/docs/` in staging.
+Documentation lives in `docs/` and is synced to the [GitHub Wiki](https://github.com/tommyroar/vitamind/wiki) automatically via `sync-wiki.yaml` on every push to `main` that touches `docs/`.
 
 ## Workflows
 
