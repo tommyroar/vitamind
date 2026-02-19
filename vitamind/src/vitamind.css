@@ -440,10 +440,10 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(15, 30, 60, 0.85);
+  background: rgba(60, 60, 60, 0.75);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(100, 160, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #F8F8F2;
   font-size: 1.1em;
   cursor: pointer;
@@ -455,15 +455,15 @@ body {
 }
 
 .settings-hamburger:hover {
-  background: rgba(20, 45, 90, 0.92);
-  border-color: rgba(100, 160, 255, 0.6);
+  background: rgba(80, 80, 80, 0.85);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .settings-panel {
-  background: rgba(15, 30, 60, 0.9);
+  background: rgba(50, 50, 50, 0.8);
   backdrop-filter: blur(24px) saturate(1.8);
   -webkit-backdrop-filter: blur(24px) saturate(1.8);
-  border: 1px solid rgba(100, 160, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   padding: 14px;
   min-width: 210px;
