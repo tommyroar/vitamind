@@ -204,42 +204,77 @@ export function getSubsolarPoint(date) {
 }
 
 /**
- * Generates a GeoJSON polygon representing the area where the sun will rise above 45 degrees today.
- * This is a latitude band from (declination - 45) to (declination + 45).
+ * Generates a GeoJSON FeatureCollection representing the area where the sun will rise above 45 degrees today.
+ * This is calculated for each longitude based on the declination at local solar noon.
  * @param {Date} [date=new Date()] - The date for which to calculate.
- * @returns {object} GeoJSON Feature representing the Vitamin D area.
+ * @returns {object} GeoJSON FeatureCollection representing the Vitamin D area and its boundaries.
  */
 export function getVitaminDAreaGeoJSON(date = new Date()) {
-  const { lat: decDeg } = getSubsolarPoint(date);
-  
-  const minLat = Math.max(-90, decDeg - 45);
-  const maxLat = Math.min(90, decDeg + 45);
+  const startOfDay = new Date(date);
+  startOfDay.setUTCHours(0, 0, 0, 0);
 
-  // Define the band. We use multiple points along the top and bottom to ensure 
-  // correct rendering on a globe projection.
-  const points = [];
-  for (let lng = -180; lng <= 180; lng += 10) {
-    points.push([lng, minLat]);
+  const topPoints = [];
+  const bottomPoints = [];
+  const resolution = 2; // degrees
+
+  for (let lng = -180; lng <= 180; lng += resolution) {
+    // Calculate declination at local solar noon for this longitude
+    // We use latitude 0 for getTimes as solar noon timing depends primarily on longitude
+    const times = SunCalc.getTimes(startOfDay, 0, lng);
+    const solarNoon = times.solarNoon || startOfDay;
+    const { lat: decDeg } = getSubsolarPoint(solarNoon);
+
+    const minLat = Math.max(-90, decDeg - 45);
+    const maxLat = Math.min(90, decDeg + 45);
+
+    bottomPoints.push([lng, minLat]);
+    topPoints.push([lng, maxLat]);
   }
-  for (let lng = 180; lng >= -180; lng -= 10) {
-    points.push([lng, maxLat]);
+
+  // Ensure we hit exactly 180 if resolution doesn't land there
+  if (bottomPoints[bottomPoints.length - 1][0] !== 180) {
+    const times = SunCalc.getTimes(startOfDay, 0, 180);
+    const solarNoon = times.solarNoon || startOfDay;
+    const { lat: decDeg } = getSubsolarPoint(solarNoon);
+    bottomPoints.push([180, decDeg - 45]);
+    topPoints.push([180, decDeg + 45]);
   }
-  points.push(points[0]); // Close the polygon
+
+  const polygonCoordinates = [
+    [
+      ...bottomPoints,
+      ...([...topPoints].reverse()),
+      bottomPoints[0]
+    ]
+  ];
 
   return {
-    type: 'Feature',
-    properties: { name: 'Vitamin D Area' },
-    geometry: {
-      type: 'Polygon',
-      coordinates: [points]
-    }
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: { name: 'Vitamin D Area Fill', type: 'fill' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: polygonCoordinates
+        }
+      },
+      {
+        type: 'Feature',
+        properties: { name: 'Vitamin D Area Boundary', type: 'boundary' },
+        geometry: {
+          type: 'MultiLineString',
+          coordinates: [bottomPoints, topPoints]
+        }
+      }
+    ]
   };
 }
 
 /**
- * Generates a GeoJSON polygon representing the nighttime area (solar terminator).
+ * Generates a GeoJSON FeatureCollection representing the nighttime area (solar terminator).
  * @param {Date} [date=new Date()] - The date for which to calculate the terminator.
- * @returns {object} GeoJSON Feature representing the nighttime polygon.
+ * @returns {object} GeoJSON FeatureCollection representing the nighttime polygon and the terminator line.
  */
 export function getTerminatorGeoJSON(date = new Date()) {
   const { lat: decDeg, lng: sunLng } = getSubsolarPoint(date);
@@ -248,34 +283,49 @@ export function getTerminatorGeoJSON(date = new Date()) {
   const points = [];
   const resolution = 2; // degrees
 
-  // 3. Generate the terminator line
-  // tan(phi) = -cos(lng - sunLng) / tan(dec)
   for (let lng = -180; lng <= 180; lng += resolution) {
     const h = (lng - sunLng) * Math.PI / 180;
     const tanPhi = -Math.cos(h) / Math.tan(dec);
     let lat = Math.atan(tanPhi) * 180 / Math.PI;
     points.push([lng, lat]);
   }
+  
+  // Ensure exactly 180
+  if (points[points.length - 1][0] !== 180) {
+    const h = (180 - sunLng) * Math.PI / 180;
+    const tanPhi = -Math.cos(h) / Math.tan(dec);
+    points.push([180, Math.atan(tanPhi) * 180 / Math.PI]);
+  }
 
-  // 4. Construct the nighttime polygon
   const nightPoints = [...points];
   if (decDeg > 0) {
-    // South Pole is in dark
     nightPoints.push([180, -90]);
     nightPoints.push([-180, -90]);
   } else {
-    // North Pole is in dark
     nightPoints.push([180, 90]);
     nightPoints.push([-180, 90]);
   }
-  nightPoints.push(nightPoints[0]); // Close the polygon
+  nightPoints.push(nightPoints[0]);
 
   return {
-    type: 'Feature',
-    properties: { name: 'Night' },
-    geometry: {
-      type: 'Polygon',
-      coordinates: [nightPoints]
-    }
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: { name: 'Night Fill', type: 'fill' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [nightPoints]
+        }
+      },
+      {
+        type: 'Feature',
+        properties: { name: 'Terminator Line', type: 'boundary' },
+        geometry: {
+          type: 'LineString',
+          coordinates: points
+        }
+      }
+    ]
   };
 }

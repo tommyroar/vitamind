@@ -448,6 +448,7 @@ function App() {
             id: 'vitamin-d-area-layer',
             type: 'fill',
             source: 'vitamin-d-area',
+            filter: ['==', ['get', 'type'], 'fill'],
             layout: {},
             paint: {
               'fill-color': '#E6DB74',
@@ -460,6 +461,7 @@ function App() {
             id: 'vitamin-d-area-boundary',
             type: 'line',
             source: 'vitamin-d-area',
+            filter: ['==', ['get', 'type'], 'boundary'],
             layout: {},
             paint: {
               'line-color': '#FD971F', // Monokai Orange
