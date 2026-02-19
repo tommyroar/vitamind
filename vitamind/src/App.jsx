@@ -349,12 +349,18 @@ function App() {
           if (mapRef.current) {
             mapRef.current.flyTo({
               center: [userLng, userLat],
-              zoom: 5, // Reduced from 10
+              zoom: 10, // Increased to 10
               duration: 3000,
               essential: true
             });
+            // Trigger statistics after zoom completes
+            mapRef.current.once('moveend', () => {
+              updateStatsForLocation(userLng, userLat);
+            });
+          } else {
+            // Fallback if map isn't ready
+            updateStatsForLocation(userLng, userLat);
           }
-          updateStatsForLocation(userLng, userLat);
         }, 
         (error) => {
           console.warn("Geolocation access denied or failed:", error.message);
@@ -538,14 +544,31 @@ function App() {
         mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
         // #16: add a locate button
-        mapRef.current.addControl(
-          new mapboxgl.GeolocateControl({
-            positionOptions: { enableHighAccuracy: true },
-            trackUserLocation: false,
-            showAccuracyCircle: false,
-          }),
-          'top-left'
-        );
+        const geolocate = new mapboxgl.GeolocateControl({
+          positionOptions: { enableHighAccuracy: true },
+          trackUserLocation: false,
+          showAccuracyCircle: false,
+          showUserLocation: false // We will handle showing/zooming ourselves
+        });
+        mapRef.current.addControl(geolocate, 'top-left');
+
+        geolocate.on('geolocate', (position) => {
+          const userLng = position.coords.longitude;
+          const userLat = position.coords.latitude;
+
+          if (mapRef.current) {
+            mapRef.current.flyTo({
+              center: [userLng, userLat],
+              zoom: 10,
+              duration: 2000,
+              essential: true
+            });
+            // Show stats once flyTo finishes
+            mapRef.current.once('moveend', () => {
+              updateStatsForLocation(userLng, userLat);
+            });
+          }
+        });
 
       } catch (err) {
         console.error("Error initializing Mapbox:", err);
