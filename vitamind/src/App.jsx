@@ -472,7 +472,6 @@ function App() {
         });
 
         mapRef.current.on('load', () => {
-          setLoading(false);
           const vitaminDAreaData = getVitaminDAreaGeoJSON();
 
           if (mapRef.current.getSource('vitamin-d-area')) return;
@@ -530,10 +529,12 @@ function App() {
           });
 
           if (needsIntro) {
-            // Play intro: zoom out from terminator to default view
+            // Start the zoom animation while the loading screen is still visible
+            // so there is no jarring jump when the screen disappears.
             startIntroSequence();
+            setTimeout(() => setLoading(false), 400);
           } else {
-            // Skip intro, request location immediately
+            setLoading(false);
             requestLocation();
           }
         });
@@ -783,7 +784,7 @@ function App() {
             <div className="modal-header">
               <div className="menu-bar">
                 <div className="menu-group title-group">
-                  <h2 style={{ color: '#A6E22E' }}>Welcome to Vitamind</h2>
+                  <h2 style={{ color: '#E6DB74' }}>Welcome to Vitamin D</h2>
                 </div>
                 <div className="menu-group right-controls">
                   <button className="close-button" onClick={handleContinue}>×</button>

@@ -277,14 +277,14 @@ body {
 
 /* Calendar Link and Modal */
 .calendar-link {
-  color: #66D9EF; /* Monokai blue/cyan */
+  color: #E6DB74;
   text-decoration: underline;
   cursor: pointer;
   font-weight: bold;
 }
 
 .calendar-link:hover {
-  color: #A6E22E; /* Monokai green on hover */
+  color: #F8F8F2;
 }
 
 .calendar-view {
