@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON, getSubsolarPoint } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -376,23 +376,23 @@ function App() {
   const startIntroSequence = useCallback(() => {
     if (!mapRef.current) return;
 
-    // 1. Zoom out to globe
+    // Slow cinematic zoom-out from terminator to default view
     mapRef.current.flyTo({
-      center: [0, 20],
-      zoom: 1.5,
-      duration: 4000,
+      center: [-122.3321, 47.6062],
+      zoom: 4,
+      duration: 8000,
       essential: true
     });
 
-    // 2. Open drawer after zoom-out starts
+    // Open drawer partway through the zoom
     setTimeout(() => {
       setShowIntroDrawer(true);
-    }, 1000);
+    }, 2000);
 
-    // 3. Trigger browser location prompt after 1s delay
+    // Trigger browser location prompt
     setTimeout(() => {
       requestLocation();
-    }, 2000); // 1s after drawer opens
+    }, 3000);
   }, [requestLocation]);
 
   const setIntroSeen = useCallback(() => {
@@ -440,11 +440,33 @@ function App() {
     // react-hooks/set-state-in-effect lint rule).
     const initMap = async () => {
       try {
+        // Determine whether the intro animation will play so we can set
+        // the correct initial camera position before the map is created.
+        const introData = JSON.parse(localStorage.getItem(INTRO_SEEN_KEY) || '{}');
+        const needsIntro = !introData.expiry || Date.now() > introData.expiry;
+
+        let initialCenter = [lng, lat];
+        let initialZoom = zoom;
+
+        if (needsIntro) {
+          // Place the camera on the terminator line at 100°W at a high zoom
+          // so the intro animation can zoom smoothly out to the default view.
+          const { lat: decDeg, lng: sunLng } = getSubsolarPoint(new Date());
+          const dec = decDeg * Math.PI / 180;
+          const h = (-100 - sunLng) * Math.PI / 180;
+          const tanPhi = -Math.cos(h) / Math.tan(dec);
+          const terminatorLat = isFinite(tanPhi)
+            ? Math.max(-85, Math.min(85, Math.atan(tanPhi) * 180 / Math.PI))
+            : 0;
+          initialCenter = [-100, terminatorLat];
+          initialZoom = 15;
+        }
+
         mapRef.current = new mapboxgl.Map({
           container: mapContainerRef.current,
           style: 'mapbox://styles/mapbox/navigation-night-v1', // Night navigation basemap
-          center: [lng, lat],
-          zoom: zoom,
+          center: initialCenter,
+          zoom: initialZoom,
           projection: 'globe', // Enable globe projection for better terminator visualization
           failIfMajorPerformanceCaveat: false, // Allow software rendering when hardware acceleration is unavailable
         });
@@ -507,12 +529,8 @@ function App() {
             'star-intensity': 0.6 // Background star brightness
           });
 
-          // Check if intro was seen in last 30 days
-          const introData = JSON.parse(localStorage.getItem(INTRO_SEEN_KEY) || '{}');
-          const now = Date.now();
-
-          if (!introData.expiry || now > introData.expiry) {
-            // Play intro and reset TTL once user interacts
+          if (needsIntro) {
+            // Play intro: zoom out from terminator to default view
             startIntroSequence();
           } else {
             // Skip intro, request location immediately
@@ -744,8 +762,9 @@ function App() {
       {loading && !mapError && (
         <div className="map-error-overlay">
           <div className="map-error-content">
-             <h2 style={{ color: '#66D9EF' }}>Loading Map...</h2>
-             <p>Preparing Vitamin D synthesis data visualization</p>
+            <div className="loading-spinner" />
+            <h2 style={{ color: '#E6DB74' }}>Loading Map...</h2>
+            <p>Preparing Vitamin D synthesis data visualization</p>
           </div>
         </div>
       )}
