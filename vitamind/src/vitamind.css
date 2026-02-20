@@ -151,22 +151,22 @@ body {
 }
 
 .menu-bar button {
-  background-color: #3e3d32;
-  color: #66D9EF;
-  border: none;
+  background: rgba(62, 61, 50, 0.7);
+  color: #E6DB74;
+  border: 1px solid rgba(230, 219, 116, 0.2);
+  border-radius: 6px;
   padding: 2px 6px;
   cursor: pointer;
   font-size: 0.8em;
   font-family: 'Fira Code', monospace;
-  font-weight: bold;
-  box-shadow: 
-    inset -1px -1px 0px 0px #1e1e1a,
-    inset 1px 1px 0px 0px #75715e;
+  font-weight: normal;
+  box-shadow: none;
+  transition: background 0.15s;
 }
 
 .menu-bar button:hover {
-  color: #A6E22E;
-  background-color: #49483e;
+  color: #F8F8F2;
+  background: rgba(80, 78, 60, 0.9);
 }
 
 .modal-header h2 {
@@ -192,6 +192,7 @@ body {
 /* Override the .menu-bar button box styles so the close button stays bare */
 .menu-bar .close-button {
   background: none;
+  border: none;
   box-shadow: none;
   border-radius: 4px;
   padding: 2px 5px;
@@ -416,13 +417,24 @@ body {
 }
 
 /* #16 — Larger, touch-friendly Mapbox controls */
+.mapboxgl-ctrl-group {
+  background: rgba(50, 50, 50, 0.8) !important;
+  backdrop-filter: blur(24px) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55) !important;
+  border-radius: 12px !important;
+}
+
 .mapboxgl-ctrl-group button {
   width: 44px !important;
   height: 44px !important;
+  background-color: transparent !important;
+  filter: invert(0.85);
 }
 
-.mapboxgl-ctrl-group {
-  border-radius: 10px !important;
+.mapboxgl-ctrl-group button + button {
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 /* #17 — Floating settings FAB (top-right corner) */
