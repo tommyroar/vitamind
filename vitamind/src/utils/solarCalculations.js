@@ -204,6 +204,23 @@ export function getSubsolarPoint(date) {
 }
 
 /**
+ * Returns the northern boundary latitude of the Vitamin D zone at a given longitude and date.
+ * This is the highest latitude where the sun can reach 45° elevation (solar noon altitude = 45°),
+ * calculated as: declination + 45°, clamped to 90°.
+ * @param {Date} [date=new Date()] - The date for which to calculate.
+ * @param {number} [lng=0] - Longitude in degrees.
+ * @returns {number} Northern boundary latitude in degrees.
+ */
+export function getNorthernVitaminDLat(date = new Date(), lng = 0) {
+  const startOfDay = new Date(date);
+  startOfDay.setUTCHours(0, 0, 0, 0);
+  const times = SunCalc.getTimes(startOfDay, 0, lng);
+  const solarNoon = times.solarNoon || startOfDay;
+  const { lat: decDeg } = getSubsolarPoint(solarNoon);
+  return Math.min(90, decDeg + 45);
+}
+
+/**
  * Generates a GeoJSON FeatureCollection representing the area where the sun will rise above 45 degrees today.
  * This is calculated for each longitude based on the declination at local solar noon.
  * @param {Date} [date=new Date()] - The date for which to calculate.

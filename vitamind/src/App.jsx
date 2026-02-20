@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON, getSubsolarPoint, getNorthernVitaminDLat } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -15,6 +15,62 @@ const BASE_MODAL_HEIGHT = 500; // Base height in pixels
 
 const INTRO_SEEN_KEY = 'vitamind_intro_seen';
 const INTRO_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+const LA_LNG = -118.2437;
+
+// Build the SVG shown inside the terminator control button.
+// Renders a mini orthographic globe centred on LA with the current
+// day/night gradient and the terminator arc overlaid.
+function buildTerminatorSVG() {
+  const { lat: decDeg, lng: sunLng } = getSubsolarPoint(new Date());
+  const dec = decDeg * Math.PI / 180;
+  const r = 14, cx = 18, cy = 18;
+  const uid = Math.random().toString(36).slice(2, 6);
+
+  // Project the subsolar point into orthographic coords centred on LA
+  const dSun = ((sunLng - LA_LNG + 540) % 360) - 180;
+  const xSun = cx + Math.cos(dec) * Math.sin(dSun * Math.PI / 180) * r;
+  const ySun = cy - Math.sin(dec) * r;
+
+  // Collect visible terminator points (front hemisphere only)
+  const pts = [];
+  for (let latDeg = -88; latDeg <= 88; latDeg += 2) {
+    const phi = latDeg * Math.PI / 180;
+    const val = -Math.tan(phi) * Math.tan(dec);
+    if (Math.abs(val) > 1) continue;
+    const dLng = Math.acos(val) * 180 / Math.PI;
+    for (const tLng of [sunLng + dLng, sunLng - dLng]) {
+      const diff = ((tLng - LA_LNG + 540) % 360) - 180;
+      if (Math.abs(diff) <= 90) {
+        pts.push([
+          cx + Math.cos(phi) * Math.sin(diff * Math.PI / 180) * r,
+          cy - Math.sin(phi) * r
+        ]);
+      }
+    }
+  }
+  pts.sort((a, b) => a[1] - b[1]); // top → bottom in SVG space
+
+  const pathD = pts.length > 1
+    ? 'M ' + pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L ')
+    : '';
+
+  return `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+    <defs>
+      <clipPath id="tc${uid}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>
+      <radialGradient id="sg${uid}" gradientUnits="userSpaceOnUse"
+          cx="${xSun.toFixed(1)}" cy="${ySun.toFixed(1)}" r="${(r * 1.5).toFixed(1)}">
+        <stop offset="0%"   stop-color="rgba(230,219,116,0.55)"/>
+        <stop offset="100%" stop-color="rgba(230,219,116,0)"/>
+      </radialGradient>
+    </defs>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#0d1520"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#sg${uid})" clip-path="url(#tc${uid})"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E6DB74" stroke-width="1.2"/>
+    ${pathD ? `<path d="${pathD}" stroke="#FD971F" stroke-width="1.5" fill="none"
+        clip-path="url(#tc${uid})" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+  </svg>`;
+}
 
 const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const todayTextRef = useRef(null);
@@ -376,23 +432,23 @@ function App() {
   const startIntroSequence = useCallback(() => {
     if (!mapRef.current) return;
 
-    // 1. Zoom out to globe
+    // Slow cinematic zoom-out from terminator to default view
     mapRef.current.flyTo({
-      center: [0, 20],
-      zoom: 1.5,
-      duration: 4000,
+      center: [-122.3321, 47.6062],
+      zoom: 4,
+      duration: 8000,
       essential: true
     });
 
-    // 2. Open drawer after zoom-out starts
+    // Open drawer partway through the zoom
     setTimeout(() => {
       setShowIntroDrawer(true);
-    }, 1000);
+    }, 2000);
 
-    // 3. Trigger browser location prompt after 1s delay
+    // Trigger browser location prompt
     setTimeout(() => {
       requestLocation();
-    }, 2000); // 1s after drawer opens
+    }, 3000);
   }, [requestLocation]);
 
   const setIntroSeen = useCallback(() => {
@@ -440,17 +496,38 @@ function App() {
     // react-hooks/set-state-in-effect lint rule).
     const initMap = async () => {
       try {
+        // Determine whether the intro animation will play so we can set
+        // the correct initial camera position before the map is created.
+        const introData = JSON.parse(localStorage.getItem(INTRO_SEEN_KEY) || '{}');
+        const needsIntro = !introData.expiry || Date.now() > introData.expiry;
+
+        let initialCenter = [lng, lat];
+        let initialZoom = zoom;
+
+        if (needsIntro) {
+          // Place the camera on the terminator line at 100°W at a high zoom
+          // so the intro animation can zoom smoothly out to the default view.
+          const { lat: decDeg, lng: sunLng } = getSubsolarPoint(new Date());
+          const dec = decDeg * Math.PI / 180;
+          const h = (-100 - sunLng) * Math.PI / 180;
+          const tanPhi = -Math.cos(h) / Math.tan(dec);
+          const terminatorLat = isFinite(tanPhi)
+            ? Math.max(-85, Math.min(85, Math.atan(tanPhi) * 180 / Math.PI))
+            : 0;
+          initialCenter = [-100, terminatorLat];
+          initialZoom = 15;
+        }
+
         mapRef.current = new mapboxgl.Map({
           container: mapContainerRef.current,
           style: 'mapbox://styles/mapbox/navigation-night-v1', // Night navigation basemap
-          center: [lng, lat],
-          zoom: zoom,
+          center: initialCenter,
+          zoom: initialZoom,
           projection: 'globe', // Enable globe projection for better terminator visualization
           failIfMajorPerformanceCaveat: false, // Allow software rendering when hardware acceleration is unavailable
         });
 
         mapRef.current.on('load', () => {
-          setLoading(false);
           const vitaminDAreaData = getVitaminDAreaGeoJSON();
 
           if (mapRef.current.getSource('vitamin-d-area')) return;
@@ -507,15 +584,13 @@ function App() {
             'star-intensity': 0.6 // Background star brightness
           });
 
-          // Check if intro was seen in last 30 days
-          const introData = JSON.parse(localStorage.getItem(INTRO_SEEN_KEY) || '{}');
-          const now = Date.now();
-
-          if (!introData.expiry || now > introData.expiry) {
-            // Play intro and reset TTL once user interacts
+          if (needsIntro) {
+            // Start the zoom animation while the loading screen is still visible
+            // so there is no jarring jump when the screen disappears.
             startIntroSequence();
+            setTimeout(() => setLoading(false), 400);
           } else {
-            // Skip intro, request location immediately
+            setLoading(false);
             requestLocation();
           }
         });
@@ -551,6 +626,44 @@ function App() {
           showUserLocation: false // We will handle showing/zooming ourselves
         });
         mapRef.current.addControl(geolocate, 'top-left');
+
+        // Terminator control — mini globe showing current day/night;
+        // clicking zooms to LA longitude at the current terminator latitude.
+        const terminatorCtrl = {
+          onAdd() {
+            this._el = document.createElement('div');
+            this._el.className = 'mapboxgl-ctrl terminator-ctrl';
+            this._el.setAttribute('title', 'Zoom to terminator at Los Angeles');
+            this._el.innerHTML = buildTerminatorSVG();
+            this._el.addEventListener('click', () => {
+              const currentLat = mapRef.current.getCenter().lat;
+              const northLat = getNorthernVitaminDLat(new Date(), LA_LNG);
+
+              // Step 1: pan to LA longitude at current latitude, settle at zoom 5
+              mapRef.current.flyTo({
+                center: [LA_LNG, currentLat],
+                zoom: 5,
+                duration: 1500,
+                essential: true
+              });
+
+              // Step 2: after arrival, fly to northern vitamin D terminus at zoom 5
+              mapRef.current.once('moveend', () => {
+                mapRef.current.flyTo({
+                  center: [LA_LNG, northLat],
+                  zoom: 5,
+                  duration: 2000,
+                  essential: true
+                });
+              });
+            });
+            return this._el;
+          },
+          onRemove() {
+            if (this._el && this._el.parentNode) this._el.parentNode.removeChild(this._el);
+          }
+        };
+        mapRef.current.addControl(terminatorCtrl, 'top-left');
 
         geolocate.on('geolocate', (position) => {
           const userLng = position.coords.longitude;
@@ -744,8 +857,9 @@ function App() {
       {loading && !mapError && (
         <div className="map-error-overlay">
           <div className="map-error-content">
-             <h2 style={{ color: '#66D9EF' }}>Loading Map...</h2>
-             <p>Preparing Vitamin D synthesis data visualization</p>
+            <div className="loading-spinner" />
+            <h2 style={{ color: '#E6DB74' }}>Loading Map...</h2>
+            <p>Preparing Vitamin D synthesis data visualization</p>
           </div>
         </div>
       )}
@@ -764,10 +878,10 @@ function App() {
             <div className="modal-header">
               <div className="menu-bar">
                 <div className="menu-group title-group">
-                  <h2 style={{ color: '#A6E22E' }}>Welcome to Vitamind</h2>
+                  <h2 style={{ color: '#E6DB74' }}>Welcome to Vitamin D</h2>
                 </div>
                 <div className="menu-group right-controls">
-                  <button className="close-button" onClick={handleContinue}>x</button>
+                  <button className="close-button" onClick={handleContinue}>×</button>
                 </div>
               </div>
             </div>
@@ -817,7 +931,7 @@ function App() {
                   </h2>
                 </div>
                 <div className="menu-group right-controls">
-                  <button className="close-button" onClick={closeModal}>x</button>
+                  <button className="close-button" onClick={closeModal}>×</button>
                 </div>
               </div>
             </div>
@@ -918,7 +1032,7 @@ function App() {
                     Apple / iCal
                   </button>
                 </div>
-                <button className="back-button" onClick={() => setModalView('stats')}>Back</button>
+                <button className="back-button" onClick={() => setModalView('stats')}>←</button>
               </div>
             )}
           </div>

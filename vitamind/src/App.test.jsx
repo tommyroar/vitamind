@@ -9,6 +9,12 @@ describe('App', () => {
     // Reset mocks before each test so state from one test doesn't bleed into another
     vi.clearAllMocks();
     mapboxgl.supported.mockReturnValue(true);
+    // Simulate intro already seen so the map initialises at the default
+    // center/zoom rather than the terminator intro position.
+    localStorage.setItem(
+      'vitamind_intro_seen',
+      JSON.stringify({ value: true, expiry: Date.now() + 86400000 })
+    );
   });
 
   it('renders without crashing and displays the map container', () => {
@@ -24,7 +30,7 @@ describe('App', () => {
       container: mapContainer,
       style: 'mapbox://styles/mapbox/navigation-night-v1',
       center: [-122.3321, 47.6062],
-      zoom: 9,
+      zoom: 4,
       projection: 'globe',
       failIfMajorPerformanceCaveat: false,
     });

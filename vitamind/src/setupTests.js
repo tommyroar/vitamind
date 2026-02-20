@@ -59,7 +59,10 @@ vi.mock('mapbox-gl', () => {
       setFog: vi.fn(),
     })),
     NavigationControl: vi.fn(),
-    GeolocateControl: vi.fn(),
+    GeolocateControl: vi.fn(() => ({
+      on: vi.fn(),
+      trigger: vi.fn(),
+    })),
     Marker: vi.fn(() => ({
       setLngLat: vi.fn().mockReturnThis(),
       addTo: vi.fn().mockReturnThis(),
