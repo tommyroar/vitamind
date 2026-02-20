@@ -374,7 +374,9 @@ body {
   cursor: pointer;
   font-size: 0.9em;
   font-family: 'Fira Code', monospace;
-  white-space: nowrap;
+  max-width: calc(100vw - 40px);
+  box-sizing: border-box;
+  text-align: center;
   animation: fade-in 1s ease-out;
   z-index: 500;
 }
