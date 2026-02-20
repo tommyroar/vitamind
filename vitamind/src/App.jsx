@@ -918,7 +918,7 @@ function App() {
                     Apple / iCal
                   </button>
                 </div>
-                <button className="back-button" onClick={() => setModalView('stats')}>Back</button>
+                <button className="back-button" onClick={() => setModalView('stats')}>←</button>
               </div>
             )}
           </div>

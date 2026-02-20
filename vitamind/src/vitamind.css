@@ -181,7 +181,7 @@ body {
 .close-button {
   background: none;
   border: none;
-  color: #75715e;
+  color: #E6DB74;
   font-size: 1.5em;
   cursor: pointer;
   padding: 0 5px;
@@ -338,19 +338,18 @@ body {
 
 .back-button {
   background: none;
-  border: 1px solid #75715e; /* Subtler border */
-  color: #75715e;
-  padding: 4px 10px; /* Compact */
-  border-radius: 4px;
+  border: none;
+  color: #E6DB74;
+  padding: 0 5px;
   cursor: pointer;
-  font-size: 0.7em;
-  transition: color 0.2s, border-color 0.2s;
+  font-size: 1.5em;
+  line-height: 1;
+  transition: color 0.2s;
   font-family: 'Fira Code', monospace;
 }
 
 .back-button:hover {
-  color: #F8F8F2;
-  border-color: #F8F8F2;
+  color: #F92672;
 }
 
 /* Click Hint */
@@ -508,8 +507,8 @@ body {
   height: 28px;
   border-radius: 5px;
   background: rgba(62, 61, 50, 0.7);
-  color: #66D9EF;
-  border: 1px solid rgba(102, 217, 239, 0.2);
+  color: #E6DB74;
+  border: 1px solid rgba(230, 219, 116, 0.2);
   cursor: pointer;
   font-family: 'Fira Code', monospace;
   font-size: 1em;
