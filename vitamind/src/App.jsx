@@ -639,18 +639,19 @@ function App() {
               const currentLat = mapRef.current.getCenter().lat;
               const northLat = getNorthernVitaminDLat(new Date(), LA_LNG);
 
-              // Step 1: pan to LA longitude at current latitude
+              // Step 1: pan to LA longitude at current latitude, settle at zoom 5
               mapRef.current.flyTo({
                 center: [LA_LNG, currentLat],
+                zoom: 5,
                 duration: 1500,
                 essential: true
               });
 
-              // Step 2: after arrival, fly to northern vitamin D terminus
+              // Step 2: after arrival, fly to northern vitamin D terminus at zoom 5
               mapRef.current.once('moveend', () => {
                 mapRef.current.flyTo({
                   center: [LA_LNG, northLat],
-                  zoom: 8,
+                  zoom: 5,
                   duration: 2000,
                   essential: true
                 });
