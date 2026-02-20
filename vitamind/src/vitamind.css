@@ -195,6 +195,8 @@ body {
   box-shadow: none;
   border-radius: 4px;
   padding: 2px 5px;
+  color: #E6DB74;
+  font-size: 1.4em;
 }
 
 .close-button:hover {
