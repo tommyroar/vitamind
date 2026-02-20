@@ -786,7 +786,7 @@ function App() {
                   <h2 style={{ color: '#A6E22E' }}>Welcome to Vitamind</h2>
                 </div>
                 <div className="menu-group right-controls">
-                  <button className="close-button" onClick={handleContinue}>x</button>
+                  <button className="close-button" onClick={handleContinue}>×</button>
                 </div>
               </div>
             </div>
@@ -836,7 +836,7 @@ function App() {
                   </h2>
                 </div>
                 <div className="menu-group right-controls">
-                  <button className="close-button" onClick={closeModal}>x</button>
+                  <button className="close-button" onClick={closeModal}>×</button>
                 </div>
               </div>
             </div>
