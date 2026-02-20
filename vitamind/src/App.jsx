@@ -16,6 +16,62 @@ const BASE_MODAL_HEIGHT = 500; // Base height in pixels
 const INTRO_SEEN_KEY = 'vitamind_intro_seen';
 const INTRO_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+const LA_LNG = -118.2437;
+
+// Build the SVG shown inside the terminator control button.
+// Renders a mini orthographic globe centred on LA with the current
+// day/night gradient and the terminator arc overlaid.
+function buildTerminatorSVG() {
+  const { lat: decDeg, lng: sunLng } = getSubsolarPoint(new Date());
+  const dec = decDeg * Math.PI / 180;
+  const r = 14, cx = 18, cy = 18;
+  const uid = Math.random().toString(36).slice(2, 6);
+
+  // Project the subsolar point into orthographic coords centred on LA
+  const dSun = ((sunLng - LA_LNG + 540) % 360) - 180;
+  const xSun = cx + Math.cos(dec) * Math.sin(dSun * Math.PI / 180) * r;
+  const ySun = cy - Math.sin(dec) * r;
+
+  // Collect visible terminator points (front hemisphere only)
+  const pts = [];
+  for (let latDeg = -88; latDeg <= 88; latDeg += 2) {
+    const phi = latDeg * Math.PI / 180;
+    const val = -Math.tan(phi) * Math.tan(dec);
+    if (Math.abs(val) > 1) continue;
+    const dLng = Math.acos(val) * 180 / Math.PI;
+    for (const tLng of [sunLng + dLng, sunLng - dLng]) {
+      const diff = ((tLng - LA_LNG + 540) % 360) - 180;
+      if (Math.abs(diff) <= 90) {
+        pts.push([
+          cx + Math.cos(phi) * Math.sin(diff * Math.PI / 180) * r,
+          cy - Math.sin(phi) * r
+        ]);
+      }
+    }
+  }
+  pts.sort((a, b) => a[1] - b[1]); // top → bottom in SVG space
+
+  const pathD = pts.length > 1
+    ? 'M ' + pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L ')
+    : '';
+
+  return `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+    <defs>
+      <clipPath id="tc${uid}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>
+      <radialGradient id="sg${uid}" gradientUnits="userSpaceOnUse"
+          cx="${xSun.toFixed(1)}" cy="${ySun.toFixed(1)}" r="${(r * 1.5).toFixed(1)}">
+        <stop offset="0%"   stop-color="rgba(230,219,116,0.55)"/>
+        <stop offset="100%" stop-color="rgba(230,219,116,0)"/>
+      </radialGradient>
+    </defs>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#0d1520"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#sg${uid})" clip-path="url(#tc${uid})"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E6DB74" stroke-width="1.2"/>
+    ${pathD ? `<path d="${pathD}" stroke="#FD971F" stroke-width="1.5" fill="none"
+        clip-path="url(#tc${uid})" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+  </svg>`;
+}
+
 const SunAngleGraph = ({ yearlyData, vitaminDDate, daysUntilVitaminD }) => {
   const todayTextRef = useRef(null);
   const [todayRectWidth, setTodayRectWidth] = useState(0);
@@ -570,6 +626,35 @@ function App() {
           showUserLocation: false // We will handle showing/zooming ourselves
         });
         mapRef.current.addControl(geolocate, 'top-left');
+
+        // Terminator control — mini globe showing current day/night;
+        // clicking zooms to LA longitude at the current terminator latitude.
+        const terminatorCtrl = {
+          onAdd() {
+            this._el = document.createElement('div');
+            this._el.className = 'mapboxgl-ctrl terminator-ctrl';
+            this._el.setAttribute('title', 'Zoom to terminator at Los Angeles');
+            this._el.innerHTML = buildTerminatorSVG();
+            this._el.addEventListener('click', () => {
+              const { lat: tDecDeg, lng: tSunLng } = getSubsolarPoint(new Date());
+              const tDec = tDecDeg * Math.PI / 180;
+              const h = (LA_LNG - tSunLng) * Math.PI / 180;
+              let termLat = 0;
+              if (Math.abs(tDec) > 0.001) {
+                const tanPhi = -Math.cos(h) / Math.tan(tDec);
+                termLat = isFinite(tanPhi)
+                  ? Math.max(-85, Math.min(85, Math.atan(tanPhi) * 180 / Math.PI))
+                  : 0;
+              }
+              mapRef.current.flyTo({ center: [LA_LNG, termLat], zoom: 8, duration: 2500, essential: true });
+            });
+            return this._el;
+          },
+          onRemove() {
+            if (this._el && this._el.parentNode) this._el.parentNode.removeChild(this._el);
+          }
+        };
+        mapRef.current.addControl(terminatorCtrl, 'top-left');
 
         geolocate.on('geolocate', (position) => {
           const userLng = position.coords.longitude;

@@ -437,6 +437,28 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* Terminator control — mini globe button */
+.terminator-ctrl {
+  width: 44px;
+  height: 44px;
+  background: rgba(50, 50, 50, 0.8);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: opacity 0.15s;
+}
+
+.terminator-ctrl:hover {
+  opacity: 0.75;
+}
+
 /* #16 — Larger, touch-friendly Mapbox controls */
 .mapboxgl-ctrl-group {
   background: rgba(50, 50, 50, 0.8) !important;
