@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON, getSubsolarPoint } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON, getSubsolarPoint, getNorthernVitaminDLat } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -636,17 +636,25 @@ function App() {
             this._el.setAttribute('title', 'Zoom to terminator at Los Angeles');
             this._el.innerHTML = buildTerminatorSVG();
             this._el.addEventListener('click', () => {
-              const { lat: tDecDeg, lng: tSunLng } = getSubsolarPoint(new Date());
-              const tDec = tDecDeg * Math.PI / 180;
-              const h = (LA_LNG - tSunLng) * Math.PI / 180;
-              let termLat = 0;
-              if (Math.abs(tDec) > 0.001) {
-                const tanPhi = -Math.cos(h) / Math.tan(tDec);
-                termLat = isFinite(tanPhi)
-                  ? Math.max(-85, Math.min(85, Math.atan(tanPhi) * 180 / Math.PI))
-                  : 0;
-              }
-              mapRef.current.flyTo({ center: [LA_LNG, termLat], zoom: 8, duration: 2500, essential: true });
+              const currentLat = mapRef.current.getCenter().lat;
+              const northLat = getNorthernVitaminDLat(new Date(), LA_LNG);
+
+              // Step 1: pan to LA longitude at current latitude
+              mapRef.current.flyTo({
+                center: [LA_LNG, currentLat],
+                duration: 1500,
+                essential: true
+              });
+
+              // Step 2: after arrival, fly to northern vitamin D terminus
+              mapRef.current.once('moveend', () => {
+                mapRef.current.flyTo({
+                  center: [LA_LNG, northLat],
+                  zoom: 8,
+                  duration: 2000,
+                  essential: true
+                });
+              });
             });
             return this._el;
           },

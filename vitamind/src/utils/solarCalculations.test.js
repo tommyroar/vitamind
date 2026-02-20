@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSunStats, getVitaminDInfo, getVitaminDAreaGeoJSON, getTerminatorGeoJSON, getSubsolarPoint } from './solarCalculations';
+import { getSunStats, getVitaminDInfo, getVitaminDAreaGeoJSON, getTerminatorGeoJSON, getSubsolarPoint, getNorthernVitaminDLat } from './solarCalculations';
 
 describe('getSunStats', () => {
   it('should calculate the highest daily sun angle, solar noon time, and day length for a given location and date (equator, equinox)', () => {
@@ -168,6 +168,64 @@ describe('getVitaminDAreaGeoJSON', () => {
     // Since peak altitude < 45, the latitude 32.7361 must be OUTSIDE the band today.
     // Specifically, for Northern Hemisphere in winter, it's above the band.
     expect(lat).toBeGreaterThan(maxLatAtLng);
+  });
+});
+
+describe('getNorthernVitaminDLat', () => {
+  const LA_LNG = -118.2437;
+
+  it('should return approximately 45° at the spring equinox', () => {
+    // At equinox declination ≈ 0°, so northern terminus ≈ 0 + 45 = 45°
+    const lat = getNorthernVitaminDLat(new Date('2024-03-20T12:00:00Z'), LA_LNG);
+    expect(lat).toBeCloseTo(45, 0);
+  });
+
+  it('should return approximately 68.5° at summer solstice', () => {
+    // Declination ≈ +23.5°, northern terminus ≈ 23.5 + 45 = 68.5°
+    const lat = getNorthernVitaminDLat(new Date('2024-06-20T12:00:00Z'), LA_LNG);
+    expect(lat).toBeCloseTo(68.5, 0);
+  });
+
+  it('should return approximately 21.5° at winter solstice', () => {
+    // Declination ≈ -23.5°, northern terminus ≈ -23.5 + 45 = 21.5°
+    const lat = getNorthernVitaminDLat(new Date('2024-12-21T12:00:00Z'), LA_LNG);
+    expect(lat).toBeCloseTo(21.5, 0);
+  });
+
+  it('should return approximately 33–34° near Long Beach for 2026-02-19', () => {
+    // Declination ≈ -11°, northern terminus ≈ 34° (Long Beach is ~33.8°N).
+    // Use a range rather than exact match due to SunCalc precision.
+    const lat = getNorthernVitaminDLat(new Date('2026-02-19T12:00:00Z'), LA_LNG);
+    expect(lat).toBeGreaterThan(32);
+    expect(lat).toBeLessThan(35);
+  });
+
+  it('should never exceed 90°', () => {
+    // Even at extreme declinations the result must be clamped
+    const lat = getNorthernVitaminDLat(new Date('2024-06-20T12:00:00Z'), 0);
+    expect(lat).toBeLessThanOrEqual(90);
+  });
+
+  it('should always be greater than or equal to decDeg (always north of subsolar point)', () => {
+    const date = new Date('2024-09-15T12:00:00Z');
+    const { lat: decDeg } = getSubsolarPoint(date);
+    const northLat = getNorthernVitaminDLat(date, LA_LNG);
+    expect(northLat).toBeGreaterThanOrEqual(decDeg);
+  });
+
+  it('should be consistent with the max latitude in getVitaminDAreaGeoJSON at the same longitude', () => {
+    // Use -118 (on the 2° grid) to avoid interpolation mismatch
+    const date = new Date('2024-03-20T12:00:00Z');
+    const gridLng = -118;
+    const northLat = getNorthernVitaminDLat(date, gridLng);
+
+    const geojson = getVitaminDAreaGeoJSON(date);
+    const fill = geojson.features.find(f => f.properties.layerType === 'fill');
+    const maxLat = Math.max(...fill.geometry.coordinates[0]
+      .filter(c => c[0] === gridLng)
+      .map(c => c[1]));
+
+    expect(northLat).toBeCloseTo(maxLat, 1);
   });
 });
 
