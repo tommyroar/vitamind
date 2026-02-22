@@ -321,7 +321,7 @@ function App() {
   const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
   const [modalView, setModalView] = useState('stats'); // 'stats' or 'calendar'
   const [yearlyData, setYearlyData] = useState([]);
-  const [showBands, setShowBands] = useState(true);
+  const [bandStyle, setBandStyle] = useState('bands'); // 'bands', 'overlays', or 'none'
 
 
   // Detect WebGL availability synchronously on first render so the effect
@@ -544,6 +544,19 @@ function App() {
             data: vitaminDBandsData
           });
 
+          // Future bands fill overlays
+          mapRef.current.addLayer({
+            id: 'vitamin-d-bands-fill',
+            type: 'fill',
+            source: 'vitamin-d-bands',
+            filter: ['==', ['get', 'layerType'], 'fill'],
+            layout: {},
+            paint: {
+              'fill-color': '#E6DB74',
+              'fill-opacity': ['get', 'opacity']
+            }
+          });
+
           // Vitamin D Area fill layer - Monokai Yellow
           mapRef.current.addLayer({
             id: 'vitamin-d-area-layer',
@@ -562,6 +575,7 @@ function App() {
             id: 'vitamin-d-bands-layer',
             type: 'line',
             source: 'vitamin-d-bands',
+            filter: ['==', ['get', 'layerType'], 'boundary'],
             layout: {
               'line-cap': 'round',
               'line-join': 'round'
@@ -578,6 +592,7 @@ function App() {
             id: 'vitamin-d-bands-labels',
             type: 'symbol',
             source: 'vitamin-d-bands',
+            filter: ['==', ['get', 'layerType'], 'boundary'],
             layout: {
               'symbol-placement': 'line',
               'text-field': ['get', 'monthName'],
@@ -758,18 +773,23 @@ function App() {
   // Toggle terminator bands visibility
   useEffect(() => {
     if (!mapRef.current) return;
-    const visibility = showBands ? 'visible' : 'none';
     
     // Check for existence of Mapbox methods (may be missing in tests)
     if (typeof mapRef.current.getLayer === 'function' && typeof mapRef.current.setLayoutProperty === 'function') {
+      const showBands = bandStyle === 'bands';
+      const showOverlays = bandStyle === 'overlays';
+
       if (mapRef.current.getLayer('vitamin-d-bands-layer')) {
-        mapRef.current.setLayoutProperty('vitamin-d-bands-layer', 'visibility', visibility);
+        mapRef.current.setLayoutProperty('vitamin-d-bands-layer', 'visibility', (showBands || showOverlays) ? 'visible' : 'none');
       }
       if (mapRef.current.getLayer('vitamin-d-bands-labels')) {
-        mapRef.current.setLayoutProperty('vitamin-d-bands-labels', 'visibility', visibility);
+        mapRef.current.setLayoutProperty('vitamin-d-bands-labels', 'visibility', (showBands || showOverlays) ? 'visible' : 'none');
+      }
+      if (mapRef.current.getLayer('vitamin-d-bands-fill')) {
+        mapRef.current.setLayoutProperty('vitamin-d-bands-fill', 'visibility', showOverlays ? 'visible' : 'none');
       }
     }
-  }, [showBands]);
+  }, [bandStyle]);
 
 
   const closeModal = () => {
@@ -1128,13 +1148,19 @@ function App() {
               </div>
             </div>
             <div className="settings-block">
-              <span className="settings-label">Show Monthly Bands</span>
+              <span className="settings-label">Monthly Style</span>
               <button 
                 className="settings-action-button" 
-                style={{ width: 'auto', padding: '4px 8px', textAlign: 'center' }}
-                onClick={() => setShowBands(prev => !prev)}
+                style={{ width: 'auto', padding: '4px 8px', textAlign: 'center', textTransform: 'capitalize' }}
+                onClick={() => {
+                  setBandStyle(prev => {
+                    if (prev === 'bands') return 'overlays';
+                    if (prev === 'overlays') return 'none';
+                    return 'bands';
+                  });
+                }}
               >
-                {showBands ? 'ON' : 'OFF'}
+                {bandStyle}
               </button>
             </div>
             <div className="settings-divider" />

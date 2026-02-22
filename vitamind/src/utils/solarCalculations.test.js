@@ -240,14 +240,15 @@ describe('getTerminatorGeoJSON', () => {
 });
 
 describe('getVitaminDBandsGeoJSON', () => {
-  it('should generate 10 features for 5 months (north and south boundaries)', () => {
+  it('should generate 15 features for 5 months (north/south boundaries and fill)', () => {
     const geojson = getVitaminDBandsGeoJSON(new Date('2024-03-20T12:00:00Z'));
     expect(geojson.type).toBe('FeatureCollection');
-    expect(geojson.features).toHaveLength(10);
-    expect(geojson.features[0].geometry.type).toBe('LineString');
+    expect(geojson.features).toHaveLength(15);
+    expect(geojson.features.filter(f => f.properties.layerType === 'boundary')).toHaveLength(10);
+    expect(geojson.features.filter(f => f.properties.layerType === 'fill')).toHaveLength(5);
+    expect(geojson.features[0].geometry.type).toBe('Polygon'); // Fill is first in loop
     expect(geojson.features[0].properties).toHaveProperty('monthName');
     expect(geojson.features[0].properties).toHaveProperty('opacity');
-    expect(geojson.features[0].properties).toHaveProperty('weight');
   });
 
   it('should identify receding lines after summer solstice (NH)', () => {

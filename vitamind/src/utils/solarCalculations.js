@@ -348,18 +348,23 @@ export function getTerminatorGeoJSON(date = new Date()) {
 }
 
 /**
- * Generates a GeoJSON FeatureCollection representing the Vitamin D boundary bands for upcoming months.
- * Each band represents the 1st day of an upcoming month.
+ * Generates a GeoJSON FeatureCollection representing the Vitamin D boundary bands and overlays for upcoming months.
+ * Each month starting from the 1st has a boundary line and an area polygon.
  * @param {Date} [date=new Date()] - The starting date.
- * @returns {object} GeoJSON FeatureCollection with future boundary lines and labels.
+ * @returns {object} GeoJSON FeatureCollection with future boundary lines, fill overlays, and labels.
  */
 export function getVitaminDBandsGeoJSON(date = new Date()) {
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const features = [];
-  const resolution = 1; // High resolution for perfect alignment
+  const resolution = 2; // Match the precision of the main area
 
   const startMonth = date.getUTCMonth();
   const startYear = date.getUTCFullYear();
+  const startDay = date.getUTCDate();
+
+  // Progress within the current month (0 to 1)
+  const lastDayOfMonth = new Date(Date.UTC(startYear, startMonth + 1, 0)).getUTCDate();
+  const monthProgress = startDay / lastDayOfMonth;
 
   // Get representative current declination to determine if we are receding
   const { lat: currentDec } = getSubsolarPoint(date);
@@ -389,19 +394,47 @@ export function getVitaminDBandsGeoJSON(date = new Date()) {
       bottomPoints.push([lng, minLat]);
     }
 
-    const northOpacity = isNorthReceding ? (0.25 / i) : (0.6 / i);
-    const southOpacity = isSouthReceding ? (0.25 / i) : (0.6 / i);
+    // Dynamic alpha: increases as the current month ends. 
+    // The immediate next month (i=1) gets the highest alpha boost.
+    const alphaBase = 1.0 / (i + 1); // Fades out into the future
+    const dynamicAlpha = alphaBase * (0.3 + 0.7 * monthProgress); // Scales from 30% to 100% of its base
+
+    const lineOpacity = isNorthReceding ? (0.2 * dynamicAlpha) : (0.6 * dynamicAlpha);
+    const fillOpacity = lineOpacity * 0.3; // Much more transparent than lines
     const weight = 1.5 / i;
 
+    // Area Fill Polygon
+    features.push({
+      type: 'Feature',
+      properties: {
+        name: `${monthName} Area Overlay`,
+        monthName,
+        layerType: 'fill',
+        opacity: fillOpacity,
+        alpha: dynamicAlpha
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          ...bottomPoints,
+          ...([...topPoints].reverse()),
+          bottomPoints[0]
+        ]]
+      }
+    });
+
+    // Northern Boundary Line
     features.push({
       type: 'Feature',
       properties: {
         name: `${monthName} Northern Boundary`,
         monthName,
         isReceding: isNorthReceding,
-        opacity: northOpacity,
+        layerType: 'boundary',
+        side: 'north',
+        opacity: lineOpacity,
         weight,
-        side: 'north'
+        alpha: dynamicAlpha
       },
       geometry: {
         type: 'LineString',
@@ -409,15 +442,18 @@ export function getVitaminDBandsGeoJSON(date = new Date()) {
       }
     });
 
+    // Southern Boundary Line
     features.push({
       type: 'Feature',
       properties: {
         name: `${monthName} Southern Boundary`,
         monthName,
         isReceding: isSouthReceding,
-        opacity: southOpacity,
+        layerType: 'boundary',
+        side: 'south',
+        opacity: lineOpacity,
         weight,
-        side: 'south'
+        alpha: dynamicAlpha
       },
       geometry: {
         type: 'LineString',
