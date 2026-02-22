@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSunStats, getVitaminDInfo, getVitaminDAreaGeoJSON, getTerminatorGeoJSON, getSubsolarPoint, getNorthernVitaminDLat } from './solarCalculations';
+import { getSunStats, getVitaminDInfo, getVitaminDAreaGeoJSON, getTerminatorGeoJSON, getSubsolarPoint, getNorthernVitaminDLat, getVitaminDBandsGeoJSON } from './solarCalculations';
 
 describe('getSunStats', () => {
   it('should calculate the highest daily sun angle, solar noon time, and day length for a given location and date (equator, equinox)', () => {
@@ -236,5 +236,39 @@ describe('getTerminatorGeoJSON', () => {
     expect(geojson.features.length).toBeGreaterThanOrEqual(1);
     expect(geojson.features.some(f => f.properties.layerType === 'fill')).toBe(true);
     expect(geojson.features.some(f => f.properties.layerType === 'boundary')).toBe(true);
+  });
+});
+
+describe('getVitaminDBandsGeoJSON', () => {
+  it('should generate 10 features for 5 months (north and south boundaries)', () => {
+    const geojson = getVitaminDBandsGeoJSON(new Date('2024-03-20T12:00:00Z'));
+    expect(geojson.type).toBe('FeatureCollection');
+    expect(geojson.features).toHaveLength(10);
+    expect(geojson.features[0].geometry.type).toBe('LineString');
+    expect(geojson.features[0].properties).toHaveProperty('monthName');
+    expect(geojson.features[0].properties).toHaveProperty('opacity');
+    expect(geojson.features[0].properties).toHaveProperty('weight');
+  });
+
+  it('should identify receding lines after summer solstice (NH)', () => {
+    // July 20 is after summer solstice
+    const date = new Date('2024-07-20T12:00:00Z');
+    const geojson = getVitaminDBandsGeoJSON(date);
+    
+    // In July/August, the sun is moving South (declination is decreasing)
+    // For Northern Boundary (north), it's receding.
+    const augustNorth = geojson.features.find(f => f.properties.monthName === 'Aug' && f.properties.side === 'north');
+    expect(augustNorth.properties.isReceding).toBe(true);
+  });
+
+  it('should identify advancing lines before summer solstice (NH)', () => {
+    // March 20 is before summer solstice
+    const date = new Date('2024-03-20T12:00:00Z');
+    const geojson = getVitaminDBandsGeoJSON(date);
+    
+    // In March/April, the sun is moving North (declination is increasing)
+    // For Northern Boundary (north), it's advancing.
+    const aprilNorth = geojson.features.find(f => f.properties.monthName === 'Apr' && f.properties.side === 'north');
+    expect(aprilNorth.properties.isReceding).toBe(false);
   });
 });

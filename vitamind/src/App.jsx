@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON, getSubsolarPoint, getNorthernVitaminDLat } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON, getSubsolarPoint, getNorthernVitaminDLat, getVitaminDBandsGeoJSON } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -529,12 +529,18 @@ function App() {
 
         mapRef.current.on('load', () => {
           const vitaminDAreaData = getVitaminDAreaGeoJSON();
+          const vitaminDBandsData = getVitaminDBandsGeoJSON();
 
           if (mapRef.current.getSource('vitamin-d-area')) return;
 
           mapRef.current.addSource('vitamin-d-area', {
             type: 'geojson',
             data: vitaminDAreaData
+          });
+
+          mapRef.current.addSource('vitamin-d-bands', {
+            type: 'geojson',
+            data: vitaminDBandsData
           });
 
           // Vitamin D Area fill layer - Monokai Yellow
@@ -550,7 +556,45 @@ function App() {
             }
           });
 
-          // Warm boundary line
+          // Future bands lines
+          mapRef.current.addLayer({
+            id: 'vitamin-d-bands-layer',
+            type: 'line',
+            source: 'vitamin-d-bands',
+            layout: {
+              'line-cap': 'round',
+              'line-join': 'round'
+            },
+            paint: {
+              'line-color': '#FD971F',
+              'line-width': ['get', 'weight'],
+              'line-opacity': ['get', 'opacity']
+            }
+          });
+
+          // Future bands labels
+          mapRef.current.addLayer({
+            id: 'vitamin-d-bands-labels',
+            type: 'symbol',
+            source: 'vitamin-d-bands',
+            layout: {
+              'symbol-placement': 'line',
+              'text-field': ['get', 'monthName'],
+              'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Regular'],
+              'text-size': 10,
+              'text-offset': [0, -1],
+              'text-keep-upright': true,
+              'symbol-spacing': 250
+            },
+            paint: {
+              'text-color': '#FD971F',
+              'text-opacity': ['get', 'opacity'],
+              'text-halo-color': 'rgba(39, 40, 34, 0.8)',
+              'text-halo-width': 1
+            }
+          });
+
+          // Warm boundary line (Realtime)
           mapRef.current.addLayer({
             id: 'vitamin-d-area-boundary',
             type: 'line',
@@ -560,7 +604,7 @@ function App() {
             paint: {
               'line-color': '#FD971F', // Monokai Orange
               'line-width': 2,
-              'line-opacity': 0.6
+              'line-opacity': 0.8
             }
           });
 

@@ -324,25 +324,102 @@ export function getTerminatorGeoJSON(date = new Date()) {
   }
   nightPoints.push(nightPoints[0]);
 
-  return {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: { name: 'Night Fill', layerType: 'fill' },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [nightPoints]
+    return {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: { name: 'Night Fill', layerType: 'fill' },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [nightPoints]
+          }
+        },
+        {
+          type: 'Feature',
+          properties: { name: 'Terminator Line', layerType: 'boundary' },
+          geometry: {
+            type: 'LineString',
+            coordinates: points
+          }
         }
-      },
-      {
-        type: 'Feature',
-        properties: { name: 'Terminator Line', layerType: 'boundary' },
-        geometry: {
-          type: 'LineString',
-          coordinates: points
+      ]
+    };
+  }
+  
+  /**
+   * Generates a GeoJSON FeatureCollection representing the Vitamin D boundary bands for upcoming months.
+   * @param {Date} [date=new Date()] - The starting date.
+   * @returns {object} GeoJSON FeatureCollection with future boundary lines and labels.
+   */
+  export function getVitaminDBandsGeoJSON(date = new Date()) {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const features = [];
+    const resolution = 5; // Use a slightly lower resolution for performance of multiple lines
+  
+    const startMonth = date.getUTCMonth();
+    const startYear = date.getUTCFullYear();
+  
+    // Get current declination to determine if we are receding
+    const { lat: currentDec } = getSubsolarPoint(date);
+  
+      for (let i = 1; i <= 5; i++) {
+        const futureDate = new Date(Date.UTC(startYear, startMonth + i, 15, 12, 0, 0));
+        const { lat: futureDec } = getSubsolarPoint(futureDate);
+        const monthName = monthNames[futureDate.getUTCMonth()];
+        
+        const isNorthReceding = futureDec < currentDec;
+        const isSouthReceding = futureDec > currentDec;
+    
+        const topPoints = [];
+        const bottomPoints = [];
+    
+        for (let lng = -180; lng <= 180; lng += resolution) {
+          const maxLat = Math.min(90, futureDec + 45);
+          const minLat = Math.max(-90, futureDec - 45);
+          topPoints.push([lng, maxLat]);
+          bottomPoints.push([lng, minLat]);
         }
+    
+        const northOpacity = isNorthReceding ? (0.3 / i) : (0.7 / i);
+        const southOpacity = isSouthReceding ? (0.3 / i) : (0.7 / i);
+        const weight = 1.5 / i;
+    
+        features.push({
+          type: 'Feature',
+          properties: {
+            name: `${monthName} Northern Boundary`,
+            monthName,
+            isReceding: isNorthReceding,
+            opacity: northOpacity,
+            weight,
+            side: 'north'
+          },
+          geometry: {
+            type: 'LineString',
+            coordinates: topPoints
+          }
+        });
+    
+        features.push({
+          type: 'Feature',
+          properties: {
+            name: `${monthName} Southern Boundary`,
+            monthName,
+            isReceding: isSouthReceding,
+            opacity: southOpacity,
+            weight,
+            side: 'south'
+          },
+          geometry: {
+            type: 'LineString',
+            coordinates: bottomPoints
+          }
+        });
       }
-    ]
-  };
-}
+        return {
+      type: 'FeatureCollection',
+      features
+    };
+  }
+  
