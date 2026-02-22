@@ -349,24 +349,24 @@ export function getTerminatorGeoJSON(date = new Date()) {
 
 /**
  * Generates a GeoJSON FeatureCollection representing the Vitamin D boundary bands for upcoming months.
+ * Each band represents the 1st day of an upcoming month.
  * @param {Date} [date=new Date()] - The starting date.
  * @returns {object} GeoJSON FeatureCollection with future boundary lines and labels.
  */
 export function getVitaminDBandsGeoJSON(date = new Date()) {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const features = [];
-  const resolution = 2; // Match the precision of the main area
+  const resolution = 1; // High resolution for perfect alignment
 
   const startMonth = date.getUTCMonth();
   const startYear = date.getUTCFullYear();
-  const startDay = date.getUTCDate();
 
   // Get representative current declination to determine if we are receding
   const { lat: currentDec } = getSubsolarPoint(date);
 
   for (let i = 1; i <= 5; i++) {
-    // Add i months while preserving the day of the month
-    const futureDate = new Date(Date.UTC(startYear, startMonth + i, startDay, 12, 0, 0));
+    // Each band represents the 1st of an upcoming month
+    const futureDate = new Date(Date.UTC(startYear, startMonth + i, 1, 12, 0, 0));
     const monthName = monthNames[futureDate.getUTCMonth()];
     
     // Determine global receding trend for the day (using 12:00 UTC as anchor)
@@ -389,8 +389,8 @@ export function getVitaminDBandsGeoJSON(date = new Date()) {
       bottomPoints.push([lng, minLat]);
     }
 
-    const northOpacity = isNorthReceding ? (0.3 / i) : (0.7 / i);
-    const southOpacity = isSouthReceding ? (0.3 / i) : (0.7 / i);
+    const northOpacity = isNorthReceding ? (0.25 / i) : (0.6 / i);
+    const southOpacity = isSouthReceding ? (0.25 / i) : (0.6 / i);
     const weight = 1.5 / i;
 
     features.push({

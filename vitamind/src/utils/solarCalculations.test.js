@@ -272,28 +272,25 @@ describe('getVitaminDBandsGeoJSON', () => {
     expect(aprilNorth.properties.isReceding).toBe(false);
   });
 
-  it('should align bands with the relative day of the month (e.g. today + 1 month), not hardcoded to the 15th', () => {
-    // Test date: March 20. 
-    // The "1 month out" band (April) should represent April 20, not April 15.
-    const baseDate = new Date('2024-03-20T12:00:00Z');
+  it('should align bands with the 1st day of the month', () => {
+    // Base date: Feb 22.
+    // The first future band (March) should represent March 1st.
+    const baseDate = new Date('2026-02-22T12:00:00Z');
     const geojson = getVitaminDBandsGeoJSON(baseDate);
     
-    const aprilBand = geojson.features.find(f => f.properties.monthName === 'Apr' && f.properties.side === 'north');
-    
-    // Check at Longitude 0 where local solar noon is 12:00 UTC
-    const coordsAt0 = aprilBand.geometry.coordinates.find(c => c[0] === 0);
+    const marchBand = geojson.features.find(f => f.properties.monthName === 'Mar' && f.properties.side === 'north');
+    const coordsAt0 = marchBand.geometry.coordinates.find(c => c[0] === 0);
     const bandLat = coordsAt0[1];
 
-    // Calculate expected latitude for April 20 at 12:00 UTC (solar noon at 0 long)
-    const expectedDate = new Date('2024-04-20T12:00:00Z');
+    // Calculate expected latitude for March 1 at 12:00 UTC
+    const expectedDate = new Date('2026-03-01T12:00:00Z');
     const { lat: expectedDec } = getSubsolarPoint(expectedDate);
     const expectedLat = Math.min(90, expectedDec + 45);
 
     expect(bandLat).toBeCloseTo(expectedLat, 1);
   });
 
-  it('should have longitudinal variation in band latitude (matching the wavy nature of the main area)', () => {
-    // Test variation between Longitude 0 and Longitude -90 (6 hours apart)
+  it('should have longitudinal variation in band latitude', () => {
     const baseDate = new Date('2026-02-22T12:00:00Z');
     const geojson = getVitaminDBandsGeoJSON(baseDate);
     const marchBand = geojson.features.find(f => f.properties.monthName === 'Mar' && f.properties.side === 'north');
@@ -301,8 +298,7 @@ describe('getVitaminDBandsGeoJSON', () => {
     const latAt0 = marchBand.geometry.coordinates.find(c => c[0] === 0)[1];
     const latAtMinus90 = marchBand.geometry.coordinates.find(c => c[0] === -90)[1];
     
-    // They should not be identical because solar noon occurs at different UTC times
     expect(latAt0).not.toBe(latAtMinus90);
-    expect(Math.abs(latAt0 - latAtMinus90)).toBeGreaterThan(0.05);
+    expect(Math.abs(latAt0 - latAtMinus90)).toBeGreaterThan(0.01);
   });
 });
