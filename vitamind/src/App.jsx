@@ -321,6 +321,7 @@ function App() {
   const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
   const [modalView, setModalView] = useState('stats'); // 'stats' or 'calendar'
   const [yearlyData, setYearlyData] = useState([]);
+  const [showBands, setShowBands] = useState(true);
 
 
   // Detect WebGL availability synchronously on first render so the effect
@@ -754,6 +755,22 @@ function App() {
     sessionStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
   }, [modalSize]);
 
+  // Toggle terminator bands visibility
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const visibility = showBands ? 'visible' : 'none';
+    
+    // Check for existence of Mapbox methods (may be missing in tests)
+    if (typeof mapRef.current.getLayer === 'function' && typeof mapRef.current.setLayoutProperty === 'function') {
+      if (mapRef.current.getLayer('vitamin-d-bands-layer')) {
+        mapRef.current.setLayoutProperty('vitamin-d-bands-layer', 'visibility', visibility);
+      }
+      if (mapRef.current.getLayer('vitamin-d-bands-labels')) {
+        mapRef.current.setLayoutProperty('vitamin-d-bands-labels', 'visibility', visibility);
+      }
+    }
+  }, [showBands]);
+
 
   const closeModal = () => {
     setShowModal(false);
@@ -1073,6 +1090,10 @@ function App() {
                   </a>
                   <button onClick={generateICS} className="calendar-button apple-button">
                     <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path fill="currentColor" d="M14.1 9.5c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.8.8-3.5.8s-1.9-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.8-.4 6.9 1.1 8.6.8 1.1 1.7 2.3 2.9 2.3s1.6-.7 3.1-.7 1.9.7 3.1.7c1.2 0 2-.1 2.8-1.2.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.9zm-2.6-6.6c.6-.8 1.1-1.9.9-3-.9.1-2 1.1-2.6 1.9-.6.7-1.1 1.8-.9 2.9 1 .1 2-.8 2.6-1.8z"/></svg>
+                    Google Calendar
+                  </a>
+                  <button onClick={generateICS} className="calendar-button apple-button">
+                    <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path fill="currentColor" d="M14.1 9.5c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.8.8-3.5.8s-1.9-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.8-.4 6.9 1.1 8.6.8 1.1 1.7 2.3 2.9 2.3s1.6-.7 3.1-.7 1.9.7 3.1.7c1.2 0 2-.1 2.8-1.2.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.9zm-2.6-6.6c.6-.8 1.1-1.9.9-3-.9.1-2 1.1-2.6 1.9-.6.7-1.1 1.8-.9 2.9 1 .1 2-.8 2.6-1.8z"/></svg>
                     Apple / iCal
                   </button>
                 </div>
@@ -1109,6 +1130,16 @@ function App() {
                 <span>{modalSize.toFixed(1)}</span>
                 <button onClick={() => adjustModalSize(0.1)}>+</button>
               </div>
+            </div>
+            <div className="settings-block">
+              <span className="settings-label">Show Monthly Bands</span>
+              <button 
+                className="settings-action-button" 
+                style={{ width: 'auto', padding: '4px 8px', textAlign: 'center' }}
+                onClick={() => setShowBands(prev => !prev)}
+              >
+                {showBands ? 'ON' : 'OFF'}
+              </button>
             </div>
             <div className="settings-divider" />
             <button className="settings-action-button" onClick={handleClearCache}>Clear Cache</button>

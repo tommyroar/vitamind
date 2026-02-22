@@ -354,7 +354,7 @@ export function getTerminatorGeoJSON(date = new Date()) {
  * @returns {object} GeoJSON FeatureCollection with future boundary lines and labels.
  */
 export function getVitaminDBandsGeoJSON(date = new Date()) {
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const features = [];
   const resolution = 1; // High resolution for perfect alignment
 

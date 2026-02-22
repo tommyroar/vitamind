@@ -257,7 +257,7 @@ describe('getVitaminDBandsGeoJSON', () => {
     
     // In July/August, the sun is moving South (declination is decreasing)
     // For Northern Boundary (north), it's receding.
-    const augustNorth = geojson.features.find(f => f.properties.monthName === 'Aug' && f.properties.side === 'north');
+    const augustNorth = geojson.features.find(f => f.properties.monthName === 'August' && f.properties.side === 'north');
     expect(augustNorth.properties.isReceding).toBe(true);
   });
 
@@ -268,7 +268,7 @@ describe('getVitaminDBandsGeoJSON', () => {
     
     // In March/April, the sun is moving North (declination is increasing)
     // For Northern Boundary (north), it's advancing.
-    const aprilNorth = geojson.features.find(f => f.properties.monthName === 'Apr' && f.properties.side === 'north');
+    const aprilNorth = geojson.features.find(f => f.properties.monthName === 'April' && f.properties.side === 'north');
     expect(aprilNorth.properties.isReceding).toBe(false);
   });
 
@@ -278,7 +278,7 @@ describe('getVitaminDBandsGeoJSON', () => {
     const baseDate = new Date('2026-02-22T12:00:00Z');
     const geojson = getVitaminDBandsGeoJSON(baseDate);
     
-    const marchBand = geojson.features.find(f => f.properties.monthName === 'Mar' && f.properties.side === 'north');
+    const marchBand = geojson.features.find(f => f.properties.monthName === 'March' && f.properties.side === 'north');
     const coordsAt0 = marchBand.geometry.coordinates.find(c => c[0] === 0);
     const bandLat = coordsAt0[1];
 
@@ -293,7 +293,7 @@ describe('getVitaminDBandsGeoJSON', () => {
   it('should have longitudinal variation in band latitude', () => {
     const baseDate = new Date('2026-02-22T12:00:00Z');
     const geojson = getVitaminDBandsGeoJSON(baseDate);
-    const marchBand = geojson.features.find(f => f.properties.monthName === 'Mar' && f.properties.side === 'north');
+    const marchBand = geojson.features.find(f => f.properties.monthName === 'March' && f.properties.side === 'north');
     
     const latAt0 = marchBand.geometry.coordinates.find(c => c[0] === 0)[1];
     const latAtMinus90 = marchBand.geometry.coordinates.find(c => c[0] === -90)[1];
