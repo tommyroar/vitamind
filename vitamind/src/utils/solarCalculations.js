@@ -357,15 +357,18 @@ export function getTerminatorGeoJSON(date = new Date()) {
     const features = [];
     const resolution = 5; // Use a slightly lower resolution for performance of multiple lines
   
-    const startMonth = date.getUTCMonth();
-    const startYear = date.getUTCFullYear();
-  
-    // Get current declination to determine if we are receding
-    const { lat: currentDec } = getSubsolarPoint(date);
-  
+      const startMonth = date.getUTCMonth();
+      const startYear = date.getUTCFullYear();
+      const startDay = date.getUTCDate();
+    
+      // Get current declination to determine if we are receding
+      const { lat: currentDec } = getSubsolarPoint(date);
+    
       for (let i = 1; i <= 5; i++) {
-        const futureDate = new Date(Date.UTC(startYear, startMonth + i, 15, 12, 0, 0));
+        // Add i months while preserving the day of the month
+        const futureDate = new Date(Date.UTC(startYear, startMonth + i, startDay, 12, 0, 0));
         const { lat: futureDec } = getSubsolarPoint(futureDate);
+    
         const monthName = monthNames[futureDate.getUTCMonth()];
         
         const isNorthReceding = futureDec < currentDec;

@@ -261,14 +261,32 @@ describe('getVitaminDBandsGeoJSON', () => {
     expect(augustNorth.properties.isReceding).toBe(true);
   });
 
-  it('should identify advancing lines before summer solstice (NH)', () => {
-    // March 20 is before summer solstice
-    const date = new Date('2024-03-20T12:00:00Z');
-    const geojson = getVitaminDBandsGeoJSON(date);
-    
-    // In March/April, the sun is moving North (declination is increasing)
-    // For Northern Boundary (north), it's advancing.
-    const aprilNorth = geojson.features.find(f => f.properties.monthName === 'Apr' && f.properties.side === 'north');
-    expect(aprilNorth.properties.isReceding).toBe(false);
+    it('should identify advancing lines before summer solstice (NH)', () => {
+      // March 20 is before summer solstice
+      const date = new Date('2024-03-20T12:00:00Z');
+      const geojson = getVitaminDBandsGeoJSON(date);
+      
+      // In March/April, the sun is moving North (declination is increasing)
+      // For Northern Boundary (north), it's advancing.
+      const aprilNorth = geojson.features.find(f => f.properties.monthName === 'Apr' && f.properties.side === 'north');
+      expect(aprilNorth.properties.isReceding).toBe(false);
+    });
+  
+    it('should align bands with the relative day of the month (e.g. today + 1 month), not hardcoded to the 15th', () => {
+      // Test date: March 20. 
+      // The "1 month out" band (April) should represent April 20, not April 15.
+      const baseDate = new Date('2024-03-20T12:00:00Z');
+      const geojson = getVitaminDBandsGeoJSON(baseDate);
+      
+      const aprilBand = geojson.features.find(f => f.properties.monthName === 'Apr' && f.properties.side === 'north');
+      const bandLat = aprilBand.geometry.coordinates[0][1]; // Latitude at -180 longitude
+  
+      // Calculate expected latitude for April 20
+      const expectedDate = new Date('2024-04-20T12:00:00Z');
+      const { lat: expectedDec } = getSubsolarPoint(expectedDate);
+      const expectedLat = Math.min(90, expectedDec + 45);
+  
+      expect(bandLat).toBeCloseTo(expectedLat, 1);
+    });
   });
-});
+  
