@@ -346,3 +346,126 @@ export function getTerminatorGeoJSON(date = new Date()) {
     ]
   };
 }
+
+/**
+ * Generates a GeoJSON FeatureCollection representing the Vitamin D boundary bands and overlays for upcoming months.
+ * Each month starting from the 1st has a boundary line and an area polygon.
+ * Only advances boundaries (increasing latitude in NH, decreasing in SH) are included to avoid overlap.
+ * @param {Date} [date=new Date()] - The starting date.
+ * @returns {object} GeoJSON FeatureCollection with future boundary lines, fill overlays, and labels.
+ */
+export function getVitaminDBandsGeoJSON(date = new Date()) {
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const features = [];
+  const resolution = 2; // Match the precision of the main area
+
+  const startMonth = date.getUTCMonth();
+  const startYear = date.getUTCFullYear();
+  const startDay = date.getUTCDate();
+
+  // Progress within the current month (0 to 1)
+  const lastDayOfMonth = new Date(Date.UTC(startYear, startMonth + 1, 0)).getUTCDate();
+  const monthProgress = startDay / lastDayOfMonth;
+
+  // Get representative current declination to determine if we are receding
+  const { lat: currentDec } = getSubsolarPoint(date);
+
+  for (let i = 1; i <= 5; i++) {
+    // Each band represents the 1st of an upcoming month
+    const futureDate = new Date(Date.UTC(startYear, startMonth + i, 1, 12, 0, 0));
+    const monthName = monthNames[futureDate.getUTCMonth()];
+    
+    // Determine global advancing trend for the day (using 12:00 UTC as anchor)
+    const { lat: futureDecAnchor } = getSubsolarPoint(futureDate);
+    const isNorthAdvancing = futureDecAnchor > currentDec;
+    const isSouthAdvancing = futureDecAnchor < currentDec;
+
+    if (!isNorthAdvancing && !isSouthAdvancing) continue;
+
+    const topPoints = [];
+    const bottomPoints = [];
+
+    for (let lng = -180; lng <= 180; lng += resolution) {
+      const times = SunCalc.getTimes(futureDate, 0, lng);
+      const solarNoon = times.solarNoon || futureDate;
+      const { lat: decDeg } = getSubsolarPoint(solarNoon);
+
+      const maxLat = Math.min(90, decDeg + 45);
+      const minLat = Math.max(-90, decDeg - 45);
+      topPoints.push([lng, maxLat]);
+      bottomPoints.push([lng, minLat]);
+    }
+
+    const alphaBase = 1.0 / (i + 1);
+    const dynamicAlpha = alphaBase * (0.3 + 0.7 * monthProgress);
+
+    const lineOpacity = 0.6 * dynamicAlpha;
+    const fillOpacity = lineOpacity * 0.3;
+    const weight = 1.5 / i;
+
+    // Area Fill Polygon
+    features.push({
+      type: 'Feature',
+      properties: {
+        name: `${monthName} Area Overlay`,
+        monthName,
+        layerType: 'fill',
+        opacity: fillOpacity,
+        alpha: dynamicAlpha
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          ...bottomPoints,
+          ...([...topPoints].reverse()),
+          bottomPoints[0]
+        ]]
+      }
+    });
+
+    if (isNorthAdvancing) {
+      features.push({
+        type: 'Feature',
+        properties: {
+          name: `${monthName} Northern Boundary`,
+          monthName,
+          isReceding: false,
+          layerType: 'boundary',
+          side: 'north',
+          opacity: lineOpacity,
+          weight,
+          alpha: dynamicAlpha
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: topPoints
+        }
+      });
+    }
+
+    if (isSouthAdvancing) {
+      features.push({
+        type: 'Feature',
+        properties: {
+          name: `${monthName} Southern Boundary`,
+          monthName,
+          isReceding: false,
+          layerType: 'boundary',
+          side: 'south',
+          opacity: lineOpacity,
+          weight,
+          alpha: dynamicAlpha
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: bottomPoints
+        }
+      });
+    }
+  }
+
+  return {
+    type: 'FeatureCollection',
+    features
+  };
+}
