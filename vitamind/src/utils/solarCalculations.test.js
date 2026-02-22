@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSunStats, getVitaminDInfo, getVitaminDAreaGeoJSON, getTerminatorGeoJSON, getSubsolarPoint, getNorthernVitaminDLat } from './solarCalculations';
+import { getSunStats, getVitaminDInfo, getVitaminDAreaGeoJSON, getTerminatorGeoJSON, getSubsolarPoint, getNorthernVitaminDLat, getVitaminDBandsGeoJSON } from './solarCalculations';
 
 describe('getSunStats', () => {
   it('should calculate the highest daily sun angle, solar noon time, and day length for a given location and date (equator, equinox)', () => {
@@ -236,5 +236,70 @@ describe('getTerminatorGeoJSON', () => {
     expect(geojson.features.length).toBeGreaterThanOrEqual(1);
     expect(geojson.features.some(f => f.properties.layerType === 'fill')).toBe(true);
     expect(geojson.features.some(f => f.properties.layerType === 'boundary')).toBe(true);
+  });
+});
+
+describe('getVitaminDBandsGeoJSON', () => {
+  it('should generate 15 features for 5 months (north/south boundaries and fill)', () => {
+    const geojson = getVitaminDBandsGeoJSON(new Date('2024-03-20T12:00:00Z'));
+    expect(geojson.type).toBe('FeatureCollection');
+    expect(geojson.features).toHaveLength(15);
+    expect(geojson.features.filter(f => f.properties.layerType === 'boundary')).toHaveLength(10);
+    expect(geojson.features.filter(f => f.properties.layerType === 'fill')).toHaveLength(5);
+    expect(geojson.features[0].geometry.type).toBe('Polygon'); // Fill is first in loop
+    expect(geojson.features[0].properties).toHaveProperty('monthName');
+    expect(geojson.features[0].properties).toHaveProperty('opacity');
+  });
+
+  it('should identify receding lines after summer solstice (NH)', () => {
+    // July 20 is after summer solstice
+    const date = new Date('2024-07-20T12:00:00Z');
+    const geojson = getVitaminDBandsGeoJSON(date);
+    
+    // In July/August, the sun is moving South (declination is decreasing)
+    // For Northern Boundary (north), it's receding.
+    const augustNorth = geojson.features.find(f => f.properties.monthName === 'August' && f.properties.side === 'north');
+    expect(augustNorth.properties.isReceding).toBe(true);
+  });
+
+  it('should identify advancing lines before summer solstice (NH)', () => {
+    // March 20 is before summer solstice
+    const date = new Date('2024-03-20T12:00:00Z');
+    const geojson = getVitaminDBandsGeoJSON(date);
+    
+    // In March/April, the sun is moving North (declination is increasing)
+    // For Northern Boundary (north), it's advancing.
+    const aprilNorth = geojson.features.find(f => f.properties.monthName === 'April' && f.properties.side === 'north');
+    expect(aprilNorth.properties.isReceding).toBe(false);
+  });
+
+  it('should align bands with the 1st day of the month', () => {
+    // Base date: Feb 22.
+    // The first future band (March) should represent March 1st.
+    const baseDate = new Date('2026-02-22T12:00:00Z');
+    const geojson = getVitaminDBandsGeoJSON(baseDate);
+    
+    const marchBand = geojson.features.find(f => f.properties.monthName === 'March' && f.properties.side === 'north');
+    const coordsAt0 = marchBand.geometry.coordinates.find(c => c[0] === 0);
+    const bandLat = coordsAt0[1];
+
+    // Calculate expected latitude for March 1 at 12:00 UTC
+    const expectedDate = new Date('2026-03-01T12:00:00Z');
+    const { lat: expectedDec } = getSubsolarPoint(expectedDate);
+    const expectedLat = Math.min(90, expectedDec + 45);
+
+    expect(bandLat).toBeCloseTo(expectedLat, 1);
+  });
+
+  it('should have longitudinal variation in band latitude', () => {
+    const baseDate = new Date('2026-02-22T12:00:00Z');
+    const geojson = getVitaminDBandsGeoJSON(baseDate);
+    const marchBand = geojson.features.find(f => f.properties.monthName === 'March' && f.properties.side === 'north');
+    
+    const latAt0 = marchBand.geometry.coordinates.find(c => c[0] === 0)[1];
+    const latAtMinus90 = marchBand.geometry.coordinates.find(c => c[0] === -90)[1];
+    
+    expect(latAt0).not.toBe(latAtMinus90);
+    expect(Math.abs(latAt0 - latAtMinus90)).toBeGreaterThan(0.01);
   });
 });

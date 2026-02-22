@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON, getSubsolarPoint, getNorthernVitaminDLat } from './utils/solarCalculations';
+import { getSunStats, getVitaminDInfo, formatTime, getYearlySunData, getVitaminDAreaGeoJSON, getSubsolarPoint, getNorthernVitaminDLat, getVitaminDBandsGeoJSON } from './utils/solarCalculations';
 
 // Set your Mapbox access token from environment variable
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -321,6 +321,7 @@ function App() {
   const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
   const [modalView, setModalView] = useState('stats'); // 'stats' or 'calendar'
   const [yearlyData, setYearlyData] = useState([]);
+  const [bandStyle, setBandStyle] = useState('bands'); // 'bands', 'overlays', or 'none'
 
 
   // Detect WebGL availability synchronously on first render so the effect
@@ -529,12 +530,31 @@ function App() {
 
         mapRef.current.on('load', () => {
           const vitaminDAreaData = getVitaminDAreaGeoJSON();
+          const vitaminDBandsData = getVitaminDBandsGeoJSON();
 
           if (mapRef.current.getSource('vitamin-d-area')) return;
 
           mapRef.current.addSource('vitamin-d-area', {
             type: 'geojson',
             data: vitaminDAreaData
+          });
+
+          mapRef.current.addSource('vitamin-d-bands', {
+            type: 'geojson',
+            data: vitaminDBandsData
+          });
+
+          // Future bands fill overlays
+          mapRef.current.addLayer({
+            id: 'vitamin-d-bands-fill',
+            type: 'fill',
+            source: 'vitamin-d-bands',
+            filter: ['==', ['get', 'layerType'], 'fill'],
+            layout: {},
+            paint: {
+              'fill-color': '#E6DB74',
+              'fill-opacity': ['get', 'opacity']
+            }
           });
 
           // Vitamin D Area fill layer - Monokai Yellow
@@ -550,7 +570,47 @@ function App() {
             }
           });
 
-          // Warm boundary line
+          // Future bands lines
+          mapRef.current.addLayer({
+            id: 'vitamin-d-bands-layer',
+            type: 'line',
+            source: 'vitamin-d-bands',
+            filter: ['==', ['get', 'layerType'], 'boundary'],
+            layout: {
+              'line-cap': 'round',
+              'line-join': 'round'
+            },
+            paint: {
+              'line-color': '#FD971F',
+              'line-width': ['get', 'weight'],
+              'line-opacity': ['get', 'opacity']
+            }
+          });
+
+          // Future bands labels
+          mapRef.current.addLayer({
+            id: 'vitamin-d-bands-labels',
+            type: 'symbol',
+            source: 'vitamin-d-bands',
+            filter: ['==', ['get', 'layerType'], 'boundary'],
+            layout: {
+              'symbol-placement': 'line',
+              'text-field': ['get', 'monthName'],
+              'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Regular'],
+              'text-size': 10,
+              'text-offset': [0, -1],
+              'text-keep-upright': true,
+              'symbol-spacing': 250
+            },
+            paint: {
+              'text-color': '#FD971F',
+              'text-opacity': ['get', 'opacity'],
+              'text-halo-color': 'rgba(39, 40, 34, 0.8)',
+              'text-halo-width': 1
+            }
+          });
+
+          // Warm boundary line (Realtime)
           mapRef.current.addLayer({
             id: 'vitamin-d-area-boundary',
             type: 'line',
@@ -560,7 +620,7 @@ function App() {
             paint: {
               'line-color': '#FD971F', // Monokai Orange
               'line-width': 2,
-              'line-opacity': 0.6
+              'line-opacity': 0.8
             }
           });
 
@@ -709,6 +769,27 @@ function App() {
   useEffect(() => {
     sessionStorage.setItem(MODAL_SIZE_STORAGE_KEY, modalSize.toString());
   }, [modalSize]);
+
+  // Toggle terminator bands visibility
+  useEffect(() => {
+    if (!mapRef.current) return;
+    
+    // Check for existence of Mapbox methods (may be missing in tests)
+    if (typeof mapRef.current.getLayer === 'function' && typeof mapRef.current.setLayoutProperty === 'function') {
+      const showBands = bandStyle === 'bands';
+      const showOverlays = bandStyle === 'overlays';
+
+      if (mapRef.current.getLayer('vitamin-d-bands-layer')) {
+        mapRef.current.setLayoutProperty('vitamin-d-bands-layer', 'visibility', (showBands || showOverlays) ? 'visible' : 'none');
+      }
+      if (mapRef.current.getLayer('vitamin-d-bands-labels')) {
+        mapRef.current.setLayoutProperty('vitamin-d-bands-labels', 'visibility', (showBands || showOverlays) ? 'visible' : 'none');
+      }
+      if (mapRef.current.getLayer('vitamin-d-bands-fill')) {
+        mapRef.current.setLayoutProperty('vitamin-d-bands-fill', 'visibility', showOverlays ? 'visible' : 'none');
+      }
+    }
+  }, [bandStyle]);
 
 
   const closeModal = () => {
@@ -1065,6 +1146,22 @@ function App() {
                 <span>{modalSize.toFixed(1)}</span>
                 <button onClick={() => adjustModalSize(0.1)}>+</button>
               </div>
+            </div>
+            <div className="settings-block">
+              <span className="settings-label">Monthly Style</span>
+              <button 
+                className="settings-action-button" 
+                style={{ width: 'auto', padding: '4px 8px', textAlign: 'center', textTransform: 'capitalize' }}
+                onClick={() => {
+                  setBandStyle(prev => {
+                    if (prev === 'bands') return 'overlays';
+                    if (prev === 'overlays') return 'none';
+                    return 'bands';
+                  });
+                }}
+              >
+                {bandStyle}
+              </button>
             </div>
             <div className="settings-divider" />
             <button className="settings-action-button" onClick={handleClearCache}>Clear Cache</button>
