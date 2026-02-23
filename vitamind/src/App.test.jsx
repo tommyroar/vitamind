@@ -52,7 +52,7 @@ describe('App', () => {
   });
 
   it('shows generic error overlay when map initialization throws', () => {
-    mapboxgl.Map.mockImplementationOnce(() => {
+    mapboxgl.Map.mockImplementationOnce(function() {
       throw new Error('WebGL context lost');
     });
 

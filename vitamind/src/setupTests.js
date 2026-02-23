@@ -43,36 +43,42 @@ Object.defineProperty(window, 'localStorage', {
 // We're mocking the core Map and NavigationControl to avoid runtime errors
 vi.mock('mapbox-gl', () => {
   const mapboxgl = {
-    Map: vi.fn(() => ({
-      remove: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-      addControl: vi.fn(),
-      flyTo: vi.fn(),
-      setCenter: vi.fn(),
-      setZoom: vi.fn(),
-      getSource: vi.fn(),
-      addSource: vi.fn(),
-      addLayer: vi.fn(),
-      getStyle: vi.fn(() => ({ layers: [] })),
-      setLayoutProperty: vi.fn(),
-      setFog: vi.fn(),
-    })),
+    Map: vi.fn(function() {
+      return {
+        remove: vi.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
+        addControl: vi.fn(),
+        flyTo: vi.fn(),
+        setCenter: vi.fn(),
+        setZoom: vi.fn(),
+        getSource: vi.fn(),
+        addSource: vi.fn(),
+        addLayer: vi.fn(),
+        getStyle: vi.fn(() => ({ layers: [] })),
+        setLayoutProperty: vi.fn(),
+        setFog: vi.fn(),
+      };
+    }),
     NavigationControl: vi.fn(),
-    GeolocateControl: vi.fn(() => ({
-      on: vi.fn(),
-      trigger: vi.fn(),
-    })),
-    Marker: vi.fn(() => ({
-      setLngLat: vi.fn().mockReturnThis(),
-      addTo: vi.fn().mockReturnThis(),
-    })),
+    GeolocateControl: vi.fn(function() {
+      return {
+        on: vi.fn(),
+        trigger: vi.fn(),
+      };
+    }),
+    Marker: vi.fn(function() {
+      return {
+        setLngLat: vi.fn().mockReturnThis(),
+        addTo: vi.fn().mockReturnThis(),
+      };
+    }),
     supported: vi.fn(() => true),
     accessToken: 'pk.test-token',
   };
   return {
-    __esModule: true, // This indicates it's an ES module with a default export
+    __esModule: true,
     default: mapboxgl,
-    ...mapboxgl, // Also export named properties for convenience if needed
+    ...mapboxgl,
   };
 });
