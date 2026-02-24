@@ -321,7 +321,7 @@ function App() {
   const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
   const [modalView, setModalView] = useState('stats'); // 'stats' or 'calendar'
   const [yearlyData, setYearlyData] = useState([]);
-  const [bandStyle, setBandStyle] = useState('bands'); // 'bands', 'overlays', or 'none'
+  const [bandStyle, setBandStyle] = useState('none'); // 'bands', 'overlays', or 'none'
 
 
   // Detect WebGL availability synchronously on first render so the effect
@@ -550,7 +550,9 @@ function App() {
             type: 'fill',
             source: 'vitamin-d-bands',
             filter: ['==', ['get', 'layerType'], 'fill'],
-            layout: {},
+            layout: {
+              'visibility': bandStyle === 'overlays' ? 'visible' : 'none'
+            },
             paint: {
               'fill-color': '#E6DB74',
               'fill-opacity': ['get', 'opacity']
@@ -578,7 +580,8 @@ function App() {
             filter: ['==', ['get', 'layerType'], 'boundary'],
             layout: {
               'line-cap': 'round',
-              'line-join': 'round'
+              'line-join': 'round',
+              'visibility': (bandStyle === 'bands' || bandStyle === 'overlays') ? 'visible' : 'none'
             },
             paint: {
               'line-color': '#FD971F',
@@ -600,7 +603,8 @@ function App() {
               'text-size': 10,
               'text-offset': [0, -1],
               'text-keep-upright': true,
-              'symbol-spacing': 250
+              'symbol-spacing': 250,
+              'visibility': (bandStyle === 'bands' || bandStyle === 'overlays') ? 'visible' : 'none'
             },
             paint: {
               'text-color': '#FD971F',
@@ -758,6 +762,7 @@ function App() {
         mapRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, requestLocation, setIntroSeen, triggerClickHint, mapError]); // dependencies for Mapbox init
 
   // Effect to update sessionStorage when fontSize changes
@@ -772,7 +777,7 @@ function App() {
 
   // Toggle terminator bands visibility
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || loading) return;
     
     // Check for existence of Mapbox methods (may be missing in tests)
     if (typeof mapRef.current.getLayer === 'function' && typeof mapRef.current.setLayoutProperty === 'function') {
@@ -789,7 +794,7 @@ function App() {
         mapRef.current.setLayoutProperty('vitamin-d-bands-fill', 'visibility', showOverlays ? 'visible' : 'none');
       }
     }
-  }, [bandStyle]);
+  }, [bandStyle, loading]);
 
 
   const closeModal = () => {
