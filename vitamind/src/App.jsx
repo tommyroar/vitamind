@@ -550,7 +550,9 @@ function App() {
             type: 'fill',
             source: 'vitamin-d-bands',
             filter: ['==', ['get', 'layerType'], 'fill'],
-            layout: {},
+            layout: {
+              'visibility': bandStyle === 'overlays' ? 'visible' : 'none'
+            },
             paint: {
               'fill-color': '#E6DB74',
               'fill-opacity': ['get', 'opacity']
@@ -578,7 +580,8 @@ function App() {
             filter: ['==', ['get', 'layerType'], 'boundary'],
             layout: {
               'line-cap': 'round',
-              'line-join': 'round'
+              'line-join': 'round',
+              'visibility': (bandStyle === 'bands' || bandStyle === 'overlays') ? 'visible' : 'none'
             },
             paint: {
               'line-color': '#FD971F',
@@ -600,7 +603,8 @@ function App() {
               'text-size': 10,
               'text-offset': [0, -1],
               'text-keep-upright': true,
-              'symbol-spacing': 250
+              'symbol-spacing': 250,
+              'visibility': (bandStyle === 'bands' || bandStyle === 'overlays') ? 'visible' : 'none'
             },
             paint: {
               'text-color': '#FD971F',
@@ -758,6 +762,7 @@ function App() {
         mapRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng, zoom, updateStatsForLocation, startIntroSequence, requestLocation, setIntroSeen, triggerClickHint, mapError]); // dependencies for Mapbox init
 
   // Effect to update sessionStorage when fontSize changes
@@ -772,7 +777,7 @@ function App() {
 
   // Toggle terminator bands visibility
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || loading) return;
     
     // Check for existence of Mapbox methods (may be missing in tests)
     if (typeof mapRef.current.getLayer === 'function' && typeof mapRef.current.setLayoutProperty === 'function') {
@@ -781,15 +786,19 @@ function App() {
 
       if (mapRef.current.getLayer('vitamin-d-bands-layer')) {
         mapRef.current.setLayoutProperty('vitamin-d-bands-layer', 'visibility', (showBands || showOverlays) ? 'visible' : 'none');
+        // Apply equal styling for 'bands' mode, graduated for 'overlays'
+        mapRef.current.setPaintProperty('vitamin-d-bands-layer', 'line-opacity', showBands ? 0.4 : ['get', 'opacity']);
+        mapRef.current.setPaintProperty('vitamin-d-bands-layer', 'line-width', showBands ? 1.0 : ['get', 'weight']);
       }
       if (mapRef.current.getLayer('vitamin-d-bands-labels')) {
         mapRef.current.setLayoutProperty('vitamin-d-bands-labels', 'visibility', (showBands || showOverlays) ? 'visible' : 'none');
+        mapRef.current.setPaintProperty('vitamin-d-bands-labels', 'text-opacity', showBands ? 0.6 : ['get', 'opacity']);
       }
       if (mapRef.current.getLayer('vitamin-d-bands-fill')) {
         mapRef.current.setLayoutProperty('vitamin-d-bands-fill', 'visibility', showOverlays ? 'visible' : 'none');
       }
     }
-  }, [bandStyle]);
+  }, [bandStyle, loading]);
 
 
   const closeModal = () => {
@@ -936,12 +945,8 @@ function App() {
       )}
 
       {loading && !mapError && (
-        <div className="map-error-overlay">
-          <div className="map-error-content">
-            <div className="loading-spinner" />
-            <h2 style={{ color: '#E6DB74' }}>Loading Map...</h2>
-            <p>Preparing Vitamin D synthesis data visualization</p>
-          </div>
+        <div className="loading-overlay">
+          <div className="loading-spinner" />
         </div>
       )}
 
@@ -1148,20 +1153,31 @@ function App() {
               </div>
             </div>
             <div className="settings-block">
-              <span className="settings-label">Monthly Style</span>
-              <button 
-                className="settings-action-button" 
-                style={{ width: 'auto', padding: '4px 8px', textAlign: 'center', textTransform: 'capitalize' }}
-                onClick={() => {
-                  setBandStyle(prev => {
-                    if (prev === 'bands') return 'overlays';
-                    if (prev === 'overlays') return 'none';
-                    return 'bands';
-                  });
-                }}
-              >
-                {bandStyle}
-              </button>
+              <div className="settings-stepper" style={{ width: '100%', justifyContent: 'space-between' }}>
+                <button 
+                  onClick={() => {
+                    setBandStyle(prev => {
+                      if (prev === 'bands') return 'none';
+                      if (prev === 'overlays') return 'bands';
+                      return 'overlays';
+                    });
+                  }}
+                >
+                  ←
+                </button>
+                <span style={{ textTransform: 'capitalize', fontWeight: 'bold' }}>{bandStyle}</span>
+                <button 
+                  onClick={() => {
+                    setBandStyle(prev => {
+                      if (prev === 'bands') return 'overlays';
+                      if (prev === 'overlays') return 'none';
+                      return 'bands';
+                    });
+                  }}
+                >
+                  →
+                </button>
+              </div>
             </div>
             <div className="settings-divider" />
             <button className="settings-action-button" onClick={handleClearCache}>Clear Cache</button>
