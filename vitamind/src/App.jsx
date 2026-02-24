@@ -321,7 +321,7 @@ function App() {
   const [copyFeedback, setCopyFeedback] = useState({ show: false, message: '', id: null });
   const [modalView, setModalView] = useState('stats'); // 'stats' or 'calendar'
   const [yearlyData, setYearlyData] = useState([]);
-  const [bandStyle, setBandStyle] = useState('none'); // 'bands', 'overlays', or 'none'
+  const [bandStyle, setBandStyle] = useState('bands'); // 'bands', 'overlays', or 'none'
 
 
   // Detect WebGL availability synchronously on first render so the effect
@@ -1153,20 +1153,31 @@ function App() {
               </div>
             </div>
             <div className="settings-block">
-              <span className="settings-label">Monthly Style</span>
-              <button 
-                className="settings-action-button" 
-                style={{ width: 'auto', padding: '4px 8px', textAlign: 'center', textTransform: 'capitalize' }}
-                onClick={() => {
-                  setBandStyle(prev => {
-                    if (prev === 'bands') return 'overlays';
-                    if (prev === 'overlays') return 'none';
-                    return 'bands';
-                  });
-                }}
-              >
-                {bandStyle}
-              </button>
+              <div className="settings-stepper" style={{ width: '100%', justifyContent: 'space-between' }}>
+                <button 
+                  onClick={() => {
+                    setBandStyle(prev => {
+                      if (prev === 'bands') return 'none';
+                      if (prev === 'overlays') return 'bands';
+                      return 'overlays';
+                    });
+                  }}
+                >
+                  ←
+                </button>
+                <span style={{ textTransform: 'capitalize', fontWeight: 'bold' }}>{bandStyle}</span>
+                <button 
+                  onClick={() => {
+                    setBandStyle(prev => {
+                      if (prev === 'bands') return 'overlays';
+                      if (prev === 'overlays') return 'none';
+                      return 'bands';
+                    });
+                  }}
+                >
+                  →
+                </button>
+              </div>
             </div>
             <div className="settings-divider" />
             <button className="settings-action-button" onClick={handleClearCache}>Clear Cache</button>
