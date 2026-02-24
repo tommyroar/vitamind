@@ -786,9 +786,13 @@ function App() {
 
       if (mapRef.current.getLayer('vitamin-d-bands-layer')) {
         mapRef.current.setLayoutProperty('vitamin-d-bands-layer', 'visibility', (showBands || showOverlays) ? 'visible' : 'none');
+        // Apply equal styling for 'bands' mode, graduated for 'overlays'
+        mapRef.current.setPaintProperty('vitamin-d-bands-layer', 'line-opacity', showBands ? 0.4 : ['get', 'opacity']);
+        mapRef.current.setPaintProperty('vitamin-d-bands-layer', 'line-width', showBands ? 1.0 : ['get', 'weight']);
       }
       if (mapRef.current.getLayer('vitamin-d-bands-labels')) {
         mapRef.current.setLayoutProperty('vitamin-d-bands-labels', 'visibility', (showBands || showOverlays) ? 'visible' : 'none');
+        mapRef.current.setPaintProperty('vitamin-d-bands-labels', 'text-opacity', showBands ? 0.6 : ['get', 'opacity']);
       }
       if (mapRef.current.getLayer('vitamin-d-bands-fill')) {
         mapRef.current.setLayoutProperty('vitamin-d-bands-fill', 'visibility', showOverlays ? 'visible' : 'none');
