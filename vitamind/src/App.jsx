@@ -945,12 +945,8 @@ function App() {
       )}
 
       {loading && !mapError && (
-        <div className="map-error-overlay">
-          <div className="map-error-content">
-            <div className="loading-spinner" />
-            <h2 style={{ color: '#E6DB74' }}>Loading Map...</h2>
-            <p>Preparing Vitamin D synthesis data visualization</p>
-          </div>
+        <div className="loading-overlay">
+          <div className="loading-spinner" />
         </div>
       )}
 
